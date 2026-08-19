@@ -23,8 +23,10 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { GoogleIcon, LinkedinIcon, GithubIcon } from "@/components/auth/AuthView";
+
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setAuthModalOpen, authMode, login, register, loginAsGuest } =
+  const { isAuthModalOpen, setAuthModalOpen, authMode, login, register, loginWithProvider, loginAsGuest } =
     useAuthStore();
 
   const [currentTab, setCurrentTab] = useState<"login" | "register">(authMode);
@@ -64,10 +66,60 @@ export const AuthModal: React.FC = () => {
           </DialogDescription>
         </DialogHeader>
 
+        {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
+        <div className="space-y-2 pt-1">
+          <div className="grid grid-cols-3 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => loginWithProvider("google")}
+              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs"
+              title="Continuar con Google"
+            >
+              <GoogleIcon />
+              <span className="hidden sm:inline font-medium">Google</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => loginWithProvider("linkedin")}
+              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs"
+              title="Continuar con LinkedIn"
+            >
+              <LinkedinIcon />
+              <span className="hidden sm:inline font-medium">LinkedIn</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => loginWithProvider("github")}
+              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs"
+              title="Continuar con GitHub"
+            >
+              <GithubIcon />
+              <span className="hidden sm:inline font-medium">GitHub</span>
+            </Button>
+          </div>
+
+          {/* Separador */}
+          <div className="relative py-1">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border/60" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-card px-2 text-muted-foreground font-semibold tracking-wider">
+                o con correo
+              </span>
+            </div>
+          </div>
+        </div>
+
         <Tabs
           value={currentTab}
           onValueChange={(v) => setCurrentTab(v as "login" | "register")}
-          className="w-full mt-2"
+          className="w-full mt-1"
         >
           <TabsList className="grid grid-cols-2 w-full h-8 bg-zinc-100 dark:bg-zinc-800 mb-4">
             <TabsTrigger value="login" className="text-xs">

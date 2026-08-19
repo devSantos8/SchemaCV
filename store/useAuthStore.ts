@@ -30,6 +30,7 @@ interface AuthState {
   // Acciones
   login: (email: string, name?: string) => void;
   register: (name: string, email: string) => void;
+  loginWithProvider: (provider: "google" | "linkedin" | "github") => void;
   loginAsGuest: () => void;
   logout: () => void;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
@@ -85,6 +86,41 @@ export const useAuthStore = create<AuthState>()(
           id: `user-${Date.now()}`,
           name,
           email,
+          joinedDate: new Date().toLocaleDateString("es-ES", {
+            month: "long",
+            year: "numeric",
+          }),
+          isDemoUser: false,
+        };
+        set({ user, isAuthenticated: true, isAuthModalOpen: false });
+      },
+
+      loginWithProvider: (provider: "google" | "linkedin" | "github") => {
+        let name = "Joain Matías Monroy";
+        let email = "matiasmonroy483@gmail.com";
+        let githubUrl = "https://github.com/devSantos8";
+        let linkedinUrl = "https://linkedin.com/in/joain-monroy";
+
+        if (provider === "google") {
+          name = "Joain Monroy (Google)";
+          email = "matiasmonroy483@gmail.com";
+        } else if (provider === "github") {
+          name = "devSantos8 (GitHub)";
+          email = "devsantos8@users.noreply.github.com";
+          githubUrl = "https://github.com/devSantos8";
+        } else if (provider === "linkedin") {
+          name = "Joain Monroy Santos (LinkedIn)";
+          email = "jmonroys@linkedin.com";
+          linkedinUrl = "https://linkedin.com/in/joain-monroy";
+        }
+
+        const user: UserProfile = {
+          ...DEFAULT_DEMO_USER,
+          id: `user-${provider}-${Date.now()}`,
+          name,
+          email,
+          githubUrl,
+          linkedinUrl,
           joinedDate: new Date().toLocaleDateString("es-ES", {
             month: "long",
             year: "numeric",

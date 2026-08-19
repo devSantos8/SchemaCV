@@ -17,8 +17,41 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+export const GoogleIcon: React.FC<{ className?: string }> = ({ className = "h-4 w-4" }) => (
+  <svg className={className} viewBox="0 0 24 24">
+    <path
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+      fill="#4285F4"
+    />
+    <path
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+      fill="#34A853"
+    />
+    <path
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+      fill="#FBBC05"
+    />
+    <path
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+      fill="#EA4335"
+    />
+  </svg>
+);
+
+export const LinkedinIcon: React.FC<{ className?: string }> = ({ className = "h-4 w-4" }) => (
+  <svg className={`${className} fill-[#0A66C2]`} viewBox="0 0 24 24">
+    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
+  </svg>
+);
+
+export const GithubIcon: React.FC<{ className?: string }> = ({ className = "h-4 w-4" }) => (
+  <svg className={`${className} fill-current`} viewBox="0 0 24 24">
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
+  </svg>
+);
+
 export const AuthView: React.FC = () => {
-  const { login, register, loginAsGuest } = useAuthStore();
+  const { login, register, loginWithProvider, loginAsGuest } = useAuthStore();
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -75,7 +108,7 @@ export const AuthView: React.FC = () => {
 
       {/* Tarjeta de Autenticación Centrada & Minimalista */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 z-10">
-        <div className="w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-7 sm:p-9 rounded-3xl shadow-2xl space-y-6 animate-in fade-in-50 zoom-in-95 duration-300">
+        <div className="w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-7 sm:p-9 rounded-3xl shadow-2xl space-y-5 animate-in fade-in-50 zoom-in-95 duration-300">
           {/* Encabezado */}
           <div className="text-center space-y-1">
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
@@ -86,6 +119,56 @@ export const AuthView: React.FC = () => {
                 ? "Ingresa tus datos para acceder a tus currículums"
                 : "Comienza a diseñar tu CV optimizado para ATS"}
             </p>
+          </div>
+
+          {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
+          <div className="space-y-2 pt-1">
+            <div className="grid grid-cols-3 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => loginWithProvider("google")}
+                className="h-9.5 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-xs"
+                title="Continuar con Google"
+              >
+                <GoogleIcon />
+                <span className="hidden sm:inline font-medium">Google</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => loginWithProvider("linkedin")}
+                className="h-9.5 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-xs"
+                title="Continuar con LinkedIn"
+              >
+                <LinkedinIcon />
+                <span className="hidden sm:inline font-medium">LinkedIn</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => loginWithProvider("github")}
+                className="h-9.5 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-xs"
+                title="Continuar con GitHub"
+              >
+                <GithubIcon />
+                <span className="hidden sm:inline font-medium">GitHub</span>
+              </Button>
+            </div>
+
+            {/* Separador */}
+            <div className="relative py-1">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border/60" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase">
+                <span className="bg-white dark:bg-zinc-900 px-2 text-muted-foreground font-semibold tracking-wider">
+                  o con correo
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Selector de Modo (Tabs con Píldora Animada) */}
