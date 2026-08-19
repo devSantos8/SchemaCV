@@ -1382,66 +1382,94 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Nombre Completo</Label>
+                          <Label className="text-xs font-bold flex items-center gap-1">
+                            <span>Nombre Completo</span>
+                            <span className="text-rose-500 font-bold">*</span>
+                          </Label>
                           <Input
                             value={masterFormData.name || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, name: e.target.value })}
+                            placeholder="ej: Joain Matías Monroy Santos"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Titular Profesional Principal</Label>
+                          <Label className="text-xs font-bold flex items-center gap-1">
+                            <span>Titular Profesional Principal</span>
+                            <span className="text-rose-500 font-bold">*</span>
+                          </Label>
                           <Input
                             value={masterFormData.headline || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, headline: e.target.value })}
+                            placeholder="ej: Senior Full Stack Developer & Cloud Architect"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Correo Electrónico</Label>
+                          <Label className="text-xs font-bold flex items-center gap-1">
+                            <span>Correo Electrónico</span>
+                            <span className="text-rose-500 font-bold">*</span>
+                          </Label>
                           <Input
+                            type="email"
                             value={masterFormData.email || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, email: e.target.value })}
+                            placeholder="ej: matiasmonroy483@gmail.com"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Teléfono</Label>
+                          <Label className="text-xs font-bold flex items-center gap-1">
+                            <span>Teléfono</span>
+                            <span className="text-[10px] font-normal text-muted-foreground">(Opcional)</span>
+                          </Label>
                           <Input
                             value={masterFormData.phone || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, phone: e.target.value })}
+                            placeholder="ej: +56 9 4900 2793"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Ubicación (Ciudad, País)</Label>
+                          <Label className="text-xs font-bold flex items-center gap-1">
+                            <span>Ubicación (Ciudad, País)</span>
+                            <span className="text-[10px] font-normal text-muted-foreground">(Opcional)</span>
+                          </Label>
                           <Input
                             value={masterFormData.location || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, location: e.target.value })}
+                            placeholder="ej: Santiago, Chile"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Sitio Web Personal / Portafolio</Label>
+                          <Label className="text-xs font-bold flex items-center gap-1">
+                            <span>Sitio Web / Portafolio</span>
+                            <span className="text-[10px] font-normal text-muted-foreground">(Opcional)</span>
+                          </Label>
                           <Input
                             value={masterFormData.website || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, website: e.target.value })}
+                            placeholder="ej: https://jmonroys.dev"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1.5 pt-2">
-                        <Label className="text-xs font-bold">Resumen Profesional Maestro (Bio Completa)</Label>
+                        <Label className="text-xs font-bold flex items-center gap-1">
+                          <span>Resumen Profesional Maestro (Bio Completa)</span>
+                          <span className="text-[10px] font-normal text-muted-foreground">(Opcional)</span>
+                        </Label>
                         <Textarea
                           value={masterFormData.summary || ""}
                           onChange={(e) => setMasterFormData({ ...masterFormData, summary: e.target.value })}
-                          placeholder="Escribe tu trayectoria completa, especialidades técnicas, visión de arquitectura y valor profesional..."
+                          placeholder="Escribe tu trayectoria completa, especialidades técnicas, visión de arquitectura y valor profesional que aportas..."
                           className="text-xs min-h-[140px] rounded-xl bg-background leading-relaxed"
                         />
                       </div>
@@ -1459,7 +1487,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <Button
                           size="sm"
                           onClick={() => {
-                            const newNet = { network: "GitHub", username: "usuario", url: "https://github.com/usuario" };
+                            const newNet = { network: "", username: "", url: "" };
                             setMasterFormData({
                               ...masterFormData,
                               social_networks: [...(masterFormData.social_networks || []), newNet],
@@ -1472,10 +1500,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </Button>
                       </div>
 
+                      {(!masterFormData.social_networks || masterFormData.social_networks.length === 0) && (
+                        <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40 space-y-2">
+                          <Globe className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                          <p className="text-xs font-bold text-foreground">Sin redes ni enlaces registrados</p>
+                          <p className="text-[11px] text-muted-foreground">Haz clic en &quot;Añadir Enlace&quot; para agregar GitHub, LinkedIn u otros perfiles.</p>
+                        </div>
+                      )}
+
                       <div className="space-y-3">
                         {masterFormData.social_networks?.map((net, idx) => (
                           <div key={idx} className="p-3.5 rounded-2xl border border-border bg-card/60 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                            <div className="w-full sm:w-36">
+                            <div className="w-full sm:w-36 space-y-1">
+                              <Label className="text-[10px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                <span>Red</span>
+                                <span className="text-rose-500">*</span>
+                              </Label>
                               <Input
                                 value={net.network}
                                 onChange={(e) => {
@@ -1483,11 +1523,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[idx].network = e.target.value;
                                   setMasterFormData({ ...masterFormData, social_networks: updated });
                                 }}
-                                placeholder="Red (ej: GitHub)"
+                                placeholder="ej: GitHub, LinkedIn"
                                 className="h-8 text-xs font-bold rounded-xl"
                               />
                             </div>
-                            <div className="w-full sm:w-40">
+                            <div className="w-full sm:w-36 space-y-1">
+                              <Label className="text-[10px] font-bold text-muted-foreground">Usuario</Label>
                               <Input
                                 value={net.username || ""}
                                 onChange={(e) => {
@@ -1495,11 +1536,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[idx].username = e.target.value;
                                   setMasterFormData({ ...masterFormData, social_networks: updated });
                                 }}
-                                placeholder="Usuario (opcional)"
+                                placeholder="ej: devSantos8"
                                 className="h-8 text-xs rounded-xl font-mono"
                               />
                             </div>
-                            <div className="flex-1">
+                            <div className="flex-1 space-y-1">
+                              <Label className="text-[10px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                <span>URL Completa</span>
+                                <span className="text-rose-500">*</span>
+                              </Label>
                               <Input
                                 value={net.url}
                                 onChange={(e) => {
@@ -1507,11 +1552,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[idx].url = e.target.value;
                                   setMasterFormData({ ...masterFormData, social_networks: updated });
                                 }}
-                                placeholder="https://..."
+                                placeholder="https://github.com/tu-usuario"
                                 className="h-8 text-xs rounded-xl"
                               />
                             </div>
-                            <div className="flex items-center gap-1 shrink-0 self-end sm:self-center">
+                            <div className="flex items-center gap-1 shrink-0 self-end sm:self-end pb-0.5">
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -1570,14 +1615,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           onClick={() => {
                             const newExp = {
                               id: `exp-${Date.now()}`,
-                              company: "Nueva Empresa",
-                              position: "Nuevo Cargo",
-                              location: "Remoto",
-                              start_date: "2024",
-                              end_date: "Presente",
-                              current: true,
-                              summary: "Liderazgo y desarrollo técnico en el equipo principal.",
-                              highlights: ["Diseñé e implementé funcionalidad clave, aumentando la eficiencia en un 25%."],
+                              company: "",
+                              position: "",
+                              location: "",
+                              start_date: "",
+                              end_date: "",
+                              current: false,
+                              summary: "",
+                              highlights: [],
                             };
                             setMasterFormData({
                               ...masterFormData,
@@ -1591,12 +1636,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </Button>
                       </div>
 
+                      {(!masterFormData.experience || masterFormData.experience.length === 0) && (
+                        <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40 space-y-2">
+                          <Briefcase className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                          <p className="text-xs font-bold text-foreground">Sin empleos registrados</p>
+                          <p className="text-[11px] text-muted-foreground">Haz clic en &quot;Añadir Empleo&quot; para registrar tus cargos y logros laborales.</p>
+                        </div>
+                      )}
+
                       <div className="space-y-5">
                         {masterFormData.experience?.map((exp, idx) => (
                           <div key={exp.id} className="p-5 rounded-2xl border border-border bg-card/60 space-y-4 text-xs">
                             <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
                               <span className="font-bold text-sm text-foreground truncate">
-                                {exp.position || "Cargo"} — <span className="text-muted-foreground font-normal">{exp.company || "Empresa"}</span>
+                                {exp.position || "Nuevo Cargo"} — <span className="text-muted-foreground font-normal">{exp.company || "Empresa"}</span>
                               </span>
 
                               <div className="flex items-center gap-1 shrink-0">
@@ -1643,7 +1696,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Empresa</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Empresa</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={exp.company}
                                   onChange={(e) => {
@@ -1651,13 +1707,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].company = e.target.value;
                                     setMasterFormData({ ...masterFormData, experience: updated });
                                   }}
-                                  placeholder="Nombre de la empresa"
+                                  placeholder="ej: Mercado Libre, Google, Startup X"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Cargo / Rol</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Cargo / Rol</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={exp.position}
                                   onChange={(e) => {
@@ -1665,13 +1724,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].position = e.target.value;
                                     setMasterFormData({ ...masterFormData, experience: updated });
                                   }}
-                                  placeholder="Cargo desempeñado"
+                                  placeholder="ej: Senior Frontend Engineer"
                                   className="h-8 text-xs rounded-xl font-bold"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Ubicación / Modalidad</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Ubicación / Modalidad</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={exp.location || ""}
                                   onChange={(e) => {
@@ -1685,7 +1747,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Fecha Inicio</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Fecha Inicio</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={exp.start_date}
                                   onChange={(e) => {
@@ -1699,7 +1764,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Fecha Fin</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Fecha Fin</span>
+                                  <span className="text-[9px] font-normal">(Opcional si es actual)</span>
+                                </Label>
                                 <Input
                                   value={exp.end_date || ""}
                                   disabled={exp.current}
@@ -1708,7 +1776,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].end_date = e.target.value;
                                     setMasterFormData({ ...masterFormData, experience: updated });
                                   }}
-                                  placeholder="ej: Presente o 2024-01"
+                                  placeholder={exp.current ? "Presente" : "ej: 2024-01 o Presente"}
                                   className="h-8 text-xs rounded-xl font-mono"
                                 />
                               </div>
@@ -1733,7 +1801,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             </div>
 
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-semibold">Resumen de Responsabilidades (Opcional)</Label>
+                              <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                <span>Resumen del Rol</span>
+                                <span className="text-[9px] font-normal">(Opcional)</span>
+                              </Label>
                               <Input
                                 value={exp.summary || ""}
                                 onChange={(e) => {
@@ -1741,7 +1812,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[idx].summary = e.target.value;
                                   setMasterFormData({ ...masterFormData, experience: updated });
                                 }}
-                                placeholder="Breve síntesis del alcance o contexto del equipo..."
+                                placeholder="ej: Liderazgo del equipo de interfaces y arquitectura frontend..."
                                 className="h-8 text-xs rounded-xl"
                               />
                             </div>
@@ -1749,8 +1820,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             {/* Viñetas STAR/XYZ */}
                             <div className="space-y-2 pt-2 border-t border-border/40">
                               <div className="flex items-center justify-between">
-                                <Label className="text-xs font-bold text-foreground">
-                                  Viñetas de Logros Cuantificables (Framework STAR/XYZ)
+                                <Label className="text-xs font-bold text-foreground flex items-center gap-1">
+                                  <span>Viñetas de Logros (Framework STAR/XYZ)</span>
+                                  <span className="text-[10px] font-normal text-muted-foreground">(Recomendado)</span>
                                 </Label>
                                 <Button
                                   variant="outline"
@@ -1759,7 +1831,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     const updated = [...masterFormData.experience];
                                     updated[idx].highlights = [
                                       ...(updated[idx].highlights || []),
-                                      "Diseñé e implementé una mejora que generó un impacto del X% en métrica clave.",
+                                      "",
                                     ];
                                     setMasterFormData({ ...masterFormData, experience: updated });
                                   }}
@@ -1769,6 +1841,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   <span>Añadir Viñeta</span>
                                 </Button>
                               </div>
+
+                              {(!exp.highlights || exp.highlights.length === 0) && (
+                                <p className="text-[11px] text-muted-foreground/75 italic">
+                                  No hay viñetas añadidas. Haz clic en &quot;+ Añadir Viñeta&quot; para agregar logros con impacto medible.
+                                </p>
+                              )}
 
                               <div className="space-y-2">
                                 {exp.highlights?.map((h, hIdx) => (
@@ -1782,7 +1860,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         setMasterFormData({ ...masterFormData, experience: updated });
                                       }}
                                       className="text-xs min-h-[44px] leading-snug rounded-lg flex-1"
-                                      placeholder="Verbo de acción + contexto + resultado cuantificable..."
+                                      placeholder="ej: Diseñé e implementé una optimización que aumentó la conversión en un 28%..."
                                     />
                                     <div className="flex flex-col gap-0.5 shrink-0">
                                       <Button
@@ -1852,8 +1930,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           onClick={() => {
                             const newCat = {
                               id: `skill-${Date.now()}`,
-                              category: "Nueva Categoría",
-                              skills: ["Tecnología 1", "Tecnología 2"],
+                              category: "",
+                              skills: [],
                             };
                             setMasterFormData({
                               ...masterFormData,
@@ -1867,11 +1945,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </Button>
                       </div>
 
+                      {(!masterFormData.skills || masterFormData.skills.length === 0) && (
+                        <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40 space-y-2">
+                          <Layers className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                          <p className="text-xs font-bold text-foreground">Sin categorías de habilidades registradas</p>
+                          <p className="text-[11px] text-muted-foreground">Haz clic en &quot;Añadir Categoría&quot; para clasificar tus tecnologías.</p>
+                        </div>
+                      )}
+
                       <div className="space-y-4">
                         {masterFormData.skills?.map((cat, catIdx) => (
                           <div key={cat.id} className="p-5 rounded-2xl border border-border bg-card/60 space-y-3">
                             <div className="flex items-center justify-between gap-2">
-                              <div className="flex-1 max-w-sm">
+                              <div className="flex-1 max-w-sm space-y-1">
+                                <Label className="text-[10px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Nombre de la Categoría</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={cat.category}
                                   onChange={(e) => {
@@ -1879,12 +1969,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[catIdx].category = e.target.value;
                                     setMasterFormData({ ...masterFormData, skills: updated });
                                   }}
-                                  placeholder="Nombre de la categoría (ej: Lenguajes & Backend)"
+                                  placeholder="ej: Lenguajes, Frontend, Cloud & DevOps"
                                   className="h-8 text-xs font-bold rounded-xl"
                                 />
                               </div>
 
-                              <div className="flex items-center gap-1 shrink-0">
+                              <div className="flex items-center gap-1 shrink-0 self-end pb-0.5">
                                 <span className="text-[11px] font-mono text-muted-foreground mr-1">
                                   {cat.skills.length} skills
                                 </span>
@@ -1930,33 +2020,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             </div>
 
                             {/* Tags visuales interactivos */}
-                            <div className="flex flex-wrap gap-1.5 pt-1">
-                              {cat.skills.map((skill, sIdx) => (
-                                <Badge
-                                  key={sIdx}
-                                  variant="secondary"
-                                  className="text-[11px] font-mono py-1 px-2.5 rounded-lg flex items-center gap-1.5"
-                                >
-                                  <span>{skill}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const updated = [...masterFormData.skills];
-                                      updated[catIdx].skills = updated[catIdx].skills.filter((_, i) => i !== sIdx);
-                                      setMasterFormData({ ...masterFormData, skills: updated });
-                                    }}
-                                    className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                            {cat.skills.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 pt-1">
+                                {cat.skills.map((skill, sIdx) => (
+                                  <Badge
+                                    key={sIdx}
+                                    variant="secondary"
+                                    className="text-[11px] font-mono py-1 px-2.5 rounded-lg flex items-center gap-1.5"
                                   >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </Badge>
-                              ))}
-                            </div>
+                                    <span>{skill}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = [...masterFormData.skills];
+                                        updated[catIdx].skills = updated[catIdx].skills.filter((_, i) => i !== sIdx);
+                                        setMasterFormData({ ...masterFormData, skills: updated });
+                                      }}
+                                      className="text-muted-foreground hover:text-rose-500 cursor-pointer"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
 
                             {/* Input para edición rápida por comas */}
                             <div className="space-y-1 pt-1">
                               <Label className="text-[10px] text-muted-foreground font-mono">
-                                Editar en bloque (separadas por comas):
+                                Habilidades separadas por comas:
                               </Label>
                               <Input
                                 value={cat.skills.join(", ")}
@@ -1965,7 +2057,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[catIdx].skills = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
                                   setMasterFormData({ ...masterFormData, skills: updated });
                                 }}
-                                placeholder="TypeScript, React, Node.js, Next.js, GraphQL..."
+                                placeholder="ej: TypeScript, React, Next.js, Node.js, Tailwind CSS, Docker..."
                                 className="h-8 text-xs font-mono rounded-xl bg-background"
                               />
                             </div>
@@ -1988,14 +2080,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           onClick={() => {
                             const newProj = {
                               id: `proj-${Date.now()}`,
-                              name: "Nuevo Proyecto",
-                              description: "Descripción de la arquitectura y valor técnico de la aplicación.",
-                              technologies: ["React", "TypeScript", "Tailwind CSS"],
-                              url: "https://demo.com",
-                              github_url: "https://github.com/usuario/proyecto",
-                              start_date: "2024",
-                              end_date: "2024",
-                              highlights: ["Implementé motor de sincronización que redujo el tiempo de procesamiento en 40%."],
+                              name: "",
+                              description: "",
+                              technologies: [],
+                              url: "",
+                              github_url: "",
+                              start_date: "",
+                              end_date: "",
+                              highlights: [],
                             };
                             setMasterFormData({
                               ...masterFormData,
@@ -2009,12 +2101,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </Button>
                       </div>
 
+                      {(!masterFormData.projects || masterFormData.projects.length === 0) && (
+                        <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40 space-y-2">
+                          <FolderGit2 className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                          <p className="text-xs font-bold text-foreground">Sin proyectos registrados</p>
+                          <p className="text-[11px] text-muted-foreground">Haz clic en &quot;Añadir Proyecto&quot; para documentar tus aplicaciones y arquitecturas.</p>
+                        </div>
+                      )}
+
                       <div className="space-y-5">
                         {masterFormData.projects?.map((proj, idx) => (
                           <div key={proj.id} className="p-5 rounded-2xl border border-border bg-card/60 space-y-4 text-xs">
                             <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
                               <span className="font-bold text-sm text-foreground truncate">
-                                {proj.name || "Nombre del Proyecto"}
+                                {proj.name || "Nuevo Proyecto"}
                               </span>
 
                               <div className="flex items-center gap-1 shrink-0">
@@ -2061,7 +2161,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Nombre del Proyecto</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Nombre del Proyecto</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={proj.name}
                                   onChange={(e) => {
@@ -2069,13 +2172,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].name = e.target.value;
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
-                                  placeholder="ej: SchemaCV, CloudPlatform"
+                                  placeholder="ej: SchemaCV, CloudPlatform, FinTech Engine"
                                   className="h-8 text-xs font-bold rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">URL Demo / Web en Vivo</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>URL Demo / En Vivo</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={proj.url || ""}
                                   onChange={(e) => {
@@ -2083,13 +2189,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].url = e.target.value;
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
-                                  placeholder="https://..."
+                                  placeholder="ej: https://schemacv.vercel.app"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">URL Repositorio GitHub</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>URL Repositorio GitHub</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={proj.github_url || ""}
                                   onChange={(e) => {
@@ -2097,13 +2206,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].github_url = e.target.value;
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
-                                  placeholder="https://github.com/..."
+                                  placeholder="ej: https://github.com/devSantos8/SchemaCV"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Fecha Inicio</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Fecha Inicio</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={proj.start_date || ""}
                                   onChange={(e) => {
@@ -2117,7 +2229,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Fecha Fin</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Fecha Fin</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={proj.end_date || ""}
                                   onChange={(e) => {
@@ -2131,7 +2246,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Tecnologías (separadas por comas)</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Tecnologías (separadas por comas)</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={proj.technologies?.join(", ") || ""}
                                   onChange={(e) => {
@@ -2139,14 +2257,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].technologies = e.target.value.split(",").map((t) => t.trim()).filter(Boolean);
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
-                                  placeholder="Next.js, TypeScript, PostgreSQL..."
+                                  placeholder="ej: Next.js, React, Tailwind CSS, Turbopack"
                                   className="h-8 text-xs font-mono rounded-xl"
                                 />
                               </div>
                             </div>
 
                             <div className="space-y-1">
-                              <Label className="text-[11px] font-semibold">Descripción Técnica del Proyecto</Label>
+                              <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                <span>Descripción Técnica del Proyecto</span>
+                                <span className="text-[9px] font-normal">(Opcional)</span>
+                              </Label>
                               <Textarea
                                 value={proj.description || ""}
                                 onChange={(e) => {
@@ -2154,7 +2275,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[idx].description = e.target.value;
                                   setMasterFormData({ ...masterFormData, projects: updated });
                                 }}
-                                placeholder="Describe el problema que resuelve, arquitectura implementada y tecnologías centrales..."
+                                placeholder="ej: Editor y renderizador de CVs optimizados para ATS con sincronización bidireccional YAML/Visual..."
                                 className="text-xs min-h-[60px] rounded-xl leading-relaxed"
                               />
                             </div>
@@ -2162,8 +2283,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             {/* Viñetas de Logros del Proyecto */}
                             <div className="space-y-2 pt-2 border-t border-border/40">
                               <div className="flex items-center justify-between">
-                                <Label className="text-xs font-bold text-foreground">
-                                  Métricas y Logros Clave del Proyecto
+                                <Label className="text-xs font-bold text-foreground flex items-center gap-1">
+                                  <span>Métricas y Logros Clave del Proyecto</span>
+                                  <span className="text-[10px] font-normal text-muted-foreground">(Opcional)</span>
                                 </Label>
                                 <Button
                                   variant="outline"
@@ -2172,7 +2294,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     const updated = [...masterFormData.projects];
                                     updated[idx].highlights = [
                                       ...(updated[idx].highlights || []),
-                                      "Alcanzó 1,000+ usuarios activos con una latencia de respuesta menor a 50ms.",
+                                      "",
                                     ];
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
@@ -2182,6 +2304,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   <span>Añadir Métrica</span>
                                 </Button>
                               </div>
+
+                              {(!proj.highlights || proj.highlights.length === 0) && (
+                                <p className="text-[11px] text-muted-foreground/75 italic">
+                                  No hay métricas añadidas. Haz clic en &quot;+ Añadir Métrica&quot; para cuantificar el impacto del proyecto.
+                                </p>
+                              )}
 
                               <div className="space-y-2">
                                 {proj.highlights?.map((h, hIdx) => (
@@ -2195,7 +2323,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         setMasterFormData({ ...masterFormData, projects: updated });
                                       }}
                                       className="text-xs min-h-[44px] leading-snug rounded-lg flex-1"
-                                      placeholder="Logro cuantificable del proyecto..."
+                                      placeholder="ej: Alcanzó 10,000+ usuarios activos mensuales con un tiempo de carga inferior a 1.2s..."
                                     />
                                     <div className="flex flex-col gap-0.5 shrink-0">
                                       <Button
@@ -2265,15 +2393,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           onClick={() => {
                             const newEdu = {
                               id: `edu-${Date.now()}`,
-                              institution: "Universidad / Institución",
-                              degree: "Licenciatura o Ingeniería en...",
-                              area: "Ciencias de la Computación",
-                              location: "Santiago, Chile",
-                              start_date: "2018",
-                              end_date: "2023",
+                              institution: "",
+                              degree: "",
+                              area: "",
+                              location: "",
+                              start_date: "",
+                              end_date: "",
                               current: false,
-                              gpa: "Máxima Distinción",
-                              highlights: ["Tesis de grado enfocada en sistemas distribuidos y optimización."],
+                              gpa: "",
+                              highlights: [],
                             };
                             setMasterFormData({
                               ...masterFormData,
@@ -2287,12 +2415,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </Button>
                       </div>
 
+                      {(!masterFormData.education || masterFormData.education.length === 0) && (
+                        <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40 space-y-2">
+                          <GraduationCap className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                          <p className="text-xs font-bold text-foreground">Sin formación académica registrada</p>
+                          <p className="text-[11px] text-muted-foreground">Haz clic en &quot;Añadir Educación&quot; para registrar títulos universitarios o técnicos.</p>
+                        </div>
+                      )}
+
                       <div className="space-y-5">
                         {masterFormData.education?.map((edu, idx) => (
                           <div key={edu.id} className="p-5 rounded-2xl border border-border bg-card/60 space-y-4 text-xs">
                             <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
                               <span className="font-bold text-sm text-foreground truncate">
-                                {edu.degree || "Título"} — <span className="text-muted-foreground font-normal">{edu.institution || "Institución"}</span>
+                                {edu.degree || "Título Académico"} — <span className="text-muted-foreground font-normal">{edu.institution || "Universidad / Institución"}</span>
                               </span>
 
                               <div className="flex items-center gap-1 shrink-0">
@@ -2339,7 +2475,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Institución / Universidad</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Institución / Universidad</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={edu.institution}
                                   onChange={(e) => {
@@ -2347,13 +2486,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].institution = e.target.value;
                                     setMasterFormData({ ...masterFormData, education: updated });
                                   }}
-                                  placeholder="ej: Universidad de Chile, Harvard"
+                                  placeholder="ej: Universidad de Chile, MIT, Platzi"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Título / Grado Académico</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Título / Grado Académico</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={edu.degree}
                                   onChange={(e) => {
@@ -2361,13 +2503,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].degree = e.target.value;
                                     setMasterFormData({ ...masterFormData, education: updated });
                                   }}
-                                  placeholder="ej: Licenciatura en Ciencias de la Computación"
+                                  placeholder="ej: Ingeniería Civil en Informática"
                                   className="h-8 text-xs font-bold rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Especialidad / Mención</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Especialidad / Área</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={edu.area || ""}
                                   onChange={(e) => {
@@ -2375,13 +2520,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].area = e.target.value;
                                     setMasterFormData({ ...masterFormData, education: updated });
                                   }}
-                                  placeholder="ej: Inteligencia Artificial, Software"
+                                  placeholder="ej: Especialidad en Arquitectura de Software e IA"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Ubicación</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Ubicación</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={edu.location || ""}
                                   onChange={(e) => {
@@ -2395,7 +2543,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Fecha Inicio</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Fecha Inicio</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={edu.start_date || ""}
                                   onChange={(e) => {
@@ -2409,7 +2560,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Fecha Fin / Graduación</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Fecha Fin / Graduación</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={edu.end_date || ""}
                                   disabled={edu.current}
@@ -2418,13 +2572,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].end_date = e.target.value;
                                     setMasterFormData({ ...masterFormData, education: updated });
                                   }}
-                                  placeholder="ej: 2023 o En curso"
+                                  placeholder={edu.current ? "En curso" : "ej: 2023 o En curso"}
                                   className="h-8 text-xs font-mono rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Promedio / Honores (GPA)</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Promedio / Honores (GPA)</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={edu.gpa || ""}
                                   onChange={(e) => {
@@ -2432,7 +2589,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].gpa = e.target.value;
                                     setMasterFormData({ ...masterFormData, education: updated });
                                   }}
-                                  placeholder="ej: Distinción Máxima o GPA 3.9"
+                                  placeholder="ej: Distinción Máxima, Cum Laude o GPA 3.9/4.0"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
@@ -2459,8 +2616,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             {/* Viñetas de Logros Académicos */}
                             <div className="space-y-2 pt-2 border-t border-border/40">
                               <div className="flex items-center justify-between">
-                                <Label className="text-xs font-bold text-foreground">
-                                  Honores Académicos, Tesis o Logros
+                                <Label className="text-xs font-bold text-foreground flex items-center gap-1">
+                                  <span>Honores Académicos, Tesis o Logros</span>
+                                  <span className="text-[10px] font-normal text-muted-foreground">(Opcional)</span>
                                 </Label>
                                 <Button
                                   variant="outline"
@@ -2469,7 +2627,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     const updated = [...masterFormData.education];
                                     updated[idx].highlights = [
                                       ...(updated[idx].highlights || []),
-                                      "Tesis de grado aprobada con honores: Optimización de sistemas.",
+                                      "",
                                     ];
                                     setMasterFormData({ ...masterFormData, education: updated });
                                   }}
@@ -2479,6 +2637,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   <span>Añadir Logro</span>
                                 </Button>
                               </div>
+
+                              {(!edu.highlights || edu.highlights.length === 0) && (
+                                <p className="text-[11px] text-muted-foreground/75 italic">
+                                  No hay menciones añadidas. Haz clic en &quot;+ Añadir Logro&quot; para agregar tesis, distinciones o proyectos universitarios.
+                                </p>
+                              )}
 
                               <div className="space-y-2">
                                 {edu.highlights?.map((h, hIdx) => (
@@ -2492,7 +2656,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                         setMasterFormData({ ...masterFormData, education: updated });
                                       }}
                                       className="text-xs min-h-[44px] leading-snug rounded-lg flex-1"
-                                      placeholder="Mención académica, beca, tesis o proyecto destacado..."
+                                      placeholder="ej: Tesis de titulación con máxima distinción: Optimización de sistemas distribuidos..."
                                     />
                                     <div className="flex flex-col gap-0.5 shrink-0">
                                       <Button
@@ -2562,11 +2726,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           onClick={() => {
                             const newCert = {
                               id: `cert-${Date.now()}`,
-                              name: "AWS Certified Solutions Architect",
-                              issuer: "Amazon Web Services",
-                              date: "2024-04",
-                              url: "https://aws.amazon.com/verification",
-                              summary: "Validación en diseño de arquitecturas cloud resilientes y escalables.",
+                              name: "",
+                              issuer: "",
+                              date: "",
+                              url: "",
+                              summary: "",
                             };
                             setMasterFormData({
                               ...masterFormData,
@@ -2580,12 +2744,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </Button>
                       </div>
 
+                      {(!masterFormData.certifications || masterFormData.certifications.length === 0) && (
+                        <div className="p-8 text-center rounded-2xl border border-dashed border-border bg-card/40 space-y-2">
+                          <Award className="h-8 w-8 mx-auto text-muted-foreground/60" />
+                          <p className="text-xs font-bold text-foreground">Sin certificaciones registradas</p>
+                          <p className="text-[11px] text-muted-foreground">Haz clic en &quot;Añadir Certificación&quot; para registrar credenciales de AWS, Google, Microsoft, etc.</p>
+                        </div>
+                      )}
+
                       <div className="space-y-4">
                         {masterFormData.certifications?.map((cert, idx) => (
                           <div key={cert.id} className="p-5 rounded-2xl border border-border bg-card/60 space-y-3 text-xs">
                             <div className="flex items-center justify-between gap-2 pb-2 border-b border-border/40">
                               <span className="font-bold text-sm text-foreground truncate">
-                                {cert.name || "Nombre de Certificación"} — <span className="text-muted-foreground font-normal">{cert.issuer || "Emisor"}</span>
+                                {cert.name || "Nueva Certificación"} — <span className="text-muted-foreground font-normal">{cert.issuer || "Entidad Emisora"}</span>
                               </span>
 
                               <div className="flex items-center gap-1 shrink-0">
@@ -2632,7 +2804,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Nombre de la Certificación</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Nombre de la Certificación</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={cert.name}
                                   onChange={(e) => {
@@ -2640,13 +2815,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].name = e.target.value;
                                     setMasterFormData({ ...masterFormData, certifications: updated });
                                   }}
-                                  placeholder="ej: Google Professional Cloud Architect"
+                                  placeholder="ej: AWS Certified Solutions Architect - Associate"
                                   className="h-8 text-xs font-bold rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Entidad Emisora</Label>
+                                <Label className="text-[11px] font-bold flex items-center gap-0.5">
+                                  <span>Entidad Emisora</span>
+                                  <span className="text-rose-500">*</span>
+                                </Label>
                                 <Input
                                   value={cert.issuer}
                                   onChange={(e) => {
@@ -2654,13 +2832,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].issuer = e.target.value;
                                     setMasterFormData({ ...masterFormData, certifications: updated });
                                   }}
-                                  placeholder="ej: Google Cloud, AWS, Microsoft"
+                                  placeholder="ej: Amazon Web Services, Google Cloud, Microsoft"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">Fecha de Emisión</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>Fecha de Emisión</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={cert.date || ""}
                                   onChange={(e) => {
@@ -2676,7 +2857,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">URL de Verificación / Credencial Digital</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>URL de Verificación / Credencial Digital</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={cert.url || ""}
                                   onChange={(e) => {
@@ -2684,13 +2868,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].url = e.target.value;
                                     setMasterFormData({ ...masterFormData, certifications: updated });
                                   }}
-                                  placeholder="https://www.credly.com/badges/..."
+                                  placeholder="ej: https://www.credly.com/badges/..."
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
 
                               <div className="space-y-1">
-                                <Label className="text-[11px] font-semibold">ID de Credencial / Resumen de Competencias</Label>
+                                <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
+                                  <span>ID de Credencial o Resumen de Competencias</span>
+                                  <span className="text-[9px] font-normal">(Opcional)</span>
+                                </Label>
                                 <Input
                                   value={cert.summary || ""}
                                   onChange={(e) => {
@@ -2698,7 +2885,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].summary = e.target.value;
                                     setMasterFormData({ ...masterFormData, certifications: updated });
                                   }}
-                                  placeholder="ID: ABC-123456 o breve descripción..."
+                                  placeholder="ej: ID: AWS-849204 o Validación en arquitecturas cloud..."
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
