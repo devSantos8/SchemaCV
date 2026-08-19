@@ -289,7 +289,7 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl p-0 overflow-hidden bg-card border-border/80 shadow-2xl rounded-2xl sm:max-h-[88vh] flex flex-col md:flex-row">
+      <DialogContent className="w-[94vw] max-w-[880px] p-0 overflow-hidden bg-card border-border/80 shadow-2xl rounded-2xl flex flex-col md:flex-row max-h-[88vh] outline-none">
         {/* SIDEBAR LATERAL: PASOS Y ESTADO (Columna Izquierda) */}
         <div className="w-full md:w-64 bg-zinc-50/80 dark:bg-zinc-900/60 p-6 border-b md:border-b-0 md:border-r border-border/60 flex flex-col justify-between shrink-0">
           <div className="space-y-6">
