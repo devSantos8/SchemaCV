@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 // Estado de la postulacion
 export const ApplicationStatusSchema = z.enum([
@@ -74,7 +74,7 @@ export type ScrapeResult = z.infer<typeof ScrapeResultSchema>;
 // Entrada de historial
 export const ActivityEntrySchema = z.object({
   id: z.string(),
-  type: z.enum(['status_change', 'note', 'interview', 'offer', 'ai_analysis', 'link_check']),
+  type: z.enum(['status_change', 'note', 'interview', 'offer', 'ai_analysis', 'link_check', 'ats_evaluation']),
   description: z.string(),
   createdAt: z.string().datetime(),
 });
@@ -96,6 +96,8 @@ export const JobApplicationSchema = z.object({
   matchAnalysis: MatchAnalysisSchema.optional(),
   linkCheck: LinkCheckResultSchema.optional(),
   activity: z.array(ActivityEntrySchema).default([]),
+  evaluations: z.array(z.custom<import('./evaluator').EvaluationReport>()).default([]),
+  lastEvaluationReport: z.custom<import('./evaluator').EvaluationReport>().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   appliedAt: z.string().datetime().optional(),

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -217,6 +217,15 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
         <div className="flex-1 overflow-y-auto">
           {activeTab === "overview" && (
             <div className="p-4 space-y-4">
+              {/* Botón Principal: Evaluar Postulación con mi CV */}
+              <a
+                href={`/jobs/${applicationId}/evaluate`}
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-xs transition-all text-center"
+              >
+                <Sparkles className="w-4 h-4" />
+                Evaluar postulación con mi CV
+              </a>
+
               {/* Match score */}
               <div className={`p-4 rounded-xl border ${scoreBg}`}>
                 <div className="flex items-center justify-between mb-2">

@@ -59,8 +59,20 @@ SchemaCV resuelve estos problemas mediante:
 - **Catálogo de 6 Plantillas Nativas:** Previsualización en vivo con datos de muestra o datos reales antes de aplicar.
 - **Inspección en Detalle:** Visualización ampliada para revisar jerarquía visual y espaciados.
 
-### 5. Ingesta Asistida por IA
+### 5. Importar CV con IA
 - Extracción y normalización automática de datos a partir de archivos PDF existentes hacia el esquema estructurado de SchemaCV.
+
+### 6. Job Tracker + Evaluador ATS de Postulaciones (Oferta vs CV)
+- **Job Tracker:** Tablero Kanban para seguimiento de postulaciones (*Guardadas*, *Postuladas*, *Entrevistas*, *Oferta*, *Rechazadas*), scraping automático de ofertas (LinkedIn, Greenhouse, Lever, GetOnBoard, Indeed, Workday) y verificación de enlaces caídos.
+- **Evaluador ATS Dedicado (`/jobs/[id]/evaluate`):**
+  - **Simulación de Parseo ATS:** Diagnóstico interactivo de cómo el robot ATS extrae los datos de contacto, orden secuencial de secciones y detección de mojibake.
+  - **Auditoría de 10 Reglas de Formato:** Evaluación pass/fail con severidad, explicación y guía de remediación.
+  - **Match Semántico y Técnico:** Clasificación de requisitos excluyentes (*Must Have*) vs deseables (*Nice to Have*), brecha de años de experiencia y keywords faltantes.
+  - **Simulador de Score Proyectado:** Cálculo interactivo en tiempo real del incremento de puntuación al incorporar keywords clave en el CV.
+  - **Script CLI:** Ejecuta la evaluación completa por terminal:
+    ```bash
+    npm run ats:evaluate -- --cv <archivo.pdf|archivo.json> --job <url|archivo.txt|"texto...">
+    ```
 
 ---
 

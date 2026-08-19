@@ -1,4 +1,4 @@
-﻿import { create } from "zustand";
+import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 import type {
@@ -57,6 +57,10 @@ interface JobsStoreState {
   setIsCheckingLinks: (v: boolean) => void;
   setIsScrapingUrl: (v: boolean) => void;
 
+  // Evaluaciones ATS
+  saveEvaluation: (jobId: string, report: import("@/types/evaluator").EvaluationReport) => void;
+  getLatestEvaluation: (jobId: string) => import("@/types/evaluator").EvaluationReport | undefined;
+
   // Notas
   updateNotes: (id: string, notes: string) => void;
 
@@ -92,6 +96,8 @@ export const useJobsStore = create<JobsStoreState>()(
           matchAnalysis: data.matchAnalysis,
           linkCheck: data.linkCheck,
           activity: addActivity([], "note", "Postulacion creada"),
+          evaluations: data.evaluations ?? [],
+          lastEvaluationReport: data.lastEvaluationReport,
           createdAt: now(),
           updatedAt: now(),
           appliedAt: data.appliedAt,
@@ -137,6 +143,8 @@ export const useJobsStore = create<JobsStoreState>()(
           id: crypto.randomUUID(),
           status: "bookmarked",
           activity: addActivity([], "note", "Duplicada desde otra postulacion"),
+          evaluations: app.evaluations ?? [],
+          lastEvaluationReport: app.lastEvaluationReport,
           createdAt: now(),
           updatedAt: now(),
           appliedAt: undefined,
@@ -230,6 +238,32 @@ export const useJobsStore = create<JobsStoreState>()(
 
       setIsScrapingUrl(v) {
         set({ isScrapingUrl: v });
+      },
+
+      // ─── Evaluaciones ATS ────────────────────────────────────────────────
+      saveEvaluation(jobId, report) {
+        set((s) => ({
+          applications: s.applications.map((a) =>
+            a.id === jobId
+              ? {
+                  ...a,
+                  lastEvaluationReport: report,
+                  evaluations: [report, ...(a.evaluations || [])].slice(0, 20),
+                  updatedAt: now(),
+                  activity: addActivity(
+                    a.activity,
+                    "ats_evaluation",
+                    `Evaluación ATS completada: ${report.atsScore}% ATS / ${report.matchScore}% Match`
+                  ),
+                }
+              : a
+          ),
+        }));
+      },
+
+      getLatestEvaluation(jobId) {
+        const app = get().applications.find((a) => a.id === jobId);
+        return app?.lastEvaluationReport || (app?.evaluations && app.evaluations[0]);
       },
 
       // ─── Notas ───────────────────────────────────────────────────────────

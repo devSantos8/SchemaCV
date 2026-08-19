@@ -10,7 +10,8 @@
     "test:ats": "npx tsx scripts/validate-ats.ts",
     "generate:examples": "npx tsx scripts/generate-example-pdfs.ts",
     "jobs:seed": "npx tsx scripts/jobs-seed.ts",
-    "jobs:test-scrape": "npx tsx scripts/jobs-test-scrape.ts"
+    "jobs:test-scrape": "npx tsx scripts/jobs-test-scrape.ts",
+    "ats:evaluate": "npx tsx scripts/ats-evaluate-cli.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.39",

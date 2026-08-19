@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { motion } from "framer-motion";
@@ -94,6 +94,16 @@ export function JobApplicationCard({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 className="absolute right-0 top-7 z-20 w-36 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-lg overflow-hidden"
               >
+                <a
+                  href={`/jobs/${application.id}/evaluate`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-violet-600 dark:text-violet-400 font-semibold hover:bg-violet-50 dark:hover:bg-violet-950/20 transition-colors"
+                >
+                  <Sparkles className="w-3 h-3 text-violet-500" /> Evaluar con mi CV
+                </a>
                 {url && (
                   <a href={url} target="_blank" rel="noopener noreferrer" onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2 px-3 py-2 text-xs text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
