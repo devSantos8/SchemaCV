@@ -24,6 +24,7 @@ import {
   Briefcase,
   MoreVertical,
   ShieldCheck,
+  ChevronDown,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -108,35 +109,35 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* 1. Header del Dashboard */}
-      <header className="h-16 border-b border-border bg-card/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
+      {/* 1. Header del Dashboard Moderno */}
+      <header className="h-14 border-b border-border/60 bg-background/80 dark:bg-zinc-950/80 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-all">
         <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-md">
-            <FileCode2 className="h-5 w-5" />
+          <div className="h-8 w-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-sm">
+            <FileCode2 className="h-4 w-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold tracking-tight text-foreground">
+              <span className="text-sm font-bold tracking-tight text-foreground">
                 SchemaCV
               </span>
-              <span className="text-[10px] font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-muted-foreground px-1.5 py-0.2 rounded border border-border">
+              <span className="text-[9px] font-mono font-bold bg-zinc-100 dark:bg-zinc-900 text-muted-foreground px-1.5 py-0.2 rounded border border-border/60">
                 Dashboard
               </span>
             </div>
-            <p className="text-[11px] text-muted-foreground -mt-0.5">
+            <p className="text-[10px] text-muted-foreground -mt-0.5 hidden sm:block">
               Gestión de Currículums Optimizados para ATS
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Botón Crear Nuevo CV */}
           <Button
             size="sm"
             onClick={() => setIsWizardOpen(true)}
-            className="h-9 text-xs gap-1.5 font-semibold bg-foreground text-background"
+            className="h-8 px-3 text-xs gap-1.5 font-semibold bg-foreground text-background rounded-lg shadow-sm hover:opacity-90 transition-all"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Nuevo Currículum</span>
           </Button>
 
@@ -144,16 +145,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-9 text-xs gap-2 font-normal bg-background"
+                <button
+                  type="button"
+                  className="flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900/80 transition-colors text-left"
                 >
-                  <UserCircle className="h-4 w-4 text-muted-foreground" />
-                  <span className="max-w-[130px] truncate font-medium">{user.name}</span>
-                </Button>
+                  <div className="h-6 w-6 rounded-full bg-zinc-200 dark:bg-zinc-800 text-foreground flex items-center justify-center font-bold text-[10px]">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="max-w-[120px] truncate font-medium text-xs text-foreground hidden sm:block">
+                    {user.name}
+                  </span>
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card border-border">
+              <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md border-border p-1.5">
                 <DropdownMenuLabel className="text-xs">
                   <div className="font-semibold text-foreground">{user.name}</div>
                   <div className="text-[10px] text-muted-foreground">{user.email}</div>
@@ -161,7 +166,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setIsWizardOpen(true)}
-                  className="text-xs cursor-pointer gap-2"
+                  className="text-xs cursor-pointer gap-2 p-2 rounded-md"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-amber-500" />
                   <span>Asistente de Nuevo CV</span>
@@ -169,7 +174,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={logout}
-                  className="text-xs cursor-pointer gap-2 text-rose-500 hover:text-rose-600"
+                  className="text-xs cursor-pointer gap-2 p-2 rounded-md text-rose-500 hover:text-rose-600"
                 >
                   <LogOut className="h-3.5 w-3.5" />
                   <span>Cerrar Sesión</span>
@@ -181,23 +186,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
               variant="outline"
               size="sm"
               onClick={() => setAuthModalOpen(true, "login")}
-              className="h-9 text-xs gap-1.5"
+              className="h-8 text-xs gap-1.5"
             >
-              <UserCircle className="h-4 w-4" />
+              <UserCircle className="h-3.5 w-3.5" />
               <span>Iniciar Sesión</span>
             </Button>
           )}
 
+          <div className="h-4 w-[1px] bg-border/80 mx-0.5" />
+
           {/* Modo Oscuro */}
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
+            type="button"
             onClick={toggleDarkMode}
-            className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
             title="Alternar tema"
           >
             {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
+          </button>
         </div>
       </header>
 
