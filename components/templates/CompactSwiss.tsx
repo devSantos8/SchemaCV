@@ -94,216 +94,237 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
 
       {/* Cuerpo estructurado en cuadrícula compacta */}
       <div className="space-y-2.5">
-        {section_order.map((sectionKey) => {
-          switch (sectionKey) {
-            case "summary":
-              if (!summary) return null;
-              return (
-                <section key="summary" className="break-inside-avoid">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                      01. Resumen
-                    </span>
-                    <div className="flex-1 h-[1px] bg-zinc-200" />
-                  </div>
-                  <p className="text-[8.5pt] text-zinc-800 leading-snug pl-1">
-                    {summary}
-                  </p>
-                </section>
-              );
+        {(() => {
+          let sectionCounter = 0;
+          return section_order.map((sectionKey) => {
+            switch (sectionKey) {
+              case "summary": {
+                if (!summary) return null;
+                sectionCounter++;
+                const secNum = String(sectionCounter).padStart(2, "0");
+                return (
+                  <section key="summary" className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
+                        {secNum}. Resumen
+                      </span>
+                      <div className="flex-1 h-[1px] bg-zinc-200" />
+                    </div>
+                    <p className="text-[8.5pt] text-zinc-800 leading-snug pl-1">
+                      {summary}
+                    </p>
+                  </section>
+                );
+              }
 
-            case "skills":
-              if (!skills || skills.length === 0) return null;
-              return (
-                <section key="skills" className="break-inside-avoid">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                      02. Competencias & Stack
-                    </span>
-                    <div className="flex-1 h-[1px] bg-zinc-200" />
-                  </div>
+              case "skills": {
+                if (!skills || skills.length === 0) return null;
+                sectionCounter++;
+                const secNum = String(sectionCounter).padStart(2, "0");
+                return (
+                  <section key="skills" className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
+                        {secNum}. Competencias & Stack
+                      </span>
+                      <div className="flex-1 h-[1px] bg-zinc-200" />
+                    </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 pl-1 text-[8.5pt]">
-                    {skills.map((cat) => (
-                      <div key={cat.id} className="flex items-baseline gap-1">
-                        <span className="font-bold text-zinc-900 shrink-0 font-mono text-[8pt]">
-                          [{cat.category}]:
-                        </span>
-                        <span className="text-zinc-700 truncate">
-                          {cat.skills.join(", ")}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              );
-
-            case "experience":
-              if (!experience || experience.length === 0) return null;
-              return (
-                <section key="experience" className="space-y-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                      03. Trayectoria Laboral
-                    </span>
-                    <div className="flex-1 h-[1px] bg-zinc-200" />
-                  </div>
-
-                  <div className="space-y-2 pl-1">
-                    {experience.map((exp) => (
-                      <div key={exp.id} className="break-inside-avoid">
-                        <div className="flex justify-between items-baseline">
-                          <div className="flex items-baseline gap-1">
-                            <span className="font-extrabold text-[9pt] text-zinc-950">
-                              {exp.position}
-                            </span>
-                            <span className="text-zinc-400">@</span>
-                            <span className="font-bold text-[9pt] text-zinc-800">
-                              {exp.company}
-                            </span>
-                          </div>
-
-                          <div className="text-[8pt] font-mono text-zinc-500 shrink-0">
-                            {exp.location ? `${exp.location} | ` : ""}
-                            {exp.start_date} – {exp.current ? "Presente" : exp.end_date}
-                          </div>
+                    <div className="space-y-1 pl-1 text-[8.5pt]">
+                      {skills.map((cat) => (
+                        <div key={cat.id} className="leading-snug">
+                          <span className="font-bold text-zinc-950 font-mono text-[8pt] mr-1.5">
+                            [{cat.category}]:
+                          </span>
+                          <span className="text-zinc-800">
+                            {cat.skills.join(", ")}
+                          </span>
                         </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              }
 
-                        {exp.summary && (
-                          <p className="text-[8.5pt] text-zinc-600 mt-0.5 leading-tight">
-                            {exp.summary}
-                          </p>
-                        )}
+              case "experience": {
+                if (!experience || experience.length === 0) return null;
+                sectionCounter++;
+                const secNum = String(sectionCounter).padStart(2, "0");
+                return (
+                  <section key="experience" className="space-y-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
+                        {secNum}. Trayectoria Laboral
+                      </span>
+                      <div className="flex-1 h-[1px] bg-zinc-200" />
+                    </div>
 
-                        {exp.highlights && exp.highlights.length > 0 && (
-                          <ul className="mt-0.5 space-y-0.5 text-[8.5pt] text-zinc-800 list-disc list-outside pl-3.5 leading-snug">
-                            {exp.highlights.map((h, i) => (
-                              <li key={i}>{h}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              );
-
-            case "projects":
-              if (!projects || projects.length === 0) return null;
-              return (
-                <section key="projects" className="space-y-1.5">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                      04. Proyectos & Productos
-                    </span>
-                    <div className="flex-1 h-[1px] bg-zinc-200" />
-                  </div>
-
-                  <div className="space-y-1.5 pl-1">
-                    {projects.map((proj) => (
-                      <div key={proj.id} className="break-inside-avoid">
-                        <div className="flex justify-between items-baseline">
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="font-bold text-[8.5pt] text-zinc-950">
-                              {proj.name}
-                            </span>
-                            {proj.technologies && proj.technologies.length > 0 && (
-                              <span className="text-[7.5pt] font-mono text-zinc-500">
-                                ({proj.technologies.join(", ")})
+                    <div className="space-y-2 pl-1">
+                      {experience.map((exp) => (
+                        <div key={exp.id} className="break-inside-avoid">
+                          <div className="flex justify-between items-baseline">
+                            <div className="flex items-baseline gap-1">
+                              <span className="font-extrabold text-[9pt] text-zinc-950">
+                                {exp.position}
                               </span>
+                              <span className="text-zinc-400">@</span>
+                              <span className="font-bold text-[9pt] text-zinc-800">
+                                {exp.company}
+                              </span>
+                            </div>
+
+                            <div className="text-[8pt] font-mono text-zinc-500 shrink-0">
+                              {exp.location ? `${exp.location} | ` : ""}
+                              {exp.start_date} – {exp.current ? "Presente" : exp.end_date}
+                            </div>
+                          </div>
+
+                          {exp.summary && (
+                            <p className="text-[8.5pt] text-zinc-600 mt-0.5 leading-tight">
+                              {exp.summary}
+                            </p>
+                          )}
+
+                          {exp.highlights && exp.highlights.length > 0 && (
+                            <ul className="mt-0.5 space-y-0.5 text-[8.5pt] text-zinc-800 list-disc list-outside pl-3.5 leading-snug">
+                              {exp.highlights.map((h, i) => (
+                                <li key={i}>{h}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              }
+
+              case "projects": {
+                if (!projects || projects.length === 0) return null;
+                sectionCounter++;
+                const secNum = String(sectionCounter).padStart(2, "0");
+                return (
+                  <section key="projects" className="space-y-1.5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
+                        {secNum}. Proyectos & Productos
+                      </span>
+                      <div className="flex-1 h-[1px] bg-zinc-200" />
+                    </div>
+
+                    <div className="space-y-1.5 pl-1">
+                      {projects.map((proj) => (
+                        <div key={proj.id} className="break-inside-avoid">
+                          <div className="flex justify-between items-baseline">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="font-bold text-[8.5pt] text-zinc-950">
+                                {proj.name}
+                              </span>
+                              {proj.technologies && proj.technologies.length > 0 && (
+                                <span className="text-[7.5pt] font-mono text-zinc-500">
+                                  ({proj.technologies.join(", ")})
+                                </span>
+                              )}
+                            </div>
+
+                            {proj.start_date && (
+                              <div className="text-[7.5pt] font-mono text-zinc-500 shrink-0">
+                                {proj.start_date}
+                                {proj.end_date ? ` – ${proj.end_date}` : ""}
+                              </div>
                             )}
                           </div>
 
-                          {proj.start_date && (
-                            <div className="text-[7.5pt] font-mono text-zinc-500 shrink-0">
-                              {proj.start_date}
-                              {proj.end_date ? ` – ${proj.end_date}` : ""}
-                            </div>
+                          {proj.description && (
+                            <p className="text-[8pt] text-zinc-600 mt-0.5 leading-tight">
+                              {proj.description}
+                            </p>
+                          )}
+
+                          {proj.highlights && proj.highlights.length > 0 && (
+                            <ul className="mt-0.5 space-y-0.5 text-[8.5pt] text-zinc-800 list-disc list-outside pl-3.5 leading-snug">
+                              {proj.highlights.map((h, i) => (
+                                <li key={i}>{h}</li>
+                              ))}
+                            </ul>
                           )}
                         </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              }
 
-                        {proj.description && (
-                          <p className="text-[8pt] text-zinc-600 mt-0.5 leading-tight">
-                            {proj.description}
-                          </p>
-                        )}
+              case "education": {
+                if (!education || education.length === 0) return null;
+                sectionCounter++;
+                const secNum = String(sectionCounter).padStart(2, "0");
+                return (
+                  <section key="education" className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
+                        {secNum}. Formación
+                      </span>
+                      <div className="flex-1 h-[1px] bg-zinc-200" />
+                    </div>
 
-                        {proj.highlights && proj.highlights.length > 0 && (
-                          <ul className="mt-0.5 space-y-0.5 text-[8.5pt] text-zinc-800 list-disc list-outside pl-3.5 leading-snug">
-                            {proj.highlights.map((h, i) => (
-                              <li key={i}>{h}</li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              );
+                    <div className="space-y-1 pl-1">
+                      {education.map((edu) => (
+                        <div key={edu.id} className="flex justify-between items-baseline">
+                          <div className="flex items-baseline gap-1">
+                            <span className="font-bold text-[8.5pt] text-zinc-950">
+                              {edu.degree} {edu.area ? `en ${edu.area}` : ""}
+                            </span>
+                            <span className="text-zinc-400">·</span>
+                            <span className="font-medium text-[8.5pt] text-zinc-700">
+                              {edu.institution}
+                            </span>
+                          </div>
 
-            case "education":
-              if (!education || education.length === 0) return null;
-              return (
-                <section key="education" className="break-inside-avoid">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                      05. Formación
-                    </span>
-                    <div className="flex-1 h-[1px] bg-zinc-200" />
-                  </div>
-
-                  <div className="space-y-1 pl-1">
-                    {education.map((edu) => (
-                      <div key={edu.id} className="flex justify-between items-baseline">
-                        <div className="flex items-baseline gap-1">
-                          <span className="font-bold text-[8.5pt] text-zinc-950">
-                            {edu.degree} {edu.area ? `en ${edu.area}` : ""}
-                          </span>
-                          <span className="text-zinc-400">·</span>
-                          <span className="font-medium text-[8.5pt] text-zinc-700">
-                            {edu.institution}
-                          </span>
+                          <div className="text-[7.5pt] font-mono text-zinc-500 shrink-0">
+                            {edu.start_date} – {edu.current ? "Presente" : edu.end_date}
+                          </div>
                         </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              }
 
-                        <div className="text-[7.5pt] font-mono text-zinc-500 shrink-0">
-                          {edu.start_date} – {edu.current ? "Presente" : edu.end_date}
+              case "certifications": {
+                if (!certifications || certifications.length === 0) return null;
+                sectionCounter++;
+                const secNum = String(sectionCounter).padStart(2, "0");
+                return (
+                  <section key="certifications" className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
+                        {secNum}. Certificaciones
+                      </span>
+                      <div className="flex-1 h-[1px] bg-zinc-200" />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 pl-1 text-[8pt]">
+                      {certifications.map((cert) => (
+                        <div key={cert.id} className="flex justify-between items-baseline">
+                          <span className="font-semibold text-zinc-900">{cert.name}</span>
+                          {cert.date && (
+                            <span className="text-zinc-500 font-mono text-[7.5pt] ml-1">
+                              {cert.date}
+                            </span>
+                          )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              );
+                      ))}
+                    </div>
+                  </section>
+                );
+              }
 
-            case "certifications":
-              if (!certifications || certifications.length === 0) return null;
-              return (
-                <section key="certifications" className="break-inside-avoid">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                      06. Certificaciones
-                    </span>
-                    <div className="flex-1 h-[1px] bg-zinc-200" />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 pl-1 text-[8pt]">
-                    {certifications.map((cert) => (
-                      <div key={cert.id} className="flex justify-between items-baseline">
-                        <span className="font-semibold text-zinc-900">{cert.name}</span>
-                        {cert.date && (
-                          <span className="text-zinc-500 font-mono text-[7.5pt] ml-1">
-                            {cert.date}
-                          </span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              );
-
-            default:
-              return null;
-          }
-        })}
+              default:
+                return null;
+            }
+          });
+        })()}
       </div>
     </div>
   );
