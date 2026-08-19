@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { JobTrackerView } from "@/components/jobs/JobTrackerView";
+import { AISettingsCard } from "@/components/settings/AISettingsCard";
 import {
   Home,
   Plus,
@@ -168,7 +170,7 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
   },
 };
 
-type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "ai_import" | "settings";
+type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "ai_import" | "job_tracker" | "settings";
 type SettingsSubTab = "account" | "security" | "workspace" | "notifications" | "support" | "terms";
 
 interface DashboardViewProps {
@@ -694,6 +696,39 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {!isSidebarCollapsed && (
                   <Badge variant="outline" className="text-[9px] font-mono">
                     PDF
+                  </Badge>
+                )}
+              </button>
+
+              {/* Botón Job Tracker */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("job_tracker");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "job_tracker"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "job_tracker"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
+                }`}
+                title="Job Tracker & Match Analyzer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Briefcase className="h-4 w-4 text-violet-500 shrink-0" />
+                  {!isSidebarCollapsed && <span>Job Tracker</span>}
+                </div>
+                {!isSidebarCollapsed && (
+                  <Badge variant="outline" className="text-[9px] font-mono text-violet-600 border-violet-300 dark:border-violet-800">
+                    Nuevo
                   </Badge>
                 )}
               </button>
@@ -3098,6 +3133,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
+          {/* APARTADO: JOB TRACKER */}
+          {activeSection === "job_tracker" && (
+            <div className="h-full -m-6">
+              <JobTrackerView />
+            </div>
+          )}
+
           {/* APARTADO 5: CONFIGURACIÓN EN ESPAÑOL ESTILO PROPEL CON STICKY SIDEBAR */}
           {activeSection === "settings" && (
             <div className="max-w-6xl mx-auto space-y-6">
@@ -3108,6 +3150,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   Administra tu información personal, preferencias del espacio de trabajo, cuenta de Gmail y seguridad.
                 </p>
               </div>
+
 
               {/* Layout 2 Columnas Estilo Propel con Sticky Sidebar en la Izquierda */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -3196,6 +3239,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="lg:col-span-9 p-6 sm:p-8 rounded-3xl border border-border bg-card shadow-xs space-y-6">
                   {/* TAB 1: INFORMACIÓN DE LA CUENTA */}
                   {settingsSubTab === "account" && (
+                    <div className="space-y-6">
                     <form onSubmit={handleSaveSettings} className="space-y-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
                         <div>
@@ -3413,6 +3457,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
                       </div>
                     </form>
+
+                    {/* Integracion IA — BYOK */}
+                    <div className="mt-6">
+                      <div className="pb-4 border-b border-border/80 mb-4">
+                        <h3 className="text-base font-bold text-foreground">Integracion IA</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Conecta tu propia API key para analizar ofertas con IA en el Job Tracker.
+                        </p>
+                      </div>
+                      <AISettingsCard />
+                    </div>
+                    </div>
                   )}
 
                   {/* TAB 2: SEGURIDAD, CONTRASEÑA & GMAIL */}
