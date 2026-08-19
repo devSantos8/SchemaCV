@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "@/components/navigation/Header";
 import { DualModeEditor } from "@/components/editor/DualModeEditor";
 import { ResumePreview } from "@/components/preview/ResumePreview";
 import { ImportResumeModal } from "@/components/editor/ImportResumeModal";
 import { ProfileManagerModal } from "@/components/navigation/ProfileManagerModal";
+import { DashboardView } from "@/components/dashboard/DashboardView";
 import { useResumeStore } from "@/store/useResumeStore";
 
 export default function SchemaCVApp() {
+  const [currentView, setCurrentView] = useState<"dashboard" | "workspace">("dashboard");
   const { undo, redo, canUndo, canRedo, activeTab } = useResumeStore();
 
   // Atajos de teclado globales para Deshacer (Ctrl+Z) y Rehacer (Ctrl+Y / Ctrl+Shift+Z)
@@ -17,7 +19,6 @@ export default function SchemaCVApp() {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
       if (!isCtrlOrCmd) return;
 
-      // Si el foco está en un input o textarea editable, dejamos que el navegador maneje el undo de texto local a menos que no haya selección
       const target = e.target as HTMLElement;
       const isInputField =
         target &&
@@ -26,8 +27,7 @@ export default function SchemaCVApp() {
           target.isContentEditable ||
           target.classList.contains("cm-content"));
 
-      // Si estamos en la pestaña visual y fuera de un input específico, o reordenando/borrando elementos
-      if (!isInputField) {
+      if (!isInputField && currentView === "workspace") {
         if (e.key === "z" && !e.shiftKey) {
           e.preventDefault();
           if (canUndo) undo();
@@ -40,12 +40,18 @@ export default function SchemaCVApp() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, canUndo, canRedo, activeTab]);
+  }, [undo, redo, canUndo, canRedo, activeTab, currentView]);
 
+  // Si estamos en la vista de Dashboard
+  if (currentView === "dashboard") {
+    return <DashboardView onOpenWorkspace={() => setCurrentView("workspace")} />;
+  }
+
+  // Si estamos en la vista de Workspace (Editor Dual ⟷ Vista Previa)
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-foreground select-none print:h-auto print:overflow-visible print:bg-white">
-      {/* 1. Header de Navegación y Herramientas */}
-      <Header />
+      {/* 1. Header con botón de volver al Dashboard */}
+      <Header onBackToDashboard={() => setCurrentView("dashboard")} />
 
       {/* 2. Área de Trabajo Principal Dividida (Editor Dual ⟷ Vista Previa ATS) */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden print:block print:overflow-visible">

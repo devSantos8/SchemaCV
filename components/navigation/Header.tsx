@@ -22,8 +22,11 @@ import {
   FileCode,
   Undo2,
   Redo2,
+  LayoutDashboard,
+  ArrowLeft,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { TemplateId, PaperSize } from "@/types/resume";
 import { TEMPLATE_METADATA } from "@/components/templates/TemplateRenderer";
 import { generateResumeDocx } from "@/lib/exporters/docxExporter";
@@ -45,7 +48,11 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   skills_first: Layers,
 };
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onBackToDashboard?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onBackToDashboard }) => {
   const {
     profiles,
     activeProfileId,
@@ -61,8 +68,9 @@ export const Header: React.FC = () => {
     setPaperSize,
     setImportModalOpen,
     setProfileModalOpen,
-    resetToSampleData,
   } = useResumeStore();
+
+  const { user, isAuthenticated, logout } = useAuthStore();
 
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -177,28 +185,33 @@ export const Header: React.FC = () => {
 
   return (
     <header className="h-14 border-b border-border bg-card/80 backdrop-blur-md px-4 flex items-center justify-between z-20 shrink-0 print:hidden">
-      {/* 1. LOGO & BRAND */}
+      {/* 1. BOTÓN VOLVER AL DASHBOARD & LOGO */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {onBackToDashboard && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBackToDashboard}
+            className="h-8 text-xs gap-1.5 px-2 text-muted-foreground hover:text-foreground font-medium"
+            title="Volver a la vista del Dashboard"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Button>
+        )}
+
         <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-sm">
+          <div className="h-7 w-7 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-sm">
             <FileCode2 className="h-4 w-4" />
           </div>
-          <div className="hidden sm:block">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold tracking-tight text-foreground">
-                SchemaCV
-              </span>
-              <span className="text-[9px] font-mono font-bold bg-zinc-100 dark:bg-zinc-800 text-muted-foreground px-1.5 py-0.2 rounded border border-border">
-                ATS v1.0
-              </span>
-            </div>
-            <p className="text-[10px] text-muted-foreground -mt-0.5">
-              Dual-Mode YAML & Visual Builder
-            </p>
+          <div className="hidden md:block">
+            <span className="text-xs font-bold tracking-tight text-foreground">
+              SchemaCV
+            </span>
           </div>
         </div>
 
-        <div className="h-5 w-[1px] bg-border mx-1 hidden md:block" />
+        <div className="h-5 w-[1px] bg-border mx-0.5 hidden md:block" />
 
         {/* 2. SELECTOR DE PERFILES */}
         <DropdownMenu>
@@ -206,7 +219,7 @@ export const Header: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
-              className="h-8 text-xs gap-1.5 max-w-[180px] sm:max-w-[200px] justify-between font-normal bg-background"
+              className="h-8 text-xs gap-1.5 max-w-[160px] sm:max-w-[200px] justify-between font-normal bg-background"
             >
               <div className="flex items-center gap-1.5 truncate">
                 <UserCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
