@@ -1,0 +1,134 @@
+{
+  "name": "Mateo Silva Arancibia",
+  "headline": "Desarrollador Full-Stack Junior | TypeScript, React & Node.js",
+  "email": "mateo.silva@devmail.cl",
+  "phone": "+56 9 8765 4321",
+  "location": "Santiago, Chile",
+  "website": "https://mateosilva.dev",
+  "social_networks": [
+    {
+      "network": "GitHub",
+      "username": "mateosilva-dev",
+      "url": "https://github.com/mateosilva-dev"
+    },
+    {
+      "network": "LinkedIn",
+      "username": "in/mateosilva-dev",
+      "url": "https://linkedin.com/in/mateosilva-dev"
+    }
+  ],
+  "summary": "Desarrollador de software junior con sólida formación en ingeniería informática y experiencia práctica construyendo aplicaciones web modernas. Enfoque en código limpio, arquitectura basada en componentes y consumo eficiente de APIs RESTful. Con iniciativa demostrada en proyectos open-source y aprendizaje continuo de tecnologías cloud.",
+  "skills": [
+    {
+      "id": "sk-1",
+      "category": "Lenguajes & Frontend",
+      "skills": ["TypeScript", "JavaScript (ES6+)", "React 19", "Next.js", "Tailwind CSS", "HTML5/CSS3"]
+    },
+    {
+      "id": "sk-2",
+      "category": "Backend & Bases de Datos",
+      "skills": ["Node.js", "Express", "PostgreSQL", "Prisma ORM", "REST APIs", "Redis"]
+    },
+    {
+      "id": "sk-3",
+      "category": "Herramientas & DevOps",
+      "skills": ["Git", "GitHub Actions", "Docker", "Linux", "Vercel", "Jest / Vitest"]
+    }
+  ],
+  "experience": [
+    {
+      "id": "exp-1",
+      "company": "Klap Fintech Solutions",
+      "position": "Desarrollador Frontend Trainee",
+      "location": "Santiago, Chile",
+      "start_date": "2024-03",
+      "end_date": "2024-11",
+      "current": false,
+      "summary": "Desarrollo de interfaces de usuario para dashboard financiero B2B.",
+      "highlights": [
+        "Implementó 8 nuevos componentes reutilizables en React con TypeScript, reduciendo el tiempo de entrega de nuevas vistas en un 25%.",
+        "Optimizó tiempos de carga en cliente un 30% implementando lazy loading y compresión de assets.",
+        "Colaboró en la integración de APIs de conciliación de pagos bajo metodología ágil Scrum."
+      ]
+    },
+    {
+      "id": "exp-2",
+      "company": "Laboratorio de Innovación Universitaria",
+      "position": "Ayudante de Cátedra & Desarrollador Web",
+      "location": "Santiago, Chile",
+      "start_date": "2023-03",
+      "end_date": "2023-12",
+      "current": false,
+      "summary": "Apoyo docente en cursos de Programación Avanzada y mantenimiento de plataforma interna.",
+      "highlights": [
+        "Diseñó guías prácticas de TypeScript y arquitecturas MVC para más de 60 estudiantes.",
+        "Refactorizó la plataforma web de asignación de laboratorios migrando el backend a Express y PostgreSQL."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj-1",
+      "name": "DevMetrics Analytics Hub",
+      "description": "Plataforma web de analíticas para repositorios de GitHub con métricas de productividad.",
+      "technologies": ["Next.js", "TypeScript", "Tailwind CSS", "GitHub REST API", "Chart.js"],
+      "start_date": "2024-06",
+      "end_date": "2024-09",
+      "highlights": [
+        "Construyó un panel interactivo que procesa commits y PRs calculando métricas de velocidad de entrega.",
+        "Desplegado en producción con más de 150 usuarios activos y 99.9% de uptime."
+      ]
+    },
+    {
+      "id": "proj-2",
+      "name": "TaskFlow API",
+      "description": "API RESTful de gestión de proyectos y tareas con autenticación JWT y roles.",
+      "technologies": ["Node.js", "Express", "PostgreSQL", "Prisma", "Docker", "Jest"],
+      "start_date": "2024-01",
+      "end_date": "2024-03",
+      "highlights": [
+        "Escribió suite de pruebas unitarias y de integración logrando 88% de cobertura de código.",
+        "Contenerizó el entorno de base de datos y aplicación mediante Docker Compose."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "id": "edu-1",
+      "institution": "Universidad de Santiago de Chile",
+      "degree": "Ingeniería en Ejecución en Computación e Informática",
+      "area": "Ingeniería de Software",
+      "start_date": "2020-03",
+      "end_date": "2024-12",
+      "current": false,
+      "location": "Santiago, Chile",
+      "gpa": "6.2 / 7.0 (Distinción Máxima)",
+      "highlights": [
+        "Tesis de grado: Sistema de Monitoreo Distribuido con Arquitectura de Microservicios."
+      ]
+    }
+  ],
+  "certifications": [
+    {
+      "id": "cert-1",
+      "name": "Meta Front-End Developer Professional Certificate",
+      "issuer": "Coursera / Meta",
+      "date": "2024-05"
+    },
+    {
+      "id": "cert-2",
+      "name": "AWS Certified Cloud Practitioner",
+      "issuer": "Amazon Web Services",
+      "date": "2024-08"
+    }
+  ],
+  "language": "es",
+  "section_order": [
+    "summary",
+    "skills",
+    "experience",
+    "projects",
+    "education",
+    "certifications"
+  ]
+}

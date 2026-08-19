@@ -65,6 +65,11 @@ import {
   ArrowDown,
   Calendar,
   Tag,
+  BookOpen,
+  Cpu,
+  Minimize2,
+  GitFork,
+  Globe2,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -73,6 +78,7 @@ import { TEMPLATE_METADATA, TemplateRenderer } from "@/components/templates/Temp
 import { generateResumeDocx } from "@/lib/exporters/docxExporter";
 import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
 import { SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
+import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -97,6 +103,11 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   skills_first: Layers,
   stanford_clean: Sparkles,
   compact_swiss: LayoutGrid,
+  executive_serif: BookOpen,
+  tech_compact: Cpu,
+  modern_minimal: Minimize2,
+  career_changer: GitFork,
+  academic_international: Globe2,
 };
 
 const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: string }> = {
@@ -129,6 +140,31 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
     bg: "bg-zinc-500/10 dark:bg-zinc-400/10",
     text: "text-zinc-700 dark:text-zinc-300",
     border: "border-zinc-300 dark:border-zinc-700",
+  },
+  executive_serif: {
+    bg: "bg-stone-500/10 dark:bg-stone-400/10",
+    text: "text-stone-700 dark:text-stone-300",
+    border: "border-stone-300 dark:border-stone-700",
+  },
+  tech_compact: {
+    bg: "bg-teal-500/10 dark:bg-teal-400/10",
+    text: "text-teal-700 dark:text-teal-300",
+    border: "border-teal-300 dark:border-teal-700",
+  },
+  modern_minimal: {
+    bg: "bg-gray-500/10 dark:bg-gray-400/10",
+    text: "text-gray-700 dark:text-gray-300",
+    border: "border-gray-300 dark:border-gray-700",
+  },
+  career_changer: {
+    bg: "bg-violet-500/10 dark:bg-violet-400/10",
+    text: "text-violet-700 dark:text-violet-300",
+    border: "border-violet-300 dark:border-violet-700",
+  },
+  academic_international: {
+    bg: "bg-blue-500/10 dark:bg-blue-400/10",
+    text: "text-blue-700 dark:text-blue-300",
+    border: "border-blue-300 dark:border-blue-700",
   },
 };
 

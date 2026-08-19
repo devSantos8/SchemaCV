@@ -199,13 +199,16 @@ export function generateTemplateHtml(
   });
 
   // Estilos tipográficos según la plantilla
-  const isSerif = templateId === "harvard";
+  const isSerif =
+    templateId === "harvard" ||
+    templateId === "executive_serif" ||
+    templateId === "academic_international";
 
   return `
     <div class="cv-document ${templateId} ${isSerif ? "font-serif" : "font-sans"}" style="padding: 28px 36px; color: #09090b; line-height: 1.45; font-size: 11px;">
       <style>
         .cv-document {
-          font-family: ${isSerif ? "'EB Garamond', Georgia, serif" : "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"};
+          font-family: ${isSerif ? "'EB Garamond', Georgia, 'Times New Roman', serif" : "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"};
         }
         .header-title {
           font-size: 24px;

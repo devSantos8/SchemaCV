@@ -38,6 +38,11 @@ import {
   LayoutGrid,
   Database,
   X,
+  BookOpen,
+  Cpu,
+  Minimize2,
+  GitFork,
+  Globe2,
 } from "lucide-react";
 
 interface CreateResumeWizardProps {
@@ -98,6 +103,11 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   skills_first: Layers,
   stanford_clean: Sparkles,
   compact_swiss: LayoutGrid,
+  executive_serif: BookOpen,
+  tech_compact: Cpu,
+  modern_minimal: Minimize2,
+  career_changer: GitFork,
+  academic_international: Globe2,
 };
 
 const STEPS = [

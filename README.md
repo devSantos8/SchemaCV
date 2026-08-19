@@ -99,7 +99,7 @@ npm run test:ats
 
 ## Catálogo de Plantillas ATS y Soporte Bilingüe (ES / EN)
 
-Todas las plantillas disponen de alternador instantáneo de idioma **[ ES | EN ]** en la barra de herramientas:
+Todas las plantillas disponen de alternador instantáneo de idioma **[ ES | EN ]** en la barra de herramientas y validación automatizada:
 
 | Plantilla | Identificador | Tipografía | Densidad | Casos de Uso Recomendados |
 | :--- | :--- | :--- | :--- | :--- |
@@ -109,6 +109,11 @@ Todas las plantillas disponen de alternador instantáneo de idioma **[ ES | EN ]
 | **Compact Swiss Grid** | `compact_swiss` | Swiss Modernist (Helvetica) | Máxima (1 Hoja) | Perfiles Senior con trayectoria extensa que requieren formato estricto de 1 página |
 | **Modern Executive** | `modern_executive` | Sans-Serif con Acento Lateral | Media | Tech Leads, Engineering Managers y Arquitectos de Software |
 | **Skills-First / Builder** | `skills_first` | Sans-Serif Clean | Alta | Makers, Fundadores Técnicos y Desarrolladores Open Source |
+| **Executive Serif** | `executive_serif` | Serif (Garamond / Georgia) | Media | Directores de Tecnología, Consultores Senior, Finanzas y C-Level |
+| **Tech Compact** | `tech_compact` | Sans-Serif + Monospace | Máxima (1 Hoja) | Desarrolladores Web, Mobile, Cloud y Especialistas en Infraestructura |
+| **Modern Minimal** | `modern_minimal` | Sans-Serif (Helvetica / Arial) | Media | Desarrolladores Junior, Diseñadores de Producto y Nuevos Talentos |
+| **Career Changer** | `career_changer` | Sans-Serif Clean | Alta | Profesionales en transición de carrera, Bootcamps y Autodidactas |
+| **Academic International** | `academic_international` | Serif (Times New Roman / Georgia) | Media | Investigadores, Docentes, Doctorados y Postulaciones Internacionales |
 
 ---
 

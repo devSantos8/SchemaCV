@@ -27,6 +27,11 @@ const TEMPLATES_TO_TEST: { id: TemplateId; name: string }[] = [
   { id: "skills_first", name: "Skills-First Builder" },
   { id: "stanford_clean", name: "Entry Academic (Stanford Clean)" },
   { id: "compact_swiss", name: "Compact Swiss Grid" },
+  { id: "executive_serif", name: "Executive Serif" },
+  { id: "tech_compact", name: "Tech Compact" },
+  { id: "modern_minimal", name: "Modern Minimal" },
+  { id: "career_changer", name: "Career Changer" },
+  { id: "academic_international", name: "Academic International" },
 ];
 
 function validateTemplate(templateId: TemplateId, templateName: string): ValidationResult {

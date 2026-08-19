@@ -191,7 +191,12 @@ export type TemplateId =
   | "modern_executive"
   | "skills_first"
   | "stanford_clean"
-  | "compact_swiss";
+  | "compact_swiss"
+  | "executive_serif"
+  | "tech_compact"
+  | "modern_minimal"
+  | "career_changer"
+  | "academic_international";
 
 export type PaperSize = "letter" | "a4";
 

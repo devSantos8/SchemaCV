@@ -30,6 +30,10 @@ import {
   Eye,
   FileCode,
   Sliders,
+  BookOpen,
+  Cpu,
+  GitFork,
+  Globe2,
 } from "lucide-react";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
@@ -39,6 +43,11 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   skills_first: Layers,
   stanford_clean: Sparkles,
   compact_swiss: LayoutGrid,
+  executive_serif: BookOpen,
+  tech_compact: Cpu,
+  modern_minimal: Minimize2,
+  career_changer: GitFork,
+  academic_international: Globe2,
 };
 
 export const TemplateGalleryModal: React.FC = () => {
