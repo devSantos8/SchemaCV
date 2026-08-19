@@ -489,11 +489,21 @@ export const FormEditor: React.FC = () => {
                   </span>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => handleToggleSectionVisibility("skills", e)}
-                className={`h-6 px-1.5 gap-1 text-xs ${
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("skills", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("skills");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
                   hiddenSections.has("skills") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title={hiddenSections.has("skills") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
@@ -509,7 +519,7 @@ export const FormEditor: React.FC = () => {
                     <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
                   </>
                 )}
-              </Button>
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
@@ -548,11 +558,21 @@ export const FormEditor: React.FC = () => {
                   </span>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => handleToggleSectionVisibility("experience", e)}
-                className={`h-6 px-1.5 gap-1 text-xs ${
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("experience", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("experience");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
                   hiddenSections.has("experience") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title={hiddenSections.has("experience") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
@@ -568,7 +588,7 @@ export const FormEditor: React.FC = () => {
                     <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
                   </>
                 )}
-              </Button>
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4 space-y-4">
@@ -780,11 +800,21 @@ export const FormEditor: React.FC = () => {
                   </span>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => handleToggleSectionVisibility("projects", e)}
-                className={`h-6 px-1.5 gap-1 text-xs ${
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("projects", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("projects");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
                   hiddenSections.has("projects") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title={hiddenSections.has("projects") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
@@ -800,7 +830,7 @@ export const FormEditor: React.FC = () => {
                     <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
                   </>
                 )}
-              </Button>
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4 space-y-3">
@@ -965,11 +995,21 @@ export const FormEditor: React.FC = () => {
                   </span>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => handleToggleSectionVisibility("education", e)}
-                className={`h-6 px-1.5 gap-1 text-xs ${
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("education", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("education");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
                   hiddenSections.has("education") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title={hiddenSections.has("education") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
@@ -985,7 +1025,7 @@ export const FormEditor: React.FC = () => {
                     <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
                   </>
                 )}
-              </Button>
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4 space-y-3">
@@ -1140,11 +1180,21 @@ export const FormEditor: React.FC = () => {
                   </span>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => handleToggleSectionVisibility("certifications", e)}
-                className={`h-6 px-1.5 gap-1 text-xs ${
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("certifications", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("certifications");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
                   hiddenSections.has("certifications") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
                 }`}
                 title={hiddenSections.has("certifications") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
@@ -1160,7 +1210,7 @@ export const FormEditor: React.FC = () => {
                     <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
                   </>
                 )}
-              </Button>
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4 space-y-3">
