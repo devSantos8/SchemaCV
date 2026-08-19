@@ -7,11 +7,14 @@ import { ResumePreview } from "@/components/preview/ResumePreview";
 import { ImportResumeModal } from "@/components/editor/ImportResumeModal";
 import { ProfileManagerModal } from "@/components/navigation/ProfileManagerModal";
 import { DashboardView } from "@/components/dashboard/DashboardView";
+import { AuthView } from "@/components/auth/AuthView";
 import { useResumeStore } from "@/store/useResumeStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function SchemaCVApp() {
   const [currentView, setCurrentView] = useState<"dashboard" | "workspace">("dashboard");
   const { undo, redo, canUndo, canRedo, activeTab } = useResumeStore();
+  const { isAuthenticated } = useAuthStore();
 
   // Atajos de teclado globales para Deshacer (Ctrl+Z) y Rehacer (Ctrl+Y / Ctrl+Shift+Z)
   useEffect(() => {
@@ -41,6 +44,11 @@ export default function SchemaCVApp() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo, canUndo, canRedo, activeTab, currentView]);
+
+  // Si el usuario no está autenticado, mostrar portal de Login / Register / Demo
+  if (!isAuthenticated) {
+    return <AuthView />;
+  }
 
   // Si estamos en la vista de Dashboard
   if (currentView === "dashboard") {
