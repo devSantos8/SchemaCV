@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -30,6 +30,9 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
       "certifications",
     ],
   } = data;
+
+  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
+  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -106,7 +109,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                   <section key="summary" className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                        {secNum}. Resumen
+                        {secNum}. {labels.summary}
                       </span>
                       <div className="flex-1 h-[1px] bg-zinc-200" />
                     </div>
@@ -125,7 +128,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                   <section key="skills" className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-1.5">
                       <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                        {secNum}. Competencias & Stack
+                        {secNum}. {labels.skills}
                       </span>
                       <div className="flex-1 h-[1px] bg-zinc-200" />
                     </div>
@@ -154,7 +157,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                   <section key="experience" className="space-y-2">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                        {secNum}. Trayectoria Laboral
+                        {secNum}. {labels.experience}
                       </span>
                       <div className="flex-1 h-[1px] bg-zinc-200" />
                     </div>
@@ -175,7 +178,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
 
                             <div className="text-[8pt] font-mono text-zinc-500 shrink-0">
                               {exp.location ? `${exp.location} | ` : ""}
-                              {exp.start_date} – {exp.current ? "Presente" : exp.end_date}
+                              {exp.start_date} – {exp.current ? labels.present : exp.end_date}
                             </div>
                           </div>
 
@@ -207,7 +210,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                   <section key="projects" className="space-y-1.5">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                        {secNum}. Proyectos & Productos
+                        {secNum}. {labels.projects}
                       </span>
                       <div className="flex-1 h-[1px] bg-zinc-200" />
                     </div>
@@ -263,7 +266,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                   <section key="education" className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                        {secNum}. Formación
+                        {secNum}. {labels.education}
                       </span>
                       <div className="flex-1 h-[1px] bg-zinc-200" />
                     </div>
@@ -282,7 +285,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                           </div>
 
                           <div className="text-[7.5pt] font-mono text-zinc-500 shrink-0">
-                            {edu.start_date} – {edu.current ? "Presente" : edu.end_date}
+                            {edu.start_date} – {edu.current ? labels.present : edu.end_date}
                           </div>
                         </div>
                       ))}
@@ -299,7 +302,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                   <section key="certifications" className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
-                        {secNum}. Certificaciones
+                        {secNum}. {labels.certifications}
                       </span>
                       <div className="flex-1 h-[1px] bg-zinc-200" />
                     </div>

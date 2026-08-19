@@ -1,4 +1,4 @@
-import { ResumeData, TemplateId, PaperSize } from "@/types/resume";
+import { ResumeData, TemplateId, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
 
 /**
  * Compilador de HTML puro independiente (sin dependencias de react-dom/server).
@@ -10,6 +10,8 @@ export function generateTemplateHtml(
   paperSize: PaperSize = "letter"
 ): string {
   const isA4 = paperSize === "a4";
+  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
+  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
 
   // Contact line
   const contactItems: string[] = [];
@@ -44,7 +46,7 @@ export function generateTemplateHtml(
         if (data.summary) {
           sectionsHtml += `
             <div class="section-block">
-              <h2 class="section-title">Resumen Profesional</h2>
+              <h2 class="section-title">${labels.summary}</h2>
               <p class="section-text">${data.summary}</p>
             </div>
           `;
@@ -66,7 +68,7 @@ export function generateTemplateHtml(
 
           sectionsHtml += `
             <div class="section-block">
-              <h2 class="section-title">Habilidades Técnicas</h2>
+              <h2 class="section-title">${labels.skills}</h2>
               <div class="skills-container">${skillsList}</div>
             </div>
           `;
@@ -90,7 +92,7 @@ export function generateTemplateHtml(
                     </div>
                     <div class="entry-dates">
                       ${exp.location ? `<span class="entry-loc">${exp.location} | </span>` : ""}
-                      ${exp.start_date} – ${exp.current ? "Presente" : exp.end_date || ""}
+                      ${exp.start_date} – ${exp.current ? labels.present : exp.end_date || ""}
                     </div>
                   </div>
                   ${exp.summary ? `<p class="entry-summary">${exp.summary}</p>` : ""}
@@ -102,7 +104,7 @@ export function generateTemplateHtml(
 
           sectionsHtml += `
             <div class="section-block">
-              <h2 class="section-title">Experiencia Profesional</h2>
+              <h2 class="section-title">${labels.experience}</h2>
               ${expList}
             </div>
           `;
@@ -135,7 +137,7 @@ export function generateTemplateHtml(
 
           sectionsHtml += `
             <div class="section-block">
-              <h2 class="section-title">Proyectos</h2>
+              <h2 class="section-title">${labels.projects}</h2>
               ${projList}
             </div>
           `;
@@ -146,23 +148,17 @@ export function generateTemplateHtml(
         if (data.education && data.education.length > 0) {
           const eduList = data.education
             .map((edu) => {
-              const bullets = (edu.highlights || [])
-                .map((h) => `<li>${h}</li>`)
-                .join("");
-
               return `
                 <div class="entry-block page-break-avoid">
                   <div class="entry-header">
                     <div>
-                      <span class="entry-title font-bold">${edu.degree} ${edu.area ? `en ${edu.area}` : ""}</span>
-                      <span class="entry-subtitle"> – ${edu.institution}</span>
+                      <span class="entry-title font-bold">${edu.institution}</span>
+                      <span class="entry-subtitle"> – ${edu.degree}${edu.area ? ` en ${edu.area}` : ""}</span>
+                      ${edu.gpa ? `<span class="entry-gpa"> (GPA: ${edu.gpa})</span>` : ""}
                     </div>
-                    <div class="entry-dates">
-                      ${edu.location ? `<span>${edu.location} | </span>` : ""}
-                      ${edu.start_date} – ${edu.current ? "Presente" : edu.end_date || ""}
-                    </div>
+                    ${edu.start_date ? `<div class="entry-dates">${edu.start_date}${edu.end_date ? ` – ${edu.end_date}` : ""}</div>` : ""}
                   </div>
-                  ${bullets ? `<ul class="entry-bullets">${bullets}</ul>` : ""}
+                  ${(edu.highlights && edu.highlights.length > 0) ? `<ul class="entry-bullets">${edu.highlights.map(h => `<li>${h}</li>`).join("")}</ul>` : ""}
                 </div>
               `;
             })
@@ -170,7 +166,7 @@ export function generateTemplateHtml(
 
           sectionsHtml += `
             <div class="section-block">
-              <h2 class="section-title">Educación</h2>
+              <h2 class="section-title">${labels.education}</h2>
               ${eduList}
             </div>
           `;
@@ -180,22 +176,20 @@ export function generateTemplateHtml(
       case "certifications":
         if (data.certifications && data.certifications.length > 0) {
           const certList = data.certifications
-            .map(
-              (cert) => `
-              <div class="cert-row page-break-avoid">
-                <div>
-                  <span class="font-bold">${cert.name}</span>
-                  <span class="text-zinc-600"> – ${cert.issuer}</span>
+            .map((cert) => {
+              return `
+                <div class="cert-row">
+                  <span class="cert-name font-semibold">${cert.name}</span>
+                  <span class="cert-issuer"> – ${cert.issuer}</span>
+                  ${cert.date ? `<span class="cert-date"> (${cert.date})</span>` : ""}
                 </div>
-                ${cert.date ? `<span class="text-zinc-500">${cert.date}</span>` : ""}
-              </div>
-            `
-            )
+              `;
+            })
             .join("");
 
           sectionsHtml += `
             <div class="section-block">
-              <h2 class="section-title">Certificaciones</h2>
+              <h2 class="section-title">${labels.certifications}</h2>
               <div class="certs-container">${certList}</div>
             </div>
           `;

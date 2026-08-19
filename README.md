@@ -64,12 +64,47 @@ SchemaCV resuelve estos problemas mediante:
 
 ---
 
-## Catálogo de Plantillas ATS
+## Reglas ATS Obligatorias (Hard Requirements)
+
+SchemaCV está diseñado bajo **9 reglas de oro** para garantizar un índice de aprobación del 100% en parsers ATS corporativos (Workday, Taleo, Greenhouse, Lever, etc.):
+
+1. **Layout Estricto de 1 Columna:** Lectura secuencial top-to-bottom. Sin sidebars flotantes, sin cajas de texto desancladas ni tablas complejas que confundan a los parsers.
+2. **Contacto en el Cuerpo Principal:** Nombres y vías de contacto ubicados directamente en el flujo del documento, nunca en headers/footers del PDF.
+3. **Secciones Estándar con Nombres Canónicos:** Títulos literales en ALL CAPS o mayúsculas claras (*"Professional Summary"*, *"Work Experience"*, *"Education"*, *"Technical Skills"*, *"Projects"*, *"Certifications"*).
+4. **Tipografías Web-Safe Reales:** Familias tipográficas estándar vectoriales (EB Garamond, Helvetica, Geist Sans, Georgia) con escala 9.5–11pt en body y 14–18pt en títulos. Solo negro puro (#000) o alto contraste.
+5. **Fechas Consistentes y Legibles:** Formato estructurado `MMM YYYY` o `YYYY-MM` (ej: `Mar 2022 – Presente`), siempre con mes explícito.
+6. **Viñetas Estándar:** Puntos sólidos estándar (`•`). Cero iconos SVG, barras de progreso de skills o gráficos decorativos que resten puntos en el parser.
+7. **Output PDF 100% Vectorial y Seleccionable:** Garantía del **Copy-Paste Test** (`Ctrl+A` → Pegar en texto plano → Contenido ordenado e íntegro sin glyphs corruptos).
+8. **Márgenes y Proporción:** Márgenes balanceados de 0.5" a 0.7", interlineado de 1.15 a 1.35, sin fotos ni números de página en CVs de 1 hoja.
+9. **Encoding UTF-8 Limpio:** Soporte nativo para caracteres hispanos (`á, é, í, ó, ú, ñ`) sin corrupción de texto (*mojibake*).
+
+---
+
+## Validación Automatizada ATS
+
+SchemaCV incluye una suite de pruebas automatizadas que valida cada plantilla contra los criterios de aceptación ATS y compatibilidad bilingüe:
+
+```bash
+# Ejecutar suite de validación ATS
+npm run test:ats
+```
+
+### ¿Cómo realizar el Copy-Paste Test Manual?
+1. Abre el PDF generado en tu visor habitual (Chrome, Adobe Acrobat, Preview).
+2. Presiona `Ctrl + A` (o `Cmd + A`) y luego `Ctrl + C` para copiar todo.
+3. Pega el contenido en un editor de texto plano (Notepad, VS Code).
+4. **Verificación:** El texto debe aparecer en orden exacto: Nombre → Contacto → Resumen → Experiencia → Educación → Habilidades, sin caracteres ilegibles (`Ã¡`, etc.).
+
+---
+
+## Catálogo de Plantillas ATS y Soporte Bilingüe (ES / EN)
+
+Todas las plantillas disponen de alternador instantáneo de idioma **[ ES | EN ]** en la barra de herramientas:
 
 | Plantilla | Identificador | Tipografía | Densidad | Casos de Uso Recomendados |
 | :--- | :--- | :--- | :--- | :--- |
-| **Harvard Classic** | `harvard` | Serif (EB Garamond) | Media | Finanzas, Consultoría, Legal, Perfiles Académicos y Corporativos |
-| **Tech Minimalist** | `tech_minimalist` | Sans-Serif + Monospace | Alta | Software Engineers, DevOps, Backend, Frontend y Full-Stack |
+| **Classic Dense** | `harvard` | Serif (EB Garamond) | Media | Finanzas, Consultoría, Legal, Perfiles Académicos y Corporativos |
+| **Engineering Clean** | `tech_minimalist` | Sans-Serif + Monospace | Alta | Software Engineers, DevOps, Backend, Frontend y Full-Stack |
 | **Stanford Clean** | `stanford_clean` | Sans-Serif (Geist Sans) | Alta | Product Managers, Data Scientists, Ingenieros de IA y Startups |
 | **Compact Swiss Grid** | `compact_swiss` | Swiss Modernist (Helvetica) | Máxima (1 Hoja) | Perfiles Senior con trayectoria extensa que requieren formato estricto de 1 página |
 | **Modern Executive** | `modern_executive` | Sans-Serif con Acento Lateral | Media | Tech Leads, Engineering Managers y Arquitectos de Software |
@@ -101,7 +136,7 @@ SchemaCV monitorea la altura de renderizado y proporciona guías de referencia:
 
 ## Motor de Exportación Multiformato
 
-- **PDF Vectorial:** Renderizado nativo de alta resolución compatible con impresión de navegador y servicio headless Puppeteer.
+- **PDF Vectorial:** Renderizado nativo de alta resolución compatible con impresión de navegador y servicio headless Puppeteer con fuentes embebidas.
 - **Word (.docx):** Documentos generados con la librería `docx`, utilizando estilos de encabezado semánticos estándar para lectura automatizada por ATS.
 - **Esquema YAML:** Archivo estructurado `.yaml` compatible con la especificación de RenderCV.
 - **JSON Estructurado:** Exportación de datos crudos validados mediante esquemas Zod.
@@ -125,13 +160,18 @@ cd schemacv
 npm install
 ```
 
-### 3. Ejecutar servidor de desarrollo
+### 3. Ejecutar suite de validación ATS
+```bash
+npm run test:ats
+```
+
+### 4. Ejecutar servidor de desarrollo
 ```bash
 npm run dev
 ```
 Accede en el navegador a [http://localhost:3000](http://localhost:3000).
 
-### 4. Compilar para producción
+### 5. Compilar para producción
 ```bash
 npm run build
 npm run start

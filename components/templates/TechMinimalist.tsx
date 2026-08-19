@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -30,6 +30,9 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
       "certifications",
     ],
   } = data;
+
+  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
+  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -100,7 +103,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
             return (
               <section key="summary" className="mb-3 page-break-avoid">
                 <h2 className="text-[9pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-200 pb-0.5 mb-1 flex items-center justify-between">
-                  <span>Resumen Profesional</span>
+                  <span>{labels.summary}</span>
                 </h2>
                 <p className="text-[9pt] leading-relaxed text-zinc-700">{summary}</p>
               </section>
@@ -111,7 +114,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
             return (
               <section key="skills" className="mb-3 page-break-avoid">
                 <h2 className="text-[9pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-200 pb-0.5 mb-1.5 flex items-center justify-between">
-                  <span>Stack Tecnológico & Habilidades</span>
+                  <span>{labels.skills}</span>
                 </h2>
                 <div className="grid grid-cols-1 gap-1 text-[8.5pt]">
                   {skills.map((cat) => (
@@ -140,7 +143,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
             return (
               <section key="experience" className="mb-3">
                 <h2 className="text-[9pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-200 pb-0.5 mb-2">
-                  Experiencia Laboral
+                  {labels.experience}
                 </h2>
                 <div className="space-y-2.5">
                   {experience.map((exp) => (
@@ -151,7 +154,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                           <span className="font-normal text-zinc-600">@ {exp.company}</span>
                         </span>
                         <span className="font-mono text-[8pt] text-zinc-500 font-medium">
-                          {[exp.start_date, exp.end_date || (exp.current ? "Presente" : "")]
+                          {[exp.start_date, exp.end_date || (exp.current ? labels.present : "")]
                             .filter(Boolean)
                             .join(" → ")}
                         </span>
@@ -177,7 +180,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
             return (
               <section key="projects" className="mb-3">
                 <h2 className="text-[9pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-200 pb-0.5 mb-2">
-                  Proyectos & Ingeniería
+                  {labels.projects}
                 </h2>
                 <div className="space-y-2">
                   {projects.map((proj) => (
@@ -247,7 +250,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
             return (
               <section key="education" className="mb-3 page-break-avoid">
                 <h2 className="text-[9pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-200 pb-0.5 mb-1.5">
-                  Educación
+                  {labels.education}
                 </h2>
                 <div className="space-y-1.5">
                   {education.map((edu) => (
@@ -258,7 +261,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                           {edu.area && <span className="font-normal text-zinc-700">, {edu.area}</span>}
                         </span>
                         <span className="font-mono text-[8pt] text-zinc-500">
-                          {[edu.start_date, edu.end_date || (edu.current ? "Presente" : "")]
+                          {[edu.start_date, edu.end_date || (edu.current ? labels.present : "")]
                             .filter(Boolean)
                             .join(" → ")}
                         </span>
@@ -285,7 +288,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
             return (
               <section key="certifications" className="mb-2 page-break-avoid">
                 <h2 className="text-[9pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-200 pb-0.5 mb-1">
-                  Certificaciones
+                  {labels.certifications}
                 </h2>
                 <div className="space-y-0.5 text-[8.5pt]">
                   {certifications.map((cert) => (

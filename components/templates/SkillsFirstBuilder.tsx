@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -30,6 +30,9 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
       "certifications",
     ],
   } = data;
+
+  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
+  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -98,7 +101,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
             return (
               <section key="skills" className="mb-3 page-break-avoid">
                 <h2 className="text-[8.5pt] font-black uppercase tracking-wider text-zinc-950 bg-zinc-100 px-2 py-0.5 mb-1.5 border-l-2 border-zinc-900">
-                  Stack Tecnológico & Competencias Clave
+                  {labels.skills}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 text-[8.5pt]">
                   {skills.map((cat) => (
@@ -116,7 +119,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
             return (
               <section key="projects" className="mb-3">
                 <h2 className="text-[8.5pt] font-black uppercase tracking-wider text-zinc-950 bg-zinc-100 px-2 py-0.5 mb-2 border-l-2 border-zinc-900">
-                  Proyectos & Contribuciones de Ingeniería
+                  {labels.projects}
                 </h2>
                 <div className="space-y-2">
                   {projects.map((proj) => (
@@ -159,7 +162,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
             return (
               <section key="experience" className="mb-3">
                 <h2 className="text-[8.5pt] font-black uppercase tracking-wider text-zinc-950 bg-zinc-100 px-2 py-0.5 mb-2 border-l-2 border-zinc-900">
-                  Experiencia Laboral
+                  {labels.experience}
                 </h2>
                 <div className="space-y-2.5">
                   {experience.map((exp) => (
@@ -169,7 +172,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
                           {exp.position} — <span className="font-semibold text-zinc-700">{exp.company}</span>
                         </span>
                         <span className="font-mono text-[8pt] text-zinc-500 font-semibold">
-                          {[exp.start_date, exp.end_date || (exp.current ? "Presente" : "")]
+                          {[exp.start_date, exp.end_date || (exp.current ? labels.present : "")]
                             .filter(Boolean)
                             .join(" – ")}
                         </span>
@@ -195,7 +198,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
             return (
               <section key="summary" className="mb-3 page-break-avoid">
                 <h2 className="text-[8.5pt] font-black uppercase tracking-wider text-zinc-950 bg-zinc-100 px-2 py-0.5 mb-1 border-l-2 border-zinc-900">
-                  Resumen Profesional
+                  {labels.summary}
                 </h2>
                 <p className="text-[8.5pt] leading-relaxed text-zinc-700">{summary}</p>
               </section>
@@ -206,7 +209,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
             return (
               <section key="education" className="mb-3 page-break-avoid">
                 <h2 className="text-[8.5pt] font-black uppercase tracking-wider text-zinc-950 bg-zinc-100 px-2 py-0.5 mb-1.5 border-l-2 border-zinc-900">
-                  Educación
+                  {labels.education}
                 </h2>
                 <div className="space-y-1.5">
                   {education.map((edu) => (
@@ -217,7 +220,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
                           {edu.area && <span className="font-normal text-zinc-700">, {edu.area}</span>}
                         </span>
                         <span className="font-mono text-[8pt] text-zinc-500">
-                          {[edu.start_date, edu.end_date || (edu.current ? "Presente" : "")]
+                          {[edu.start_date, edu.end_date || (edu.current ? labels.present : "")]
                             .filter(Boolean)
                             .join(" – ")}
                         </span>
@@ -237,7 +240,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
             return (
               <section key="certifications" className="mb-2 page-break-avoid">
                 <h2 className="text-[8.5pt] font-black uppercase tracking-wider text-zinc-950 bg-zinc-100 px-2 py-0.5 mb-1 border-l-2 border-zinc-900">
-                  Certificaciones
+                  {labels.certifications}
                 </h2>
                 <div className="space-y-0.5 text-[8pt]">
                   {certifications.map((cert) => (

@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -30,6 +30,9 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
       "certifications",
     ],
   } = data;
+
+  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
+  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -103,7 +106,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
               return (
                 <section key="summary" className="break-inside-avoid">
                   <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
-                    <span>Resumen Profesional</span>
+                    <span>{labels.summary}</span>
                   </h2>
                   <p className="text-[9.5pt] text-zinc-800 leading-relaxed text-justify">
                     {summary}
@@ -116,7 +119,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
               return (
                 <section key="experience" className="space-y-2.5">
                   <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
-                    <span>Experiencia Profesional</span>
+                    <span>{labels.experience}</span>
                   </h2>
 
                   <div className="space-y-2.5">
@@ -135,7 +138,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
 
                           <div className="text-[8.5pt] text-zinc-600 font-mono shrink-0">
                             {exp.location ? `${exp.location} • ` : ""}
-                            {exp.start_date} – {exp.current ? "Presente" : exp.end_date}
+                            {exp.start_date} – {exp.current ? labels.present : exp.end_date}
                           </div>
                         </div>
 
@@ -163,7 +166,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
               return (
                 <section key="skills" className="break-inside-avoid">
                   <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
-                    <span>Habilidades Técnicas</span>
+                    <span>{labels.skills}</span>
                   </h2>
 
                   <div className="space-y-1 text-[9pt]">
@@ -186,7 +189,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
               return (
                 <section key="projects" className="space-y-2">
                   <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
-                    <span>Proyectos Destacados</span>
+                    <span>{labels.projects}</span>
                   </h2>
 
                   <div className="space-y-2">
@@ -236,7 +239,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
               return (
                 <section key="education" className="space-y-1.5 break-inside-avoid">
                   <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
-                    <span>Educación</span>
+                    <span>{labels.education}</span>
                   </h2>
 
                   <div className="space-y-1.5">
@@ -255,7 +258,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
 
                           <div className="text-[8.5pt] text-zinc-600 font-mono shrink-0">
                             {edu.location ? `${edu.location} • ` : ""}
-                            {edu.start_date} – {edu.current ? "Presente" : edu.end_date}
+                            {edu.start_date} – {edu.current ? labels.present : edu.end_date}
                           </div>
                         </div>
 
@@ -277,7 +280,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
               return (
                 <section key="certifications" className="break-inside-avoid">
                   <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
-                    <span>Certificaciones</span>
+                    <span>{labels.certifications}</span>
                   </h2>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[9pt]">

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { ZoomIn, ZoomOut, Printer, LayoutGrid, CheckCircle2, AlertTriangle } from "lucide-react";
+import { ZoomIn, ZoomOut, Printer, LayoutGrid, CheckCircle2, AlertTriangle, Globe } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 
 interface DockToolbarProps {
@@ -15,7 +15,15 @@ export const DockToolbar: React.FC<DockToolbarProps> = ({
   pageCount = 1,
   occupancyPercent = 100,
 }) => {
-  const { zoom, setZoom, paperSize, setPaperSize, setTemplateGalleryOpen } = useResumeStore();
+  const {
+    zoom,
+    setZoom,
+    paperSize,
+    setPaperSize,
+    setTemplateGalleryOpen,
+    resumeData,
+    setResumeData,
+  } = useResumeStore();
 
   const handlePrint = () => {
     window.print();
@@ -106,6 +114,22 @@ export const DockToolbar: React.FC<DockToolbarProps> = ({
         title={`Cambiar a ${paperSize === "letter" ? "A4" : "Letter"}`}
       >
         {paperSize}
+      </button>
+
+      <div className="h-4 w-[1px] bg-zinc-700 mx-0.5" />
+
+      {/* Selector Idioma Plantilla (ES / EN) */}
+      <button
+        type="button"
+        onClick={() => {
+          const nextLang = (resumeData.language || "es") === "es" ? "en" : "es";
+          setResumeData({ language: nextLang });
+        }}
+        className="flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-zinc-200 transition-colors uppercase"
+        title={`Idioma de plantilla: ${(resumeData.language || "es").toUpperCase()}. Clic para cambiar a ${(resumeData.language || "es") === "es" ? "EN" : "ES"}`}
+      >
+        <Globe className="h-3 w-3 text-emerald-400" />
+        <span>{(resumeData.language || "es").toUpperCase()}</span>
       </button>
 
       <div className="h-4 w-[1px] bg-zinc-700 mx-0.5" />

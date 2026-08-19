@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -30,6 +30,9 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
       "certifications",
     ],
   } = data;
+
+  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
+  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -96,7 +99,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
             return (
               <section key="summary" className="mb-3.5 page-break-avoid">
                 <h2 className="text-[9.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b-2 border-zinc-200 pb-1 mb-1.5">
-                  Perfil Ejecutivo & Liderazgo
+                  {labels.summary}
                 </h2>
                 <p className="text-[9pt] leading-relaxed text-zinc-700 text-justify">
                   {summary}
@@ -109,7 +112,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
             return (
               <section key="experience" className="mb-3.5">
                 <h2 className="text-[9.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b-2 border-zinc-200 pb-1 mb-2">
-                  Trayectoria Profesional
+                  {labels.experience}
                 </h2>
                 <div className="space-y-3">
                   {experience.map((exp) => (
@@ -125,7 +128,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                           </span>
                         </div>
                         <span className="text-[8.5pt] font-semibold text-zinc-600">
-                          {[exp.start_date, exp.end_date || (exp.current ? "Presente" : "")]
+                          {[exp.start_date, exp.end_date || (exp.current ? labels.present : "")]
                             .filter(Boolean)
                             .join(" – ")}
                         </span>
@@ -151,7 +154,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
             return (
               <section key="projects" className="mb-3.5">
                 <h2 className="text-[9.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b-2 border-zinc-200 pb-1 mb-2">
-                  Iniciativas & Proyectos Estratégicos
+                  {labels.projects}
                 </h2>
                 <div className="space-y-2.5">
                   {projects.map((proj) => (
@@ -193,7 +196,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
             return (
               <section key="skills" className="mb-3.5 page-break-avoid">
                 <h2 className="text-[9.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b-2 border-zinc-200 pb-1 mb-1.5">
-                  Competencias & Dominio Técnico
+                  {labels.skills}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-[8.5pt]">
                   {skills.map((cat) => (
@@ -211,7 +214,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
             return (
               <section key="education" className="mb-3 page-break-avoid">
                 <h2 className="text-[9.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b-2 border-zinc-200 pb-1 mb-1.5">
-                  Formación Académica
+                  {labels.education}
                 </h2>
                 <div className="space-y-1.5">
                   {education.map((edu) => (
@@ -222,7 +225,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                           {edu.area && <span className="font-normal">, {edu.area}</span>}
                         </span>
                         <span className="text-[8pt] text-zinc-600 font-semibold">
-                          {[edu.start_date, edu.end_date || (edu.current ? "Presente" : "")]
+                          {[edu.start_date, edu.end_date || (edu.current ? labels.present : "")]
                             .filter(Boolean)
                             .join(" – ")}
                         </span>
@@ -249,7 +252,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
             return (
               <section key="certifications" className="mb-2 page-break-avoid">
                 <h2 className="text-[9.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b-2 border-zinc-200 pb-1 mb-1">
-                  Acreditaciones & Certificados
+                  {labels.certifications}
                 </h2>
                 <div className="space-y-0.5 text-[8.5pt]">
                   {certifications.map((cert) => (

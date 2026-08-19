@@ -116,6 +116,41 @@ export interface SectionMeta {
   enabled: boolean;
 }
 
+// Idioma del currículum para ATS
+export type ResumeLanguage = "es" | "en";
+
+export const SECTION_LABELS: Record<
+  ResumeLanguage,
+  {
+    summary: string;
+    skills: string;
+    experience: string;
+    projects: string;
+    education: string;
+    certifications: string;
+    present: string;
+  }
+> = {
+  es: {
+    summary: "Resumen Profesional",
+    skills: "Competencias Técnicas",
+    experience: "Experiencia Laboral",
+    projects: "Proyectos Destacados",
+    education: "Educación & Formación",
+    certifications: "Certificaciones",
+    present: "Presente",
+  },
+  en: {
+    summary: "Professional Summary",
+    skills: "Technical Skills",
+    experience: "Work Experience",
+    projects: "Key Projects",
+    education: "Education",
+    certifications: "Certifications & Credentials",
+    present: "Present",
+  },
+};
+
 // Estructura completa de CV compatible con RenderCV y optimizada para ATS
 export const ResumeSchema = z.object({
   name: z.string(),
@@ -125,6 +160,7 @@ export const ResumeSchema = z.object({
   phone: z.string().optional(),
   location: z.string().optional(),
   website: z.string().url().optional(),
+  language: z.enum(["es", "en"]).default("es").optional(),
   social_networks: z.array(SocialNetworkSchema).default([]),
   
   // Secciones
