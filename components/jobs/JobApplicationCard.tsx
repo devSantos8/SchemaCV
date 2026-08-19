@@ -45,10 +45,10 @@ export function JobApplicationCard({
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -1 }}
       onClick={onClick}
-      className={`relative cursor-pointer rounded-xl border p-3.5 transition-all ${
+      className={`relative cursor-pointer rounded-2xl border p-3.5 transition-all shadow-2xs ${
         isSelected
-          ? "border-violet-500 bg-violet-50/50 dark:bg-violet-950/10"
-          : "border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 hover:border-zinc-300 dark:hover:border-zinc-700"
+          ? "border-zinc-900 dark:border-white bg-zinc-50/90 dark:bg-zinc-900 ring-1 ring-zinc-900/10 dark:ring-white/10"
+          : "border-zinc-200/90 dark:border-zinc-800/90 bg-white dark:bg-zinc-950 hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs"
       }`}
     >
       {/* Top row */}

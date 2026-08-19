@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { JobTrackerView } from "@/components/jobs/JobTrackerView";
 import { AISettingsCard } from "@/components/settings/AISettingsCard";
+import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
 import {
   Home,
   Plus,
@@ -238,6 +239,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [settingsLinkedin, setSettingsLinkedin] = useState(user?.linkedinUrl || "https://linkedin.com/in/jmonroys17");
   const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "https://jmonroys.dev");
   const [isSettingsSaved, setIsSettingsSaved] = useState(false);
+
+  // Estados de Auditoría ATS
+  const [auditResumeData, setAuditResumeData] = useState<ResumeData | null>(null);
+  const [auditModalTitle, setAuditModalTitle] = useState<string>("Auditor de Formato ATS");
 
   // Estados de Contraseña y Seguridad
   const [currentPassword, setCurrentPassword] = useState("");
@@ -917,18 +922,49 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
 
             {activeSection === "resumes" && (
-              <Button
-                size="sm"
-                onClick={() => setIsWizardOpen(true)}
-                className="h-8 px-3 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Nuevo Currículum</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const activeProf = profiles.find((p) => p.id === activeProfileId) || profiles[0];
+                    if (activeProf) {
+                      setAuditResumeData(activeProf.data);
+                      setAuditModalTitle(`Auditor ATS — ${activeProf.name}`);
+                    }
+                  }}
+                  className="h-8 px-3 text-xs font-semibold rounded-xl border-border hover:bg-zinc-100 dark:hover:bg-zinc-800 gap-1.5 cursor-pointer"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Auditar Formato ATS</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={() => setIsWizardOpen(true)}
+                  className="h-8 px-3 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Nuevo Currículum</span>
+                </Button>
+              </div>
             )}
 
             {activeSection === "master_profile" && (
               <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setAuditResumeData(masterFormData);
+                    setAuditModalTitle("Auditor ATS — Perfil Base");
+                  }}
+                  className="h-8 px-3 text-xs font-semibold rounded-xl border-border hover:bg-zinc-100 dark:hover:bg-zinc-800 gap-1.5 cursor-pointer"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Auditar Formato ATS</span>
+                </Button>
+
                 <Button
                   size="sm"
                   variant="outline"
@@ -1217,6 +1253,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               >
                                 <FileDown className="h-3.5 w-3.5 text-rose-500" />
                                 <span>Exportar PDF Vectorial</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setAuditResumeData(profile.data);
+                                  setAuditModalTitle(`Auditor ATS — ${profile.name}`);
+                                }}
+                                className="cursor-pointer gap-2"
+                              >
+                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span>Auditar Formato ATS</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleDownloadDocx(profile)}
@@ -3866,6 +3912,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           )}
         </div>
       </main>
+
+      {/* Modal de Auditoría de Formato ATS */}
+      {auditResumeData && (
+        <ATSAuditModal
+          isOpen={Boolean(auditResumeData)}
+          onClose={() => setAuditResumeData(null)}
+          resumeData={auditResumeData}
+          title={auditModalTitle}
+        />
+      )}
 
       {/* Asistente de Creación de CV */}
       <CreateResumeWizard

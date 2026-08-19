@@ -33,7 +33,7 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
   const app = applications.find((a) => a.id === applicationId);
   if (!app) return null;
 
-  const { title, company, status, description, matchAnalysis, keywords, url, notes, activity, location, salary } = app;
+  const { title, company, status, description, matchAnalysis, keywords, url, notes, activity, location, salary, portal } = app;
   const score = matchAnalysis?.score;
 
   const scoreColor =
@@ -138,12 +138,19 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
         className="flex flex-col h-full border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+        <div className="px-5 py-4 border-b border-zinc-200/80 dark:border-zinc-800 shrink-0 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-tight truncate">{title}</h2>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{company}</p>
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
+              <h2 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-snug line-clamp-2">{title}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-300">{company}</span>
+                {portal && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 border border-zinc-200/60 dark:border-zinc-700">
+                    {portal}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 mt-2 flex-wrap text-xs text-zinc-500">
                 {location && (
                   <span className="flex items-center gap-1 text-[11px] text-zinc-400"><MapPin className="w-3 h-3" />{location}</span>
                 )}
@@ -158,7 +165,7 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               {enabled && (
                 <button
                   onClick={() => setShowChat(true)}
@@ -175,25 +182,31 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
           </div>
 
           {/* Status selector */}
-          <div className="flex gap-1 mt-3 flex-wrap">
-            {STATUSES.map((s) => (
-              <button
-                key={s}
-                onClick={() => updateApplication(applicationId, { status: s })}
-                className={`px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
-                  status === s
-                    ? STATUS_COLORS[s] + " ring-2 ring-offset-1 ring-current/30"
-                    : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                }`}
-              >
-                {STATUS_LABELS[s]}
-              </button>
-            ))}
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono block mb-1.5">
+              Estado de la postulación
+            </span>
+            <div className="grid grid-cols-3 gap-1.5">
+              {STATUSES.map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => updateApplication(applicationId, { status: s })}
+                  className={`px-2 py-1.5 rounded-xl text-xs font-semibold transition-all text-center truncate ${
+                    status === s
+                      ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xs font-bold"
+                      : "text-zinc-600 dark:text-zinc-400 bg-zinc-100/80 dark:bg-zinc-900 hover:bg-zinc-200/70 dark:hover:bg-zinc-800"
+                  }`}
+                >
+                  {STATUS_LABELS[s]}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+        <div className="flex border-b border-zinc-200/80 dark:border-zinc-800 shrink-0 px-2">
           {[
             { id: "overview" as const, label: "Resumen" },
             { id: "keywords" as const, label: `Keywords ${keywords.length > 0 ? `(${keywords.length})` : ""}` },
@@ -202,13 +215,16 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+              className={`flex-1 py-2.5 text-xs font-semibold transition-all relative ${
                 activeTab === tab.id
-                  ? "text-zinc-900 dark:text-zinc-100 border-b-2 border-zinc-900 dark:border-zinc-100"
-                  : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                  ? "text-zinc-900 dark:text-zinc-100"
+                  : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
               }`}
             >
               {tab.label}
+              {activeTab === tab.id && (
+                <div className="absolute bottom-0 left-2 right-2 h-0.5 bg-zinc-900 dark:bg-white rounded-full" />
+              )}
             </button>
           ))}
         </div>
@@ -220,41 +236,45 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
               {/* Botón Principal: Evaluar Postulación con mi CV */}
               <a
                 href={`/jobs/${applicationId}/evaluate`}
-                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white shadow-xs transition-all text-center"
+                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 shadow-xs transition-all text-center group"
               >
-                <Sparkles className="w-4 h-4" />
-                Evaluar postulación con mi CV
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+                <span>Evaluar postulación con mi CV</span>
               </a>
 
               {/* Match score */}
-              <div className={`p-4 rounded-xl border ${scoreBg}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Match con tu CV</p>
+              <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">Match con tu CV</p>
+                    <p className="text-[11px] text-zinc-500">Afinidad según competencias de la oferta</p>
+                  </div>
                   <div className="flex items-center gap-2">
                     {matchAnalysis && enabled && !matchAnalysis.explanation && (
                       <button onClick={handleExplain} disabled={isExplaining}
-                        className="flex items-center gap-1 text-[10px] text-violet-600 dark:text-violet-400 hover:underline disabled:opacity-40">
+                        className="flex items-center gap-1 text-[11px] text-violet-600 dark:text-violet-400 hover:underline disabled:opacity-40 font-medium">
                         {isExplaining ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Sparkles className="w-2.5 h-2.5" />}
                         Explicar
                       </button>
                     )}
                     <button onClick={handleAnalyze} disabled={isAnalyzing || !description}
-                      className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-40">
+                      className="flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 disabled:opacity-40 font-medium">
                       {isAnalyzing ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <RefreshCw className="w-2.5 h-2.5" />}
                       Analizar
                     </button>
                   </div>
                 </div>
+
                 {score !== undefined ? (
                   <>
-                    <div className="flex items-end gap-2 mb-2">
+                    <div className="flex items-baseline gap-2">
                       <span className={`text-3xl font-black ${scoreColor}`}>{score}%</span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400 pb-1">
+                      <span className="text-xs text-zinc-500 dark:text-zinc-400">
                         {matchAnalysis?.matched.length} de {keywords.length} keywords
                       </span>
                     </div>
                     {/* Barra de progreso */}
-                    <div className="h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden">
+                    <div className="h-2 rounded-full bg-zinc-200 dark:bg-zinc-800 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${score}%` }}
@@ -265,20 +285,20 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
                       />
                     </div>
                     {matchAnalysis?.generatedBy === "ai" && (
-                      <span className="flex items-center gap-1 text-[10px] text-violet-500 mt-1.5">
+                      <span className="flex items-center gap-1 text-[10px] text-violet-500 font-medium pt-1">
                         <Sparkles className="w-2.5 h-2.5" /> Analizado con IA
                       </span>
                     )}
                     {/* Explicacion IA */}
                     {matchAnalysis?.explanation && (
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2 leading-relaxed">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-2 leading-relaxed bg-white dark:bg-zinc-950 p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800">
                         {matchAnalysis.explanation}
                       </p>
                     )}
                   </>
                 ) : (
                   <p className="text-xs text-zinc-500">
-                    {description ? "Haz clic en Analizar para calcular el puntaje." : "Agrega la descripcion de la oferta para analizar."}
+                    {description ? "Haz clic en Analizar para calcular el puntaje de coincidencia." : "Agrega la descripción de la oferta para analizar."}
                   </p>
                 )}
               </div>

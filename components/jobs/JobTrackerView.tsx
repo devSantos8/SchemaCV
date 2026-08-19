@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -229,7 +229,7 @@ export function JobTrackerView() {
         {/* Panel de detalle */}
         <AnimatePresence>
           {selectedId && (
-            <div className="w-[340px] shrink-0 h-full overflow-y-auto">
+            <div className="w-[380px] shrink-0 h-full overflow-hidden border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-lg z-20">
               <JobDetailPanel
                 applicationId={selectedId}
                 onClose={() => setSelectedId(null)}

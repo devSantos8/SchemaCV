@@ -8,6 +8,7 @@ import {
   UserCircle,
   FileText,
   Sparkles,
+  ShieldCheck,
   ChevronDown,
   Moon,
   Sun,
@@ -27,6 +28,7 @@ import {
   Settings,
   LayoutDashboard,
 } from "lucide-react";
+import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { TemplateId, PaperSize } from "@/types/resume";
@@ -89,6 +91,8 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
 
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isAtsAuditOpen, setIsAtsAuditOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0];
@@ -422,6 +426,17 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
 
       {/* 3. ZONA DERECHA: ACCIONES PRINCIPALES & EXPORTACIÓN */}
       <div className="flex items-center gap-2">
+        {/* Auditor de Formato ATS */}
+        <button
+          type="button"
+          onClick={() => setIsAtsAuditOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all cursor-pointer"
+          title="Auditar cumplimiento de formato ATS para este CV"
+        >
+          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+          <span className="hidden sm:inline">Auditor ATS</span>
+        </button>
+
         {/* Ingesta con IA */}
         <button
           type="button"
@@ -549,6 +564,13 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
       </div>
+
+      {/* Modal de Auditoría ATS */}
+      <ATSAuditModal
+        isOpen={isAtsAuditOpen}
+        onClose={() => setIsAtsAuditOpen(false)}
+        resumeData={resumeData}
+      />
     </header>
   );
 };
