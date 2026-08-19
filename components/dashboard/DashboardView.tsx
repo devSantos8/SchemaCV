@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import {
+  Home,
   Plus,
   Sparkles,
   FileText,
@@ -9,6 +10,9 @@ import {
   Trash2,
   ExternalLink,
   ChevronRight,
+  ChevronLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
   UserCircle,
   LogOut,
   Moon,
@@ -27,6 +31,7 @@ import {
   CheckCircle2,
   Settings,
   ArrowRight,
+  ArrowUpRight,
   Check,
   LayoutGrid,
   Database,
@@ -43,6 +48,7 @@ import {
   Menu,
   X,
   Clock,
+  Zap,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -110,7 +116,7 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
   },
 };
 
-type DashboardSection = "resumes" | "master_profile" | "templates" | "ai_import" | "settings";
+type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "ai_import" | "settings";
 
 interface DashboardViewProps {
   onOpenWorkspace: () => void;
@@ -143,7 +149,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateUserProfile,
   } = useAuthStore();
 
-  const [activeSection, setActiveSection] = useState<DashboardSection>("resumes");
+  const [activeSection, setActiveSection] = useState<DashboardSection>("home");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -155,7 +162,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Estados de Ingesta IA
   const [isUploadingAi, setIsUploadingAi] = useState(false);
-  const [pastedCvText, setPastedCvText] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Estados del Perfil Base Maestro
@@ -165,7 +171,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Estados de la Galería de Plantillas
   const [templatePreviewSample, setTemplatePreviewSample] = useState(true);
-  const [inspectTemplateId, setInspectTemplateId] = useState<TemplateId | null>(null);
 
   // Sincronizar formulario maestro si cambia el store
   React.useEffect(() => {
@@ -195,17 +200,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   };
 
   // Subida de CV con IA
-  const handleProcessAiUpload = async (file?: File, text?: string) => {
+  const handleProcessAiUpload = async (file?: File) => {
+    if (!file) return;
     try {
       setIsUploadingAi(true);
       const formData = new FormData();
-      if (file) {
-        formData.append("file", file);
-      } else if (text) {
-        formData.append("text", text);
-      } else {
-        return;
-      }
+      formData.append("file", file);
 
       const res = await fetch("/api/parse-cv", { method: "POST", body: formData });
       const result = await res.json();
@@ -328,135 +328,210 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const masterExpCount = masterProfileData.experience?.length || 0;
   const masterSkillsCount = masterProfileData.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0;
   const masterProjCount = masterProfileData.projects?.length || 0;
+  const masterEduCount = masterProfileData.education?.length || 0;
 
+  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0];
   const templateKeys = Object.keys(TEMPLATE_METADATA) as TemplateId[];
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground select-none">
-      {/* 1. SIDEBAR LATERAL ESTRUCTURADO (Estilo Linear / Vercel / Google) */}
+      {/* 1. SIDEBAR LATERAL DINÁMICO (COLAPSABLE, CENTRADO & ELEGANTE) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-border bg-card/95 backdrop-blur-xl flex flex-col justify-between transition-transform duration-200 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 border-r border-border bg-card/95 backdrop-blur-xl flex flex-col justify-between transition-all duration-200 lg:static lg:translate-x-0 ${
           isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        } ${isSidebarCollapsed ? "w-20" : "w-64"}`}
       >
-        <div className="flex flex-col gap-6 p-5">
-          {/* Logo & Marca */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-baseline gap-1 select-none">
-              <span className="text-xl font-black tracking-tight text-foreground font-sans">
-                Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
-              </span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block" />
+        <div className="flex flex-col p-4 gap-6">
+          {/* Header del Sidebar: Logo Centrado y Botón Colapsar */}
+          <div className="relative flex items-center justify-center min-h-[40px] pt-1">
+            {/* Logo Centrado */}
+            <div
+              onClick={() => setActiveSection("home")}
+              className="flex items-baseline gap-1 cursor-pointer select-none group"
+            >
+              {!isSidebarCollapsed ? (
+                <>
+                  <span className="text-xl font-black tracking-tight text-foreground font-sans group-hover:opacity-90">
+                    Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
+                  </span>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block animate-pulse" />
+                </>
+              ) : (
+                <div className="h-9 w-9 rounded-xl bg-foreground text-background flex items-center justify-center font-black text-sm shadow-sm">
+                  S<span className="text-emerald-400">.</span>
+                </div>
+              )}
             </div>
 
+            {/* Botón de Colapsar Sidebar (Desktop) */}
+            <button
+              type="button"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+              title={isSidebarCollapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
+            >
+              {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+            </button>
+
+            {/* Botón Cerrar (Móvil) */}
             <button
               type="button"
               onClick={() => setIsMobileSidebarOpen(false)}
-              className="lg:hidden p-1 rounded-md text-muted-foreground hover:text-foreground"
+              className="lg:hidden absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Menú de Navegación por Apartados Específicos */}
-          <div className="space-y-6">
+          {/* Menú de Navegación por Apartados */}
+          <nav className="space-y-4">
             <div className="space-y-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1.5 font-mono">
-                Espacio de Trabajo
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1 font-mono">
+                  Principal
+                </div>
+              )}
 
+              {/* Botón Inicio / Home */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("home");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
+                } rounded-xl text-xs font-semibold transition-all ${
+                  activeSection === "home"
+                    ? "bg-foreground text-background shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                }`}
+                title={isSidebarCollapsed ? "Inicio" : undefined}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Home className="h-4 w-4" />
+                  {!isSidebarCollapsed && <span>Inicio</span>}
+                </div>
+              </button>
+
+              {/* Botón Mis Currículums */}
               <button
                 type="button"
                 onClick={() => {
                   setActiveSection("resumes");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
+                } rounded-xl text-xs font-semibold transition-all ${
                   activeSection === "resumes"
                     ? "bg-foreground text-background shadow-xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 }`}
+                title={isSidebarCollapsed ? "Mis Currículums" : undefined}
               >
                 <div className="flex items-center gap-2.5">
                   <FileText className="h-4 w-4" />
-                  <span>Mis Currículums</span>
+                  {!isSidebarCollapsed && <span>Mis Currículums</span>}
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`text-[10px] font-mono px-1.5 py-0 ${
-                    activeSection === "resumes" ? "border-background/30 text-background" : "border-border text-muted-foreground"
-                  }`}
-                >
-                  {profiles.length}
-                </Badge>
+                {!isSidebarCollapsed && (
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-mono px-1.5 py-0 ${
+                      activeSection === "resumes" ? "border-background/30 text-background" : "border-border text-muted-foreground"
+                    }`}
+                  >
+                    {profiles.length}
+                  </Badge>
+                )}
               </button>
 
+              {/* Botón Perfil Base Maestro */}
               <button
                 type="button"
                 onClick={() => {
                   setActiveSection("master_profile");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
+                } rounded-xl text-xs font-semibold transition-all ${
                   activeSection === "master_profile"
                     ? "bg-foreground text-background shadow-xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 }`}
+                title={isSidebarCollapsed ? "Perfil Base Maestro" : undefined}
               >
                 <div className="flex items-center gap-2.5">
                   <Database className="h-4 w-4 text-emerald-500" />
-                  <span>Perfil Base Maestro</span>
+                  {!isSidebarCollapsed && <span>Perfil Base Maestro</span>}
                 </div>
-                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
-                  Base
-                </span>
+                {!isSidebarCollapsed && (
+                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                    Base
+                  </span>
+                )}
               </button>
 
+              {/* Botón Plantillas ATS */}
               <button
                 type="button"
                 onClick={() => {
                   setActiveSection("templates");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
+                } rounded-xl text-xs font-semibold transition-all ${
                   activeSection === "templates"
                     ? "bg-foreground text-background shadow-xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 }`}
+                title={isSidebarCollapsed ? "Plantillas ATS" : undefined}
               >
                 <div className="flex items-center gap-2.5">
                   <LayoutGrid className="h-4 w-4 text-amber-500" />
-                  <span>Plantillas ATS</span>
+                  {!isSidebarCollapsed && <span>Plantillas ATS</span>}
                 </div>
-                <span className="text-[10px] font-mono opacity-80">6</span>
+                {!isSidebarCollapsed && (
+                  <span className="text-[10px] font-mono opacity-80">6</span>
+                )}
               </button>
 
+              {/* Botón Ingesta IA */}
               <button
                 type="button"
                 onClick={() => {
                   setActiveSection("ai_import");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
+                } rounded-xl text-xs font-semibold transition-all ${
                   activeSection === "ai_import"
                     ? "bg-foreground text-background shadow-xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 }`}
+                title={isSidebarCollapsed ? "Ingesta con IA" : undefined}
               >
                 <div className="flex items-center gap-2.5">
                   <Sparkles className="h-4 w-4 text-cyan-500" />
-                  <span>Ingesta con IA</span>
+                  {!isSidebarCollapsed && <span>Ingesta con IA</span>}
                 </div>
-                <Badge variant="outline" className="text-[9px] font-mono">
-                  PDF
-                </Badge>
+                {!isSidebarCollapsed && (
+                  <Badge variant="outline" className="text-[9px] font-mono">
+                    PDF
+                  </Badge>
+                )}
               </button>
             </div>
 
             <div className="space-y-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1.5 font-mono">
-                Ajustes
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1 font-mono">
+                  Ajustes
+                </div>
+              )}
 
               <button
                 type="button"
@@ -464,55 +539,90 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setActiveSection("settings");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
+                } rounded-xl text-xs font-semibold transition-all ${
                   activeSection === "settings"
                     ? "bg-foreground text-background shadow-xs"
                     : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                 }`}
+                title={isSidebarCollapsed ? "Configuración" : undefined}
               >
                 <div className="flex items-center gap-2.5">
                   <Settings className="h-4 w-4" />
-                  <span>Configuración de Perfil</span>
+                  {!isSidebarCollapsed && <span>Configuración</span>}
                 </div>
               </button>
             </div>
-          </div>
+          </nav>
         </div>
 
-        {/* Footer del Sidebar: Perfil de Usuario & Modo Oscuro */}
-        <div className="p-4 border-t border-border/80 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-800 text-foreground flex items-center justify-center font-bold text-xs shrink-0">
-              {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
-            </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-bold text-foreground truncate">
-                {user?.name || "Usuario"}
-              </span>
-              <span className="text-[10px] text-muted-foreground truncate">
-                {user?.email || "Sin correo"}
-              </span>
-            </div>
-          </div>
+        {/* Footer del Sidebar: Tarjeta de Cuenta con Alta Presencia */}
+        <div className="p-3 border-t border-border/80 bg-zinc-50/80 dark:bg-zinc-900/60">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={`w-full flex items-center ${
+                  isSidebarCollapsed ? "justify-center p-1.5" : "p-2.5 justify-between"
+                } rounded-2xl bg-card border border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-2xs hover:shadow-xs transition-all text-left group`}
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {/* Avatar con Indicador */}
+                  <div className="relative shrink-0">
+                    <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-bold text-xs shadow-xs">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : "J"}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
+                  </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={toggleDarkMode}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-              title="Alternar tema"
-            >
-              {isDarkMode ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-            </button>
-            <button
-              type="button"
-              onClick={logout}
-              className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
-              title="Cerrar Sesión"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-            </button>
-          </div>
+                  {!isSidebarCollapsed && (
+                    <div className="flex flex-col min-w-0 pr-1">
+                      <span className="text-xs font-bold text-foreground truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                        {user?.name || "Joain Monroy"}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground truncate font-mono">
+                        {user?.email || "devSantos8"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {!isSidebarCollapsed && (
+                  <MoreVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-card border-border p-1.5 shadow-xl">
+              <DropdownMenuLabel className="text-xs">
+                <div className="font-bold text-foreground">{user?.name || "Joain Monroy"}</div>
+                <div className="text-[10px] text-muted-foreground font-mono truncate">{user?.email || "matiasmonroy483@gmail.com"}</div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setActiveSection("settings")}
+                className="text-xs cursor-pointer gap-2 p-2 rounded-lg"
+              >
+                <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Configuración de Cuenta</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={toggleDarkMode}
+                className="text-xs cursor-pointer gap-2 p-2 rounded-lg"
+              >
+                {isDarkMode ? <Sun className="h-3.5 w-3.5 text-amber-500" /> : <Moon className="h-3.5 w-3.5 text-indigo-500" />}
+                <span>{isDarkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={logout}
+                className="text-xs cursor-pointer gap-2 p-2 rounded-lg text-rose-500 hover:text-rose-600"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Cerrar Sesión</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
 
@@ -524,7 +634,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         />
       )}
 
-      {/* 2. ÁREA DE CONTENIDO PRINCIPAL DINÁMICA */}
+      {/* 2. ÁREA DE CONTENIDO PRINCIPAL */}
       <main className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-50/40 dark:bg-zinc-950/40">
         {/* TOPBAR MINIMALISTA */}
         <header className="h-14 border-b border-border/80 bg-background/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between shrink-0">
@@ -537,19 +647,36 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Menu className="h-5 w-5" />
             </button>
 
-            <div>
+            <div className="flex items-center gap-2">
               <h1 className="text-sm font-bold text-foreground capitalize">
+                {activeSection === "home" && "Panel Principal"}
                 {activeSection === "resumes" && "Mis Currículums"}
                 {activeSection === "master_profile" && "Perfil Base de Carrera"}
                 {activeSection === "templates" && "Catálogo de Plantillas ATS"}
                 {activeSection === "ai_import" && "Ingesta Asistida por IA"}
                 {activeSection === "settings" && "Configuración de Perfil"}
               </h1>
+              {activeSection === "home" && (
+                <Badge variant="secondary" className="text-[10px] font-mono py-0 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
+                  Online
+                </Badge>
+              )}
             </div>
           </div>
 
-          {/* Acción contextual según apartado */}
+          {/* Botones de Acción Primarios Contextuales */}
           <div className="flex items-center gap-2.5">
+            {activeSection === "home" && (
+              <Button
+                size="sm"
+                onClick={onOpenWorkspace}
+                className="h-8 px-3.5 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90"
+              >
+                <span>Abrir Editor</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
+
             {activeSection === "resumes" && (
               <Button
                 size="sm"
@@ -578,6 +705,174 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
         {/* CONTENIDO SEGÚN APARTADO ACTIVO */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 scrollbar-thin">
+          {/* APARTADO 0: INICIO / HOME */}
+          {activeSection === "home" && (
+            <div className="max-w-5xl mx-auto space-y-8">
+              {/* Saludo y Resumen Ejecutivo */}
+              <div className="space-y-1">
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                  Hola, {user?.name?.split(" ")[0] || "Joain"}
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Resumen de tu espacio de trabajo y estado de tus versiones de currículum ATS.
+                </p>
+              </div>
+
+              {/* 4 Métricas Reales y Dinámicas */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div
+                  onClick={() => setActiveSection("resumes")}
+                  className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-xs font-semibold">Versiones Creadas</span>
+                    <FileText className="h-4 w-4 text-blue-500 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="text-2xl font-extrabold text-foreground">
+                    {profiles.length}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-mono">
+                    Perfiles adaptados
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => setActiveSection("master_profile")}
+                  className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-xs font-semibold">Empleos en Base</span>
+                    <Briefcase className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="text-2xl font-extrabold text-foreground">
+                    {masterExpCount}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-mono">
+                    Experiencias laborales
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => setActiveSection("master_profile")}
+                  className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-xs font-semibold">Skills Técnicas</span>
+                    <Layers className="h-4 w-4 text-amber-500 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="text-2xl font-extrabold text-foreground">
+                    {masterSkillsCount}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground block font-mono">
+                    Habilidades registradas
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => setActiveSection("templates")}
+                  className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all space-y-2 group"
+                >
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span className="text-xs font-semibold">Plantilla Activa</span>
+                    <LayoutGrid className="h-4 w-4 text-purple-500 group-hover:scale-110 transition-transform" />
+                  </div>
+                  <div className="text-sm font-extrabold text-foreground truncate pt-1">
+                    {TEMPLATE_METADATA[activeTemplate]?.name || "Tech Minimalist"}
+                  </div>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block font-mono">
+                    100% ATS Approved
+                  </span>
+                </div>
+              </div>
+
+              {/* Tarjetas de Accesos Directos (Redirecciones Rápidas) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div
+                  onClick={onOpenWorkspace}
+                  className="p-5 rounded-2xl border border-border bg-card hover:border-foreground/30 cursor-pointer transition-all flex items-center justify-between group shadow-2xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-lg bg-foreground text-background flex items-center justify-center">
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </div>
+                      <h3 className="text-sm font-bold text-foreground">
+                        Continuar Editando CV Activo
+                      </h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground pl-9">
+                      {activeProfile.name} • {TEMPLATE_METADATA[activeProfile.templateId]?.name}
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </div>
+
+                <div
+                  onClick={() => setActiveSection("master_profile")}
+                  className="p-5 rounded-2xl border border-border bg-card hover:border-emerald-500/40 cursor-pointer transition-all flex items-center justify-between group shadow-2xs"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                        <Database className="h-3.5 w-3.5" />
+                      </div>
+                      <h3 className="text-sm font-bold text-foreground">
+                        Administrar Perfil Base Maestro
+                      </h3>
+                    </div>
+                    <p className="text-xs text-muted-foreground pl-9">
+                      Actualiza tus proyectos, logros y competencias completas.
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-emerald-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                </div>
+              </div>
+
+              {/* Lista de Versiones de CV Recientes */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-foreground">Tus Versiones de CV</h3>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection("resumes")}
+                    className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1"
+                  >
+                    <span>Ver todas ({profiles.length})</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {profiles.slice(0, 4).map((p) => {
+                    const meta = TEMPLATE_METADATA[p.templateId] || TEMPLATE_METADATA.tech_minimalist;
+                    return (
+                      <div
+                        key={p.id}
+                        className="p-4 rounded-xl border border-border bg-card flex items-center justify-between gap-3 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
+                      >
+                        <div className="space-y-0.5 min-w-0">
+                          <h4 className="font-bold text-xs text-foreground truncate">{p.name}</h4>
+                          <p className="text-[11px] text-muted-foreground truncate">{p.targetRole}</p>
+                          <span className="text-[10px] font-mono text-muted-foreground">{meta.name}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Button
+                            size="sm"
+                            onClick={() => handleOpenResume(p.id)}
+                            className="h-7 px-2.5 text-xs font-semibold bg-foreground text-background"
+                          >
+                            Editar
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* APARTADO 1: MIS CURRÍCULUMS */}
           {activeSection === "resumes" && (
             <div className="max-w-6xl mx-auto space-y-6">
@@ -731,7 +1026,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
-          {/* APARTADO 2: PERFIL BASE MAESTRO (INFORMACIÓN COMPLETA) */}
+          {/* APARTADO 2: PERFIL BASE MAESTRO */}
           {activeSection === "master_profile" && (
             <div className="max-w-4xl mx-auto space-y-6">
               <div className="p-5 rounded-2xl border border-border bg-card space-y-4">
