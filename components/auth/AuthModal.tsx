@@ -54,12 +54,18 @@ export const AuthModal: React.FC = () => {
   return (
     <Dialog open={isAuthModalOpen} onOpenChange={(open) => setAuthModalOpen(open)}>
       <DialogContent className="max-w-md bg-card border-border p-6">
-        <DialogHeader className="space-y-2 text-center items-center">
-          <div className="h-10 w-10 rounded-xl bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-md">
+        <DialogHeader className="space-y-1.5 text-center items-center">
+          <div className="h-10 w-10 rounded-xl bg-zinc-900 dark:bg-white flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-md">
             <FileCode2 className="h-5 w-5" />
           </div>
-          <DialogTitle className="text-lg font-bold text-foreground">
-            {currentTab === "login" ? "Iniciar Sesión en SchemaCV" : "Crear Cuenta en SchemaCV"}
+          <div className="flex items-baseline gap-1 justify-center">
+            <span className="text-xl font-extrabold tracking-tight text-foreground font-sans">
+              Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
+            </span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block" />
+          </div>
+          <DialogTitle className="text-base font-bold text-foreground">
+            {currentTab === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
           </DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             Plataforma de ingeniería de currículums optimizados para ATS y sincronización YAML.

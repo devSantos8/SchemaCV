@@ -87,15 +87,8 @@ export const AuthView: React.FC = () => {
       {/* Fondo Ambiental Sutil con Gradiente Radial Minimalista */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-zinc-200/50 via-zinc-100/20 to-transparent dark:from-zinc-800/20 dark:via-zinc-900/10 dark:to-transparent rounded-full blur-3xl pointer-events-none" />
 
-      {/* Header Superior Minimalista */}
-      <header className="h-16 px-6 sm:px-10 flex items-center justify-between z-10">
-        <div className="flex items-baseline gap-1 select-none">
-          <span className="text-xl font-extrabold tracking-tight text-foreground font-sans">
-            Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
-          </span>
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block" />
-        </div>
-
+      {/* Header Superior Minimalista (Theme toggle a la derecha) */}
+      <header className="h-16 px-6 sm:px-10 flex items-center justify-end z-10">
         <button
           type="button"
           onClick={toggleDarkMode}
@@ -106,8 +99,24 @@ export const AuthView: React.FC = () => {
         </button>
       </header>
 
-      {/* Tarjeta de Autenticación Centrada & Minimalista */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 z-10">
+      {/* Tarjeta de Autenticación Centrada con Título Encima */}
+      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 z-10 -mt-6">
+        {/* Título & Logo Central Encima de la Tarjeta */}
+        <div className="flex flex-col items-center justify-center gap-2 mb-6 text-center select-none animate-in fade-in-50 slide-in-from-top-3 duration-300">
+          <div className="h-12 w-12 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-xl ring-1 ring-zinc-900/10 dark:ring-white/20">
+            <FileCode2 className="h-6 w-6" />
+          </div>
+          <div className="flex items-baseline gap-1.5 justify-center">
+            <span className="text-2xl sm:text-3xl font-black tracking-tight text-foreground font-sans">
+              Schema<span className="font-bold text-zinc-400 dark:text-zinc-500">CV</span>
+            </span>
+            <span className="h-2 w-2 rounded-full bg-emerald-500 mb-1 inline-block animate-pulse" />
+          </div>
+          <p className="text-xs text-muted-foreground font-medium max-w-sm">
+            Ingeniería de currículums ATS y sincronización bidireccional YAML
+          </p>
+        </div>
+
         <div className="w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-7 sm:p-9 rounded-3xl shadow-2xl space-y-5 animate-in fade-in-50 zoom-in-95 duration-300">
           {/* Encabezado */}
           <div className="text-center space-y-1">
