@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   FileCode2,
   Plus,
@@ -24,6 +24,11 @@ import {
   ShieldCheck,
   ChevronDown,
   Loader2,
+  Upload,
+  CheckCircle2,
+  Settings,
+  Cpu,
+  Zap,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -43,6 +48,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreateResumeWizard } from "./CreateResumeWizard";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { ProfileHeroCard } from "./ProfileHeroCard";
+import { ProfileSettingsModal } from "./ProfileSettingsModal";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
@@ -62,14 +69,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
     setActiveProfile,
     duplicateProfile,
     deleteProfile,
+    loadImportedResume,
   } = useResumeStore();
 
-  const { user, isAuthenticated, logout, setAuthModalOpen } = useAuthStore();
+  const {
+    user,
+    isAuthenticated,
+    logout,
+    setAuthModalOpen,
+    setSettingsModalOpen,
+  } = useAuthStore();
 
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [downloadingDocxId, setDownloadingDocxId] = useState<string | null>(null);
   const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
+  const [isUploadingAi, setIsUploadingAi] = useState(false);
+
+  const quickFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const toggleDarkMode = () => {
     const root = document.documentElement;
@@ -85,6 +102,31 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
   const handleOpenResume = (profileId: string) => {
     setActiveProfile(profileId);
     onOpenWorkspace();
+  };
+
+  // Subida rápida de CV desde el Bento Widget
+  const handleQuickUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        setIsUploadingAi(true);
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/parse-cv", { method: "POST", body: formData });
+        const result = await res.json();
+        if (res.ok && result.success && result.data) {
+          loadImportedResume(result.data);
+          onOpenWorkspace();
+        } else {
+          alert(result.error || "No se pudo extraer el currículum.");
+        }
+      } catch (err) {
+        console.error("Error en subida rápida:", err);
+        alert("Hubo un problema al procesar el archivo.");
+      } finally {
+        setIsUploadingAi(false);
+      }
+    }
   };
 
   // Descarga directa de Word (.docx)
@@ -127,7 +169,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
       });
 
       if (!res.ok) {
-        // Fallback: abrir en editor para imprimir
         handleOpenResume(profile.id);
         return;
       }
@@ -182,9 +223,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      {/* 1. Header del Dashboard Moderno */}
-      <header className="h-14 border-b border-border/60 bg-background/80 dark:bg-zinc-950/80 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-all">
+    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 text-foreground flex flex-col transition-colors duration-300">
+      {/* 1. HEADER MODERNO */}
+      <header className="h-14 border-b border-border/60 bg-background/80 dark:bg-zinc-950/80 backdrop-blur-xl px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30 transition-all">
         <div className="flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-sm">
             <FileCode2 className="h-4 w-4" />
@@ -195,12 +236,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                 SchemaCV
               </span>
               <span className="text-[9px] font-mono font-bold bg-zinc-100 dark:bg-zinc-900 text-muted-foreground px-1.5 py-0.2 rounded border border-border/60">
-                Dashboard
+                Hub
               </span>
             </div>
-            <p className="text-[10px] text-muted-foreground -mt-0.5 hidden sm:block">
-              Gestión de Currículums Optimizados para ATS
-            </p>
           </div>
         </div>
 
@@ -215,7 +253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
             <span className="hidden sm:inline">Nuevo Currículum</span>
           </Button>
 
-          {/* Menú de Usuario / Autenticación */}
+          {/* Menú de Usuario / Configuración */}
           {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -238,6 +276,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                   <div className="text-[10px] text-muted-foreground">{user.email}</div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setSettingsModalOpen(true)}
+                  className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                >
+                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Configuración de Perfil</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setIsWizardOpen(true)}
                   className="text-xs cursor-pointer gap-2 p-2 rounded-md"
@@ -281,76 +326,137 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
         </div>
       </header>
 
-      {/* 2. Contenido Principal del Dashboard */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 md:p-8 space-y-8">
-        {/* Banner de Bienvenida y Resumen */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-zinc-100 via-zinc-50 to-white dark:from-zinc-900 dark:via-zinc-900/60 dark:to-zinc-950 p-6 rounded-2xl border border-border shadow-sm">
-          <div className="space-y-1">
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
-              Bienvenido{user ? `, ${user.name}` : ""} a SchemaCV
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-              Crea y personaliza versiones de tu currículum optimizadas para los filtros de
-              selección ATS con sincronización YAML y exportación multiformato (PDF, Word, YAML).
-            </p>
+      {/* 2. CONTENIDO PRINCIPAL: BENTO GRID DASHBOARD */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-8">
+        {/* SECCIÓN SUPERIOR: BENTO HERO (Tarjeta de Perfil + Widgets Inteligentes) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Columna Izquierda: Tarjeta de Perfil Hero con Banner y Avatar (4 cols) */}
+          <div className="lg:col-span-4 flex justify-center">
+            <ProfileHeroCard onOpenWorkspace={onOpenWorkspace} />
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              size="sm"
-              onClick={() => setIsWizardOpen(true)}
-              className="h-9 text-xs gap-1.5 font-semibold bg-foreground text-background"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-              <span>Crear con Asistente</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenWorkspace}
-              className="h-9 text-xs gap-1.5"
-            >
-              <span>Abrir Editor Dual</span>
-              <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
+          {/* Columna Derecha: Bento Widgets de Ingesta & ATS Health (8 cols) */}
+          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 flex flex-col justify-between">
+            {/* Bento 1: Centro de Ingesta & Creación con IA */}
+            <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-md flex flex-col justify-between space-y-4 relative overflow-hidden group">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-mono">
+                    AI Powered
+                  </Badge>
+                </div>
+                <h3 className="text-sm font-bold text-foreground pt-1">
+                  Ingesta Inteligente de CV
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Sube tu currículum en PDF o pega tu perfil de LinkedIn para estructurarlo bajo los estándares ATS automáticamente.
+                </p>
+              </div>
 
-        {/* Métricas Rápidas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="p-4 rounded-xl border border-border bg-card space-y-1">
-            <span className="text-[11px] text-muted-foreground font-medium">Currículums Activos</span>
-            <div className="text-2xl font-extrabold text-foreground">{profiles.length}</div>
-            <div className="text-[10px] text-muted-foreground">Versiones listas para postulación</div>
-          </div>
+              {/* Zona de Arrastre / Acción Rápida */}
+              <div className="space-y-2">
+                <input
+                  ref={quickFileInputRef}
+                  type="file"
+                  accept=".pdf,.txt"
+                  onChange={handleQuickUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => quickFileInputRef.current?.click()}
+                  disabled={isUploadingAi}
+                  className="w-full p-3 rounded-xl border border-dashed border-border/90 hover:border-foreground/60 bg-zinc-50/60 dark:bg-zinc-900/40 flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-all"
+                >
+                  {isUploadingAi ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
+                      <span>Extrayendo con IA...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-4 w-4 text-muted-foreground" />
+                      <span>Subir PDF y abrir editor</span>
+                    </>
+                  )}
+                </button>
 
-          <div className="p-4 rounded-xl border border-border bg-card space-y-1">
-            <span className="text-[11px] text-muted-foreground font-medium">Puntuación ATS Estimada</span>
-            <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <span>98 / 100</span>
-              <ShieldCheck className="h-4 w-4" />
+                <Button
+                  size="sm"
+                  onClick={() => setIsWizardOpen(true)}
+                  className="w-full h-8 text-xs font-semibold rounded-xl bg-foreground text-background"
+                >
+                  <span>Iniciar Asistente Guiado</span>
+                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </div>
             </div>
-            <div className="text-[10px] text-emerald-600/80">Estructura semántica sin tablas</div>
-          </div>
 
-          <div className="p-4 rounded-xl border border-border bg-card space-y-1">
-            <span className="text-[11px] text-muted-foreground font-medium">Plantillas Disponibles</span>
-            <div className="text-2xl font-extrabold text-foreground">4 Nativas</div>
-            <div className="text-[10px] text-muted-foreground">Harvard, Tech, Executive, Builder</div>
-          </div>
+            {/* Bento 2: Métricas de Optimización ATS & Cumplimiento */}
+            <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-md flex flex-col justify-between space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <span>98 / 100</span>
+                  </span>
+                </div>
+                <h3 className="text-sm font-bold text-foreground pt-1">
+                  Salud ATS de tus Versiones
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Tus currículums cumplen con los algoritmos de filtrado de los principales portales de empleo.
+                </p>
+              </div>
 
-          <div className="p-4 rounded-xl border border-border bg-card space-y-1">
-            <span className="text-[11px] text-muted-foreground font-medium">Formatos Listos</span>
-            <div className="text-2xl font-extrabold text-foreground">PDF & Word</div>
-            <div className="text-[10px] text-muted-foreground">Vectorial (.pdf) y DOCX (.docx)</div>
+              {/* Barras de cumplimiento ATS */}
+              <div className="space-y-2 text-[11px]">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Estructura sin tablas complejas</span>
+                    <span className="font-bold text-foreground">100%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full w-full" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Fórmula de logros STAR/XYZ</span>
+                    <span className="font-bold text-foreground">95%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full w-[95%]" />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Taxonomía y jerarquía técnica</span>
+                    <span className="font-bold text-foreground">100%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 rounded-full w-full" />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Listado de Perfiles de CV */}
-        <div className="space-y-4">
+        {/* SECCIÓN INFERIOR: TUS VERSIONES DE CURRÍCULUM */}
+        <div className="space-y-4 pt-2">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-bold text-foreground">Tus Versiones de Currículum</h2>
+              <h2 className="text-base font-bold text-foreground">
+                Tus Versiones de Currículum
+              </h2>
               <p className="text-xs text-muted-foreground">
                 Selecciona cualquier perfil para editarlo en el espacio de trabajo o expórtalo directamente en PDF o Word.
               </p>
@@ -359,7 +465,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
               variant="outline"
               size="sm"
               onClick={() => setIsWizardOpen(true)}
-              className="h-8 text-xs gap-1"
+              className="h-8 text-xs gap-1 rounded-xl"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Nuevo Perfil</span>
@@ -367,14 +473,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
           </div>
 
           {/* Grid de Tarjetas de Perfil */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {profiles.map((profile) => {
               const isActive = profile.id === activeProfileId;
-              const templateMeta = TEMPLATE_METADATA[profile.templateId] || TEMPLATE_METADATA.tech_minimalist;
+              const templateMeta =
+                TEMPLATE_METADATA[profile.templateId] || TEMPLATE_METADATA.tech_minimalist;
               const TemplateIcon = TEMPLATE_ICONS[profile.templateId] || Terminal;
 
               const experienceCount = profile.data.experience?.length || 0;
-              const skillsCount = profile.data.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0;
+              const skillsCount =
+                profile.data.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0;
               const projectsCount = profile.data.projects?.length || 0;
 
               const isDownloadingPdf = downloadingPdfId === profile.id;
@@ -383,10 +491,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
               return (
                 <div
                   key={profile.id}
-                  className={`p-5 rounded-xl border bg-card flex flex-col justify-between transition-all hover:shadow-md ${
+                  className={`p-5 rounded-2xl border bg-card flex flex-col justify-between transition-all duration-200 hover:shadow-lg ${
                     isActive
-                      ? "border-zinc-900 dark:border-zinc-100 ring-1 ring-zinc-900/10 dark:ring-zinc-100/10"
-                      : "border-border hover:border-zinc-300 dark:hover:border-zinc-700"
+                      ? "border-zinc-900 dark:border-zinc-100 ring-1 ring-zinc-900/10 dark:ring-zinc-100/10 shadow-sm"
+                      : "border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700"
                   }`}
                 >
                   <div className="space-y-3">
@@ -394,18 +502,29 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                     <div className="flex items-start justify-between gap-2 min-w-0">
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 min-w-0">
-                          <h3 className="text-sm font-bold text-foreground truncate" title={profile.name}>
+                          <h3
+                            className="text-sm font-bold text-foreground truncate"
+                            title={profile.name}
+                          >
                             {profile.name}
                           </h3>
                           {isActive && (
-                            <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-mono shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            <Badge
+                              variant="secondary"
+                              className="text-[10px] py-0 px-1.5 font-mono shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                            >
                               Activo
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 font-medium min-w-0" title={profile.targetRole}>
+                        <p
+                          className="text-xs text-muted-foreground flex items-center gap-1 font-medium min-w-0"
+                          title={profile.targetRole}
+                        >
                           <Briefcase className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <span className="truncate">{profile.targetRole || "Rol no definido"}</span>
+                          <span className="truncate">
+                            {profile.targetRole || "Rol no definido"}
+                          </span>
                         </p>
                       </div>
 
@@ -421,87 +540,96 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                               <MoreVertical className="h-3.5 w-3.5" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-52 bg-card/95 backdrop-blur-md border-border p-1.5">
-                          <DropdownMenuItem
-                            onClick={() => handleOpenResume(profile.id)}
-                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                          <DropdownMenuContent
+                            align="end"
+                            className="w-52 bg-card/95 backdrop-blur-md border-border p-1.5"
                           >
-                            <ExternalLink className="h-3.5 w-3.5" />
-                            <span>Abrir en Editor</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => duplicateProfile(profile.id)}
-                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                          >
-                            <Copy className="h-3.5 w-3.5" />
-                            <span>Duplicar Versión</span>
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleOpenResume(profile.id)}
+                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span>Abrir en Editor</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => duplicateProfile(profile.id)}
+                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                              <span>Duplicar Versión</span>
+                            </DropdownMenuItem>
 
-                          <DropdownMenuSeparator />
+                            <DropdownMenuSeparator />
 
-                          <DropdownMenuItem
-                            onClick={() => handleDownloadPdf(profile)}
-                            disabled={isDownloadingPdf}
-                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                          >
-                            <FileDown className="h-3.5 w-3.5 text-rose-500" />
-                            <span>Descargar PDF Vectorial</span>
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDownloadPdf(profile)}
+                              disabled={isDownloadingPdf}
+                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                            >
+                              <FileDown className="h-3.5 w-3.5 text-rose-500" />
+                              <span>Descargar PDF Vectorial</span>
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => handleDownloadDocx(profile)}
-                            disabled={isDownloadingDocx}
-                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                          >
-                            <FileText className="h-3.5 w-3.5 text-blue-500" />
-                            <span>Descargar Word (.docx)</span>
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDownloadDocx(profile)}
+                              disabled={isDownloadingDocx}
+                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                            >
+                              <FileText className="h-3.5 w-3.5 text-blue-500" />
+                              <span>Descargar Word (.docx)</span>
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => handleDownloadYaml(profile)}
-                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                          >
-                            <FileCode className="h-3.5 w-3.5 text-emerald-500" />
-                            <span>Descargar YAML (.yaml)</span>
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDownloadYaml(profile)}
+                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                            >
+                              <FileCode className="h-3.5 w-3.5 text-emerald-500" />
+                              <span>Descargar YAML (.yaml)</span>
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => handleDownloadJson(profile)}
-                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                          >
-                            <FileCode className="h-3.5 w-3.5 text-amber-500" />
-                            <span>Descargar JSON (.json)</span>
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDownloadJson(profile)}
+                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                            >
+                              <FileCode className="h-3.5 w-3.5 text-amber-500" />
+                              <span>Descargar JSON (.json)</span>
+                            </DropdownMenuItem>
 
-                          {profiles.length > 1 && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => deleteProfile(profile.id)}
-                                className="text-xs cursor-pointer gap-2 p-2 rounded-md text-rose-500 hover:text-rose-600"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                                <span>Eliminar Perfil</span>
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            {profiles.length > 1 && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => deleteProfile(profile.id)}
+                                  className="text-xs cursor-pointer gap-2 p-2 rounded-md text-rose-500 hover:text-rose-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <span>Eliminar Perfil</span>
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Resumen de contenido */}
+                    {/* Resumen de contenido */}
                     <div className="grid grid-cols-3 gap-2 py-2 border-y border-border/60 text-center">
                       <div>
-                        <div className="text-xs font-bold text-foreground">{experienceCount}</div>
+                        <div className="text-xs font-bold text-foreground">
+                          {experienceCount}
+                        </div>
                         <div className="text-[10px] text-muted-foreground">Trabajos</div>
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-foreground">{skillsCount}</div>
+                        <div className="text-xs font-bold text-foreground">
+                          {skillsCount}
+                        </div>
                         <div className="text-[10px] text-muted-foreground">Skills</div>
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-foreground">{projectsCount}</div>
+                        <div className="text-xs font-bold text-foreground">
+                          {projectsCount}
+                        </div>
                         <div className="text-[10px] text-muted-foreground">Proyectos</div>
                       </div>
                     </div>
@@ -510,7 +638,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                     <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                       <TemplateIcon className="h-3.5 w-3.5 text-foreground" />
                       <span>Plantilla: </span>
-                      <span className="font-semibold text-foreground">{templateMeta.name}</span>
+                      <span className="font-semibold text-foreground">
+                        {templateMeta.name}
+                      </span>
                     </div>
                   </div>
 
@@ -519,7 +649,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                     <Button
                       size="sm"
                       onClick={() => handleOpenResume(profile.id)}
-                      className="flex-1 h-8 text-xs font-semibold"
+                      className="flex-1 h-8 text-xs font-semibold rounded-xl"
                     >
                       <span>Abrir Editor</span>
                       <ChevronRight className="h-3.5 w-3.5 ml-1" />
@@ -531,7 +661,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                       size="sm"
                       disabled={isDownloadingPdf}
                       onClick={() => handleDownloadPdf(profile)}
-                      className="h-8 px-2.5 text-xs gap-1 hover:border-rose-500 hover:text-rose-600 dark:hover:text-rose-400"
+                      className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-rose-500 hover:text-rose-600 dark:hover:text-rose-400"
                       title="Descargar PDF Vectorial directo"
                     >
                       {isDownloadingPdf ? (
@@ -550,7 +680,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                       size="sm"
                       disabled={isDownloadingDocx}
                       onClick={() => handleDownloadDocx(profile)}
-                      className="h-8 px-2.5 text-xs gap-1 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                      className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
                       title="Descargar Word DOCX directo"
                     >
                       {isDownloadingDocx ? (
@@ -570,47 +700,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
             {/* Tarjeta de Añadir Nuevo */}
             <div
               onClick={() => setIsWizardOpen(true)}
-              className="p-6 rounded-xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 min-h-[220px]"
+              className="p-6 rounded-2xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 min-h-[220px]"
             >
               <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-foreground mb-2">
                 <Plus className="h-5 w-5" />
               </div>
-              <h3 className="text-xs font-bold text-foreground">Crear Otra Versión de CV</h3>
+              <h3 className="text-xs font-bold text-foreground">
+                Crear Otra Versión de CV
+              </h3>
               <p className="text-[11px] text-muted-foreground max-w-[200px] mt-1">
                 Adapta tu experiencia para postulaciones específicas.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Guía Rápida de Optimización ATS */}
-        <div className="space-y-3 pt-4 border-t border-border">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <h3 className="text-sm font-bold text-foreground">
-              Guía de Optimización ATS de SchemaCV
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-            <div className="p-4 rounded-lg border border-border bg-card space-y-1">
-              <span className="text-xs font-bold text-foreground">Fórmula STAR / XYZ</span>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Describe tus logros con métricas: "Logré [X] medido por [Y]% haciendo [Z]". Evita listas pasivas de tareas.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg border border-border bg-card space-y-1">
-              <span className="text-xs font-bold text-foreground">Jerarquía Semántica</span>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Nuestras plantillas utilizan encabezados directos y tabuladores limpios, evitando tablas complejas que bloquean los parsers.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-lg border border-border bg-card space-y-1">
-              <span className="text-xs font-bold text-foreground">Sincronización YAML</span>
-              <p className="text-[11px] text-muted-foreground leading-relaxed">
-                Mantén tu CV versionado como código, garantizando consistencia absoluta en exportaciones PDF y Word.
               </p>
             </div>
           </div>
@@ -623,6 +722,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
         onOpenChange={setIsWizardOpen}
         onComplete={onOpenWorkspace}
       />
+      <ProfileSettingsModal />
       <AuthModal />
     </div>
   );
