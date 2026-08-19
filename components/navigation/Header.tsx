@@ -189,8 +189,20 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
 
   return (
     <header className="h-14 border-b border-border/60 bg-background/80 dark:bg-zinc-950/80 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 print:hidden transition-all">
-      {/* 1. ZONA IZQUIERDA: BREADCRUMB & SELECTOR DE PERFIL MODERNO */}
+      {/* 1. ZONA IZQUIERDA: LOGO TIPOGRÁFICO, BOTÓN DASHBOARD & SELECTOR DE PERFIL */}
       <div className="flex items-center gap-2 sm:gap-3">
+        {/* LOGOTIPO TIPOGRÁFICO MINIMALISTA (SIN ICONO DE IA) */}
+        <div
+          onClick={onBackToDashboard}
+          className="flex items-baseline gap-1 select-none cursor-pointer group"
+          title="Volver al Dashboard"
+        >
+          <span className="text-lg font-extrabold tracking-tight text-foreground font-sans">
+            Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
+          </span>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block group-hover:scale-125 transition-transform" />
+        </div>
+
         {onBackToDashboard && (
           <button
             type="button"

@@ -172,14 +172,16 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onBack
 
           <div className="h-4 w-[1px] bg-border/80 mx-1 hidden sm:block" />
 
-          <div className="flex items-center gap-2">
-            <div className="h-7 w-7 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-xs">
-              <FileCode2 className="h-3.5 w-3.5" />
-            </div>
-            <span className="text-xs font-bold text-foreground">
-              Configuración de Perfil & Cuenta
+          <div className="flex items-baseline gap-1 select-none">
+            <span className="text-base font-extrabold tracking-tight text-foreground font-sans">
+              Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
             </span>
+            <span className="h-1 w-1 rounded-full bg-emerald-500 mb-0.5 inline-block" />
           </div>
+
+          <span className="text-xs font-bold text-muted-foreground hidden md:inline">
+            / Configuración de Perfil
+          </span>
         </div>
 
         <div className="flex items-center gap-3">

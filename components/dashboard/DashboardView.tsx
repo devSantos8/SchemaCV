@@ -2,7 +2,6 @@
 
 import React, { useState, useRef } from "react";
 import {
-  FileCode2,
   Plus,
   Sparkles,
   FileText,
@@ -29,6 +28,9 @@ import {
   Settings,
   Cpu,
   Zap,
+  ArrowRight,
+  Code2,
+  Check,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -48,14 +50,35 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreateResumeWizard } from "./CreateResumeWizard";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { ProfileHeroCard } from "./ProfileHeroCard";
-import { ProfileSettingsModal } from "./ProfileSettingsModal";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
   tech_minimalist: Terminal,
   modern_executive: Briefcase,
   skills_first: Layers,
+};
+
+const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: string }> = {
+  harvard: {
+    bg: "bg-slate-500/10 dark:bg-slate-400/10",
+    text: "text-slate-700 dark:text-slate-300",
+    border: "border-slate-300 dark:border-slate-700",
+  },
+  tech_minimalist: {
+    bg: "bg-emerald-500/10 dark:bg-emerald-400/10",
+    text: "text-emerald-700 dark:text-emerald-300",
+    border: "border-emerald-300 dark:border-emerald-700",
+  },
+  modern_executive: {
+    bg: "bg-indigo-500/10 dark:bg-indigo-400/10",
+    text: "text-indigo-700 dark:text-indigo-300",
+    border: "border-indigo-300 dark:border-indigo-700",
+  },
+  skills_first: {
+    bg: "bg-amber-500/10 dark:bg-amber-400/10",
+    text: "text-amber-700 dark:text-amber-300",
+    border: "border-amber-300 dark:border-amber-700",
+  },
 };
 
 interface DashboardViewProps {
@@ -226,24 +249,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // Totalizadores de Métricas Globales
+  const totalExperience = profiles.reduce((acc, p) => acc + (p.data.experience?.length || 0), 0);
+  const totalSkills = profiles.reduce(
+    (acc, p) => acc + (p.data.skills?.reduce((sAcc, cat) => sAcc + cat.skills.length, 0) || 0),
+    0
+  );
+  const totalProjects = profiles.reduce((acc, p) => acc + (p.data.projects?.length || 0), 0);
+
   return (
     <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 text-foreground flex flex-col transition-colors duration-300">
-      {/* 1. HEADER MODERNO */}
+      {/* 1. TOPBAR CON TIPOGRAFÍA PURA Y ELEGANTE */}
       <header className="h-14 border-b border-border/60 bg-background/80 dark:bg-zinc-950/80 backdrop-blur-xl px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30 transition-all">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-sm">
-            <FileCode2 className="h-4 w-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-tight text-foreground">
-                SchemaCV
-              </span>
-              <span className="text-[9px] font-mono font-bold bg-zinc-100 dark:bg-zinc-900 text-muted-foreground px-1.5 py-0.2 rounded border border-border/60">
-                Hub
-              </span>
-            </div>
-          </div>
+        {/* LOGOTIPO TIPOGRÁFICO MINIMALISTA (SIN ICONO DE IA) */}
+        <div className="flex items-baseline gap-1 select-none">
+          <span className="text-xl font-extrabold tracking-tight text-foreground font-sans">
+            Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
+          </span>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block" />
         </div>
 
         <div className="flex items-center gap-2 sm:gap-2.5">
@@ -330,129 +353,180 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </header>
 
-      {/* 2. CONTENIDO PRINCIPAL: BENTO GRID DASHBOARD */}
+      {/* 2. CONTENIDO PRINCIPAL CON JERARQUÍA Y VALOR REAL */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-8">
-        {/* SECCIÓN SUPERIOR: BENTO HERO (Tarjeta de Perfil + Widgets Inteligentes) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* Columna Izquierda: Tarjeta de Perfil Hero con Banner y Avatar (4 cols) */}
-          <div className="lg:col-span-4 flex justify-center">
-            <ProfileHeroCard
-              onOpenWorkspace={onOpenWorkspace}
-              onOpenSettings={onOpenSettings}
-            />
+        {/* HERO COMMAND HUB: BIENVENIDA & ESTADO */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-border/40">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+                Bienvenido, {user?.name ? user.name.split(" ")[0] : "Usuario"}
+              </h1>
+              <Badge variant="secondary" className="text-[10px] font-mono py-0.5 bg-zinc-100 dark:bg-zinc-800 border-border">
+                {profiles.length} Perfiles Activos
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground max-w-xl">
+              Panel de ingeniería de currículums ATS, sincronización bidireccional YAML y exportación multiformato.
+            </p>
           </div>
 
-          {/* Columna Derecha: Bento Widgets de Ingesta & ATS Health (8 cols) */}
-          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 flex flex-col justify-between">
-            {/* Bento 1: Centro de Ingesta & Creación con IA */}
-            <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-md flex flex-col justify-between space-y-4 relative overflow-hidden group">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    <Sparkles className="h-5 w-5" />
-                  </div>
-                  <Badge variant="outline" className="text-[10px] font-mono">
-                    AI Powered
-                  </Badge>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenSettings}
+              className="h-8 px-3 text-xs gap-1.5 rounded-xl border-border/80 hover:bg-zinc-100 dark:hover:bg-zinc-900"
+            >
+              <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Configuración</span>
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={onOpenWorkspace}
+              className="h-8 px-3.5 text-xs gap-1.5 font-semibold bg-foreground text-background rounded-xl shadow-sm hover:opacity-90 transition-all"
+            >
+              <span>Abrir Editor Dual</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* SECCIÓN BENTO ASIMÉTRICA DE ALTO VALOR */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* PANEL PRINCIPAL 1: ATS ENGINE & HEALTH METRICS (8 COLS) */}
+          <div className="lg:col-span-8 p-6 sm:p-7 rounded-3xl bg-card border border-border/80 shadow-sm flex flex-col justify-between space-y-5 relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  <ShieldCheck className="h-3 w-3" />
+                  <span>Calificación ATS Óptima</span>
                 </div>
-                <h3 className="text-sm font-bold text-foreground pt-1">
-                  Ingesta Inteligente de CV
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Sube tu currículum en PDF o pega tu perfil de LinkedIn para estructurarlo bajo los estándares ATS automáticamente.
+                <h2 className="text-base font-bold text-foreground pt-1">
+                  Compatibilidad y Rendimiento de Algoritmos
+                </h2>
+                <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
+                  Tus perfiles están estructurados bajo estándares semánticos aprobados para filtros de selección en Workday, Taleo y Greenhouse.
                 </p>
               </div>
 
-              {/* Zona de Arrastre / Acción Rápida */}
-              <div className="space-y-2">
-                <input
-                  ref={quickFileInputRef}
-                  type="file"
-                  accept=".pdf,.txt"
-                  onChange={handleQuickUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => quickFileInputRef.current?.click()}
-                  disabled={isUploadingAi}
-                  className="w-full p-3 rounded-xl border border-dashed border-border/90 hover:border-foreground/60 bg-zinc-50/60 dark:bg-zinc-900/40 flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-all"
-                >
-                  {isUploadingAi ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin text-amber-500" />
-                      <span>Extrayendo con IA...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="h-4 w-4 text-muted-foreground" />
-                      <span>Subir PDF y abrir editor</span>
-                    </>
-                  )}
-                </button>
-
-                <Button
-                  size="sm"
-                  onClick={() => setIsWizardOpen(true)}
-                  className="w-full h-8 text-xs font-semibold rounded-xl bg-foreground text-background"
-                >
-                  <span>Iniciar Asistente Guiado</span>
-                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                </Button>
+              {/* Indicador Numérico de Alto Impacto */}
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-border/60 text-center shrink-0 min-w-[130px]">
+                <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
+                  98<span className="text-sm font-semibold text-muted-foreground">/100</span>
+                </div>
+                <div className="text-[10px] font-medium text-muted-foreground mt-0.5">
+                  ATS Score Estimado
+                </div>
               </div>
             </div>
 
-            {/* Bento 2: Métricas de Optimización ATS & Cumplimiento */}
-            <div className="p-6 rounded-3xl bg-card border border-border/80 shadow-md flex flex-col justify-between space-y-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                    <ShieldCheck className="h-5 w-5" />
-                  </div>
-                  <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                    <span>98 / 100</span>
-                  </span>
+            {/* Checklist de Estándares Verificados */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-border/60">
+              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Check className="h-3 w-3" />
                 </div>
-                <h3 className="text-sm font-bold text-foreground pt-1">
-                  Salud ATS de tus Versiones
-                </h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Tus currículums cumplen con los algoritmos de filtrado de los principales portales de empleo.
-                </p>
+                <span>Estructura plana y limpia sin tablas complejas</span>
               </div>
 
-              {/* Barras de cumplimiento ATS */}
-              <div className="space-y-2 text-[11px]">
-                <div className="space-y-1">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Estructura sin tablas complejas</span>
-                    <span className="font-bold text-foreground">100%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full w-full" />
-                  </div>
+              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Check className="h-3 w-3" />
                 </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Fórmula de logros STAR/XYZ</span>
-                    <span className="font-bold text-foreground">95%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full w-[95%]" />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Taxonomía y jerarquía técnica</span>
-                    <span className="font-bold text-foreground">100%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-500 rounded-full w-full" />
-                  </div>
-                </div>
+                <span>Viñetas optimizadas con métricas STAR/XYZ</span>
               </div>
+
+              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Check className="h-3 w-3" />
+                </div>
+                <span>Sincronización en vivo Formulario ⟷ YAML</span>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                  <Check className="h-3 w-3" />
+                </div>
+                <span>Exportación vectorial dual (PDF & DOCX Word)</span>
+              </div>
+            </div>
+
+            {/* Ribbon de Métricas Globales Acumuladas */}
+            <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/60 border border-border/50 text-center text-xs">
+              <div>
+                <span className="font-extrabold text-foreground">{totalExperience}</span>
+                <span className="text-[10px] text-muted-foreground ml-1.5 font-medium">Experiencias</span>
+              </div>
+              <div className="border-x border-border/60">
+                <span className="font-extrabold text-foreground">{totalSkills}</span>
+                <span className="text-[10px] text-muted-foreground ml-1.5 font-medium">Skills Indexadas</span>
+              </div>
+              <div>
+                <span className="font-extrabold text-foreground">{totalProjects}</span>
+                <span className="text-[10px] text-muted-foreground ml-1.5 font-medium">Proyectos</span>
+              </div>
+            </div>
+          </div>
+
+          {/* PANEL PRINCIPAL 2: INGESTA INTELIGENTE & DROPZONE (4 COLS) */}
+          <div className="lg:col-span-4 p-6 sm:p-7 rounded-3xl bg-card border border-border/80 shadow-sm flex flex-col justify-between space-y-4">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <Badge variant="outline" className="text-[9px] font-mono uppercase">
+                  Extractor IA
+                </Badge>
+              </div>
+              <h3 className="text-sm font-bold text-foreground pt-1">
+                Ingesta de Documentos
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Importa un CV existente en PDF o texto para autocompletar tus secciones en segundos.
+              </p>
+            </div>
+
+            {/* Dropzone interactivo */}
+            <div className="space-y-2.5">
+              <input
+                ref={quickFileInputRef}
+                type="file"
+                accept=".pdf,.txt"
+                onChange={handleQuickUpload}
+                className="hidden"
+              />
+
+              <button
+                type="button"
+                onClick={() => quickFileInputRef.current?.click()}
+                disabled={isUploadingAi}
+                className="w-full p-4 rounded-2xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center gap-1.5 text-center transition-all group cursor-pointer"
+              >
+                {isUploadingAi ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin text-amber-500 my-1" />
+                    <span className="text-xs font-semibold text-foreground">Extrayendo datos con IA...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:-translate-y-0.5 transition-all" />
+                    <span className="text-xs font-semibold text-foreground">Subir CV en PDF</span>
+                    <span className="text-[10px] text-muted-foreground">o haz clic para explorar</span>
+                  </>
+                )}
+              </button>
+
+              <Button
+                size="sm"
+                onClick={() => setIsWizardOpen(true)}
+                className="w-full h-8 text-xs font-semibold rounded-xl bg-foreground text-background"
+              >
+                <span>Crear con Asistente Guiado</span>
+                <ChevronRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
             </div>
           </div>
         </div>
@@ -465,27 +539,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 Tus Versiones de Currículum
               </h2>
               <p className="text-xs text-muted-foreground">
-                Selecciona cualquier perfil para editarlo en el espacio de trabajo o expórtalo directamente en PDF o Word.
+                Cada versión cuenta con su propio enfoque de rol, plantilla ATS y exportación directa.
               </p>
             </div>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsWizardOpen(true)}
-              className="h-8 text-xs gap-1 rounded-xl"
+              className="h-8 text-xs gap-1.5 rounded-xl border-border/80"
             >
               <Plus className="h-3.5 w-3.5" />
               <span>Nuevo Perfil</span>
             </Button>
           </div>
 
-          {/* Grid de Tarjetas de Perfil */}
+          {/* Grid de Tarjetas de Perfil con Personalidad y Jerarquía */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {profiles.map((profile) => {
               const isActive = profile.id === activeProfileId;
               const templateMeta =
                 TEMPLATE_METADATA[profile.templateId] || TEMPLATE_METADATA.tech_minimalist;
               const TemplateIcon = TEMPLATE_ICONS[profile.templateId] || Terminal;
+              const accent = TEMPLATE_ACCENTS[profile.templateId] || TEMPLATE_ACCENTS.tech_minimalist;
 
               const experienceCount = profile.data.experience?.length || 0;
               const skillsCount =
@@ -495,35 +570,46 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               const isDownloadingPdf = downloadingPdfId === profile.id;
               const isDownloadingDocx = downloadingDocxId === profile.id;
 
+              // Obtener primeras 3 skills para preview de tags
+              const topSkills = profile.data.skills?.[0]?.skills.slice(0, 3) || [];
+
               return (
                 <div
                   key={profile.id}
-                  className={`p-5 rounded-2xl border bg-card flex flex-col justify-between transition-all duration-200 hover:shadow-lg ${
+                  className={`rounded-2xl border bg-card flex flex-col justify-between transition-all duration-200 overflow-hidden ${
                     isActive
-                      ? "border-zinc-900 dark:border-zinc-100 ring-1 ring-zinc-900/10 dark:ring-zinc-100/10 shadow-sm"
-                      : "border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700"
+                      ? "border-zinc-900 dark:border-zinc-100 ring-2 ring-zinc-900/15 dark:ring-zinc-100/15 shadow-md"
+                      : "border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md"
                   }`}
                 >
-                  <div className="space-y-3">
+                  {/* Banner de plantilla sutil */}
+                  <div className={`px-4 py-2 flex items-center justify-between border-b ${accent.border} ${accent.bg}`}>
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                      <TemplateIcon className="h-3.5 w-3.5" />
+                      <span>{templateMeta.name}</span>
+                    </div>
+
+                    {isActive ? (
+                      <Badge className="text-[9px] py-0 px-2 font-mono bg-emerald-600 text-white font-bold">
+                        Activo en Editor
+                      </Badge>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground font-mono">
+                        {profile.paperSize?.toUpperCase() || "LETTER"}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="p-5 space-y-4">
                     {/* Header de la Tarjeta */}
                     <div className="flex items-start justify-between gap-2 min-w-0">
                       <div className="space-y-1 flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <h3
-                            className="text-sm font-bold text-foreground truncate"
-                            title={profile.name}
-                          >
-                            {profile.name}
-                          </h3>
-                          {isActive && (
-                            <Badge
-                              variant="secondary"
-                              className="text-[10px] py-0 px-1.5 font-mono shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                            >
-                              Activo
-                            </Badge>
-                          )}
-                        </div>
+                        <h3
+                          className="text-sm font-extrabold text-foreground truncate"
+                          title={profile.name}
+                        >
+                          {profile.name}
+                        </h3>
                         <p
                           className="text-xs text-muted-foreground flex items-center gap-1 font-medium min-w-0"
                           title={profile.targetRole}
@@ -542,7 +628,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground rounded-lg"
                             >
                               <MoreVertical className="h-3.5 w-3.5" />
                             </Button>
@@ -619,6 +705,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
                     </div>
 
+                    {/* Chips de Skills destacadas */}
+                    {topSkills.length > 0 && (
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {topSkills.map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800/80 text-[10px] font-mono text-muted-foreground border border-border/50"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Resumen de contenido */}
                     <div className="grid grid-cols-3 gap-2 py-2 border-y border-border/60 text-center">
                       <div>
@@ -641,64 +741,55 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
                     </div>
 
-                    {/* Plantilla Asignada */}
-                    <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                      <TemplateIcon className="h-3.5 w-3.5 text-foreground" />
-                      <span>Plantilla: </span>
-                      <span className="font-semibold text-foreground">
-                        {templateMeta.name}
-                      </span>
+                    {/* Acciones principales de la tarjeta */}
+                    <div className="pt-1 flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        onClick={() => handleOpenResume(profile.id)}
+                        className="flex-1 h-8 text-xs font-semibold rounded-xl"
+                      >
+                        <span>Abrir en Editor</span>
+                        <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                      </Button>
+
+                      {/* Botón Descarga Directa PDF */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isDownloadingPdf}
+                        onClick={() => handleDownloadPdf(profile)}
+                        className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-rose-500 hover:text-rose-600 dark:hover:text-rose-400"
+                        title="Descargar PDF Vectorial directo"
+                      >
+                        {isDownloadingPdf ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <FileDown className="h-3.5 w-3.5 text-rose-500" />
+                            <span className="text-[11px] font-medium">PDF</span>
+                          </>
+                        )}
+                      </Button>
+
+                      {/* Botón Descarga Directa Word */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={isDownloadingDocx}
+                        onClick={() => handleDownloadDocx(profile)}
+                        className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
+                        title="Descargar Word DOCX directo"
+                      >
+                        {isDownloadingDocx ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <FileText className="h-3.5 w-3.5 text-blue-500" />
+                            <span className="text-[11px] font-medium">Word</span>
+                          </>
+                        )}
+                      </Button>
                     </div>
-                  </div>
-
-                  {/* Acciones principales de la tarjeta con soporte PDF y Word */}
-                  <div className="pt-4 flex items-center gap-1.5">
-                    <Button
-                      size="sm"
-                      onClick={() => handleOpenResume(profile.id)}
-                      className="flex-1 h-8 text-xs font-semibold rounded-xl"
-                    >
-                      <span>Abrir Editor</span>
-                      <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                    </Button>
-
-                    {/* Botón Descarga Directa PDF */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isDownloadingPdf}
-                      onClick={() => handleDownloadPdf(profile)}
-                      className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-rose-500 hover:text-rose-600 dark:hover:text-rose-400"
-                      title="Descargar PDF Vectorial directo"
-                    >
-                      {isDownloadingPdf ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <>
-                          <FileDown className="h-3.5 w-3.5 text-rose-500" />
-                          <span className="text-[11px] font-medium">PDF</span>
-                        </>
-                      )}
-                    </Button>
-
-                    {/* Botón Descarga Directa Word */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={isDownloadingDocx}
-                      onClick={() => handleDownloadDocx(profile)}
-                      className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
-                      title="Descargar Word DOCX directo"
-                    >
-                      {isDownloadingDocx ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <>
-                          <FileText className="h-3.5 w-3.5 text-blue-500" />
-                          <span className="text-[11px] font-medium">Word</span>
-                        </>
-                      )}
-                    </Button>
                   </div>
                 </div>
               );
@@ -707,9 +798,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* Tarjeta de Añadir Nuevo */}
             <div
               onClick={() => setIsWizardOpen(true)}
-              className="p-6 rounded-2xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 min-h-[220px]"
+              className="p-6 rounded-2xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 min-h-[220px] group"
             >
-              <div className="h-10 w-10 rounded-full bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-foreground mb-2">
+              <div className="h-10 w-10 rounded-2xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-foreground mb-2 group-hover:scale-105 transition-transform">
                 <Plus className="h-5 w-5" />
               </div>
               <h3 className="text-xs font-bold text-foreground">
@@ -729,7 +820,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenChange={setIsWizardOpen}
         onComplete={onOpenWorkspace}
       />
-      <ProfileSettingsModal />
       <AuthModal />
     </div>
   );

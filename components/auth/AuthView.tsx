@@ -56,13 +56,11 @@ export const AuthView: React.FC = () => {
 
       {/* Header Superior Minimalista */}
       <header className="h-16 px-6 sm:px-10 flex items-center justify-between z-10">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-xl bg-zinc-900 dark:bg-zinc-100 flex items-center justify-center text-white dark:text-zinc-950 font-bold shadow-sm transition-transform hover:scale-105 duration-200">
-            <FileCode2 className="h-4 w-4" />
-          </div>
-          <span className="text-sm font-bold tracking-tight text-foreground">
-            SchemaCV
+        <div className="flex items-baseline gap-1 select-none">
+          <span className="text-xl font-extrabold tracking-tight text-foreground font-sans">
+            Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
           </span>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block" />
         </div>
 
         <button
@@ -78,12 +76,9 @@ export const AuthView: React.FC = () => {
       {/* Tarjeta de Autenticación Centrada & Minimalista */}
       <main className="flex-1 flex items-center justify-center p-4 sm:p-6 z-10">
         <div className="w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-7 sm:p-9 rounded-3xl shadow-2xl space-y-6 animate-in fade-in-50 zoom-in-95 duration-300">
-          {/* Logo y Encabezado */}
-          <div className="text-center space-y-1.5">
-            <div className="h-12 w-12 rounded-2xl bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center mx-auto shadow-md transition-all duration-300 hover:rotate-3 hover:scale-105">
-              <FileCode2 className="h-6 w-6" />
-            </div>
-            <h1 className="text-xl font-extrabold tracking-tight text-foreground pt-1">
+          {/* Encabezado */}
+          <div className="text-center space-y-1">
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
               {mode === "login" ? "Bienvenido de nuevo" : "Crear tu cuenta"}
             </h1>
             <p className="text-xs text-muted-foreground">
