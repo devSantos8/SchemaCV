@@ -25,6 +25,7 @@ import {
   Share2,
   CheckCircle2,
   Settings,
+  LayoutDashboard,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -200,31 +201,19 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
 
   return (
     <header className="h-14 border-b border-border/60 bg-background/80 dark:bg-zinc-950/80 backdrop-blur-xl px-4 sm:px-6 flex items-center justify-between z-30 shrink-0 print:hidden transition-all">
-      {/* 1. ZONA IZQUIERDA: LOGO TIPOGRÁFICO, BOTÓN DASHBOARD & SELECTOR DE PERFIL */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        {/* LOGOTIPO TIPOGRÁFICO MINIMALISTA (SIN ICONO DE IA) */}
+      {/* 1. ZONA IZQUIERDA: LOGOTIPO & SELECTOR DE PERFIL / WORKSPACE */}
+      <div className="flex items-center gap-3">
+        {/* LOGOTIPO TIPOGRÁFICO MINIMALISTA (Clic lleva a Mis CVs / Dashboard) */}
         <div
           onClick={onBackToDashboard}
-          className="flex items-baseline gap-1 select-none cursor-pointer group"
-          title="Volver al Dashboard"
+          className="flex items-baseline gap-1 select-none cursor-pointer group py-1"
+          title="Volver a Mis CVs (Dashboard)"
         >
-          <span className="text-lg font-extrabold tracking-tight text-foreground font-sans">
+          <span className="text-lg font-extrabold tracking-tight text-foreground font-sans group-hover:text-primary transition-colors">
             Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
           </span>
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block group-hover:scale-125 transition-transform" />
         </div>
-
-        {onBackToDashboard && (
-          <button
-            type="button"
-            onClick={onBackToDashboard}
-            className="group flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-muted-foreground hover:text-foreground bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/50 transition-all shadow-2xs"
-            title="Volver a la vista del Dashboard"
-          >
-            <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </button>
-        )}
 
         <div className="h-4 w-[1px] bg-border/80 hidden sm:block" />
 
@@ -257,6 +246,18 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64 bg-card/95 backdrop-blur-md border-border">
+            {onBackToDashboard && (
+              <>
+                <DropdownMenuItem
+                  onClick={onBackToDashboard}
+                  className="text-xs font-semibold text-foreground cursor-pointer gap-2 py-2"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span>Ir al Dashboard (Mis CVs)</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
               <span>Versiones de CV</span>
               <Badge variant="outline" className="text-[10px] font-mono">
@@ -316,7 +317,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
             <DropdownMenuContent align="center" className="w-80 bg-card/95 backdrop-blur-md border-border max-h-[80vh] overflow-y-auto scrollbar-thin">
               <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/60">
                 <span className="text-xs font-semibold text-muted-foreground">
-                  Catálogo de 6 Plantillas ATS
+                  Catálogo de 11 Plantillas ATS
                 </span>
                 <button
                   type="button"
@@ -419,24 +420,14 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
         </div>
       </div>
 
-      {/* 3. ZONA DERECHA: ACCIONES DE ALTO IMPACTO & EXPORTACIÓN */}
+      {/* 3. ZONA DERECHA: ACCIONES PRINCIPALES & EXPORTACIÓN */}
       <div className="flex items-center gap-2">
-        {/* Botón Explorar Plantillas */}
-        <button
-          type="button"
-          onClick={() => setTemplateGalleryOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all"
-          title="Ver galería visual de plantillas"
-        >
-          <LayoutGrid className="h-3.5 w-3.5 text-emerald-500" />
-          <span className="hidden sm:inline">Plantillas</span>
-        </button>
-
         {/* Ingesta con IA */}
         <button
           type="button"
           onClick={() => setImportModalOpen(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all"
+          title="Importar CV o contenido con IA"
         >
           <Sparkles className="h-3.5 w-3.5 text-amber-500" />
           <span className="hidden sm:inline">Ingesta IA</span>
@@ -547,16 +538,6 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
         </DropdownMenu>
 
         <div className="h-4 w-[1px] bg-border/80 mx-0.5" />
-
-        {/* Configuración de Perfil */}
-        <button
-          type="button"
-          onClick={onOpenSettings || (() => setSettingsModalOpen(true))}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
-          title="Configuración de Perfil y Cuenta"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
 
         {/* Modo Oscuro */}
         <button

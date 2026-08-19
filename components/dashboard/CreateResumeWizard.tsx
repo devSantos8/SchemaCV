@@ -124,7 +124,7 @@ const STEPS = [
   {
     num: 3,
     title: "Plantilla ATS",
-    desc: "4 formatos aprobados",
+    desc: "11 formatos aprobados",
   },
 ];
 

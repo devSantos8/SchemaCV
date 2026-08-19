@@ -94,7 +94,7 @@ export const TemplateGalleryModal: React.FC = () => {
                   <span>Catálogo de Plantillas ATS</span>
                 </DialogTitle>
                 <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                  6 Plantillas Nativas
+                  11 Plantillas ATS
                 </Badge>
               </div>
               <DialogDescription className="text-xs text-muted-foreground max-w-xl">
@@ -172,7 +172,7 @@ export const TemplateGalleryModal: React.FC = () => {
 
             <div className="flex-1 overflow-auto flex justify-center items-start p-2 sm:p-4">
               <div
-                className={`bg-white text-zinc-950 shadow-2xl rounded-sm border border-zinc-200 transition-all ${
+                className={`bg-white text-zinc-950 shadow-2xl rounded-sm border border-zinc-200 transition-all [color-scheme:light] ${
                   paperSize === "a4" ? "w-[210mm] min-h-[297mm]" : "w-[8.5in] min-h-[11in]"
                 }`}
               >
@@ -202,13 +202,13 @@ export const TemplateGalleryModal: React.FC = () => {
                   }`}
                 >
                   {/* Vista Previa Miniaturizada con Render en Vivo Garantizado */}
-                  <div className="relative h-64 bg-zinc-100 dark:bg-zinc-900 border-b border-border/60 overflow-hidden flex justify-center items-start pt-3">
-                    {/* Caja de Hoja de Papel en Miniatura */}
-                    <div className="w-[230px] h-[290px] overflow-hidden rounded-xs border border-zinc-300 dark:border-zinc-700 shadow-md relative bg-white shrink-0">
+                  <div className="relative h-64 bg-zinc-100/90 dark:bg-zinc-900/90 border-b border-border/60 overflow-hidden flex justify-center items-center p-2.5">
+                    {/* Caja de Hoja de Papel en Miniatura Proporcional */}
+                    <div className="w-[192px] h-[248px] overflow-hidden rounded-xs border border-zinc-300 dark:border-zinc-700 shadow-md relative bg-white shrink-0">
                       <div
-                        className="w-[816px] min-h-[1056px] bg-white text-zinc-950 pointer-events-none select-none absolute top-0 left-0"
+                        className="w-[816px] min-h-[1056px] bg-white text-zinc-900 pointer-events-none select-none absolute top-0 left-0 [color-scheme:light]"
                         style={{
-                          transform: "scale(0.282)",
+                          transform: "scale(0.235)",
                           transformOrigin: "top left",
                         }}
                       >
