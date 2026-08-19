@@ -1389,7 +1389,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <Input
                             value={masterFormData.name || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, name: e.target.value })}
-                            placeholder="ej: Joain Matías Monroy Santos"
+                            placeholder="ej: Carlos Mendoza Rivera"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
@@ -1416,7 +1416,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             type="email"
                             value={masterFormData.email || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, email: e.target.value })}
-                            placeholder="ej: matiasmonroy483@gmail.com"
+                            placeholder="ej: carlos.mendoza@example.com"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
@@ -1429,7 +1429,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <Input
                             value={masterFormData.phone || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, phone: e.target.value })}
-                            placeholder="ej: +56 9 4900 2793"
+                            placeholder="ej: +1 (555) 382-9102"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
@@ -1442,7 +1442,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <Input
                             value={masterFormData.location || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, location: e.target.value })}
-                            placeholder="ej: Santiago, Chile"
+                            placeholder="ej: San Francisco, CA (Remoto)"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
@@ -1455,7 +1455,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <Input
                             value={masterFormData.website || ""}
                             onChange={(e) => setMasterFormData({ ...masterFormData, website: e.target.value })}
-                            placeholder="ej: https://jmonroys.dev"
+                            placeholder="ej: https://carlosmendoza.dev"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                         </div>
@@ -1536,7 +1536,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[idx].username = e.target.value;
                                   setMasterFormData({ ...masterFormData, social_networks: updated });
                                 }}
-                                placeholder="ej: devSantos8"
+                                placeholder="ej: cmendoza-dev"
                                 className="h-8 text-xs rounded-xl font-mono"
                               />
                             </div>
@@ -1552,7 +1552,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                   updated[idx].url = e.target.value;
                                   setMasterFormData({ ...masterFormData, social_networks: updated });
                                 }}
-                                placeholder="https://github.com/tu-usuario"
+                                placeholder="https://github.com/cmendoza-tech"
                                 className="h-8 text-xs rounded-xl"
                               />
                             </div>

@@ -184,7 +184,7 @@ export const AuthModal: React.FC = () => {
                 <div className="relative">
                   <User className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                   <Input
-                    placeholder="ej. Joain Matias Monroy"
+                    placeholder="ej. Carlos Mendoza Rivera"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required

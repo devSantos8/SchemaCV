@@ -130,11 +130,11 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
 
   // Datos del Paso 2
   const [profileName, setProfileName] = useState("CV desde Perfil Base");
-  const [targetRole, setTargetRole] = useState(masterProfileData?.headline || "Desarrollador Full Stack & DevOps");
-  const [candidateName, setCandidateName] = useState(masterProfileData?.name || "Joain Matias Monroy");
-  const [candidateEmail, setCandidateEmail] = useState(masterProfileData?.email || "matiasmonroy483@gmail.com");
-  const [candidatePhone, setCandidatePhone] = useState(masterProfileData?.phone || "+56 9 4900 2793");
-  const [candidateLocation, setCandidateLocation] = useState(masterProfileData?.location || "Santiago, Chile");
+  const [targetRole, setTargetRole] = useState(masterProfileData?.headline || "Senior Full Stack & Cloud Developer");
+  const [candidateName, setCandidateName] = useState(masterProfileData?.name || "Carlos Mendoza Rivera");
+  const [candidateEmail, setCandidateEmail] = useState(masterProfileData?.email || "carlos.mendoza.dev@example.com");
+  const [candidatePhone, setCandidatePhone] = useState(masterProfileData?.phone || "+1 (555) 382-9102");
+  const [candidateLocation, setCandidateLocation] = useState(masterProfileData?.location || "San Francisco, CA (Remoto)");
 
   // Ingesta con IA
   const [file, setFile] = useState<File | null>(null);
@@ -592,7 +592,7 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
                       <Input
                         value={candidateName}
                         onChange={(e) => setCandidateName(e.target.value)}
-                        placeholder="ej. Joain Matias Monroy"
+                        placeholder="ej. Carlos Mendoza Rivera"
                         className="h-8 text-xs pl-8"
                       />
                     </div>

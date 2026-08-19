@@ -250,7 +250,7 @@ export const FormEditor: React.FC = () => {
                 <Input
                   value={resumeData.name || ""}
                   onChange={(e) => handlePersonalChange("name", e.target.value)}
-                  placeholder="ej. Joain Matias Monroy"
+                  placeholder="ej. Carlos Mendoza Rivera"
                   className="h-8 text-xs"
                 />
               </div>
