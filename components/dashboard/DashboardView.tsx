@@ -603,7 +603,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
               </button>
 
-              {/* Botón Perfil Base Maestro */}
+              {/* Botón Perfil Base */}
               <button
                 type="button"
                 onClick={() => {
@@ -623,11 +623,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                       }`
                 }`}
-                title="Perfil Base Maestro"
+                title="Perfil Base"
               >
                 <div className="flex items-center gap-2.5">
                   <Database className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span>Perfil Base Maestro</span>}
+                  {!isSidebarCollapsed && <span>Perfil Base</span>}
                 </div>
                 {!isSidebarCollapsed && (
                   <Badge
@@ -679,7 +679,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
               </button>
 
-              {/* Botón Ingesta IA */}
+              {/* Botón Importar CV */}
               <button
                 type="button"
                 onClick={() => {
@@ -699,11 +699,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                       }`
                 }`}
-                title="Ingesta Asistida por IA"
+                title="Importar CV desde PDF o Texto"
               >
                 <div className="flex items-center gap-2.5">
                   <Sparkles className="h-4 w-4 shrink-0" />
-                  {!isSidebarCollapsed && <span>Ingesta con IA</span>}
+                  {!isSidebarCollapsed && <span>Importar CV</span>}
                 </div>
                 {!isSidebarCollapsed && (
                   <Badge
@@ -712,7 +712,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       activeSection === "ai_import" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
                     }`}
                   >
-                    PDF
+                    IA
                   </Badge>
                 )}
               </button>
@@ -889,9 +889,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <h1 className="text-sm font-bold text-foreground capitalize">
                 {activeSection === "home" && "Panel Principal"}
                 {activeSection === "resumes" && "Mis Currículums"}
-                {activeSection === "master_profile" && "Perfil Base Maestro"}
+                {activeSection === "master_profile" && "Perfil Base"}
                 {activeSection === "templates" && "Catálogo de Plantillas ATS"}
-                {activeSection === "ai_import" && "Ingesta Asistida por IA"}
+                {activeSection === "ai_import" && "Importar CV con IA"}
+                {activeSection === "job_tracker" && "Job Tracker & Match Analyzer"}
                 {activeSection === "settings" && "Configuración"}
               </h1>
               {activeSection === "home" && (

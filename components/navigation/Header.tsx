@@ -430,7 +430,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           title="Importar CV o contenido con IA"
         >
           <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-          <span className="hidden sm:inline">Ingesta IA</span>
+          <span className="hidden sm:inline">Importar CV</span>
         </button>
 
         {/* Dropdown de Exportación */}
