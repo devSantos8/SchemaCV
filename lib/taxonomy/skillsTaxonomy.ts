@@ -170,7 +170,19 @@ export function classifySkillsIntoCategories(rawSkills: string[]): {
     if (match) {
       map[match.category].add(match.name);
     } else {
-      uncategorized.add(trimmed);
+      // Solo agregar a no categorizados si parece una habilidad real (no una oración o párrafo)
+      if (
+        trimmed.length >= 2 &&
+        trimmed.length <= 30 &&
+        trimmed.split(/\s+/).length <= 3 &&
+        !trimmed.includes(".") &&
+        !trimmed.includes(":") &&
+        !trimmed.includes("–") &&
+        !trimmed.includes("—") &&
+        !/^(el|la|los|las|de|en|con|por|para|un|una|construí|integré|desarrollé|optimicé|responsable)/i.test(trimmed)
+      ) {
+        uncategorized.add(trimmed);
+      }
     }
   });
 
