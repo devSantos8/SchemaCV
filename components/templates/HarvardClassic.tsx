@@ -59,7 +59,7 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
       }}
     >
       {/* Encabezado ATS Centrado Clásico */}
-      <header className="text-center pb-2.5 mb-2.5 border-b border-zinc-900">
+      <header className="text-center pb-2 mb-2">
         <h1 className="text-[20pt] font-bold tracking-tight text-zinc-950 uppercase mb-0.5">
           {name || "Tu Nombre Completo"}
         </h1>

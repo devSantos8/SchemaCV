@@ -59,7 +59,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
       }}
     >
       {/* Encabezado Compact Swiss Grid */}
-      <header className="border-b border-zinc-950 pb-2 mb-2.5 flex flex-col sm:flex-row sm:items-end justify-between gap-1">
+      <header className="pb-1.5 mb-2 flex flex-col sm:flex-row sm:items-end justify-between gap-1">
         <div>
           <h1 className="text-[19pt] font-black tracking-tighter text-zinc-950 uppercase leading-none">
             {name || "Nombre Completo"}

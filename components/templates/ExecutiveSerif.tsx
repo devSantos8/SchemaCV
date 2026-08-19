@@ -59,7 +59,7 @@ export const ExecutiveSerif: React.FC<TemplateProps> = ({ data, paperSize = "let
       }}
     >
       {/* Encabezado Formal Ejecutivo Centrado */}
-      <header className="text-center pb-3 mb-3 border-b-2 border-zinc-800">
+      <header className="text-center pb-2 mb-2">
         <h1 className="text-[21pt] font-extrabold tracking-wide text-zinc-950 uppercase mb-1">
           {name || "Nombre Completo"}
         </h1>

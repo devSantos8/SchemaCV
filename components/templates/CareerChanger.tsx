@@ -59,7 +59,7 @@ export const CareerChanger: React.FC<TemplateProps> = ({ data, paperSize = "lett
       }}
     >
       {/* Encabezado Career Changer */}
-      <header className="border-b-2 border-zinc-900 pb-3 mb-3">
+      <header className="pb-2 mb-2.5">
         <h1 className="text-[20pt] font-black tracking-tight text-zinc-950 uppercase">
           {name || "Nombre Completo"}
         </h1>

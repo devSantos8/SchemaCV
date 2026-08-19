@@ -59,7 +59,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
       }}
     >
       {/* Header Stanford / Silicon Valley */}
-      <header className="border-b-2 border-zinc-900 pb-2.5 mb-3.5">
+      <header className="pb-2 mb-2.5">
         <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
           <div>
             <h1 className="text-2xl font-black tracking-tight text-zinc-950 uppercase">

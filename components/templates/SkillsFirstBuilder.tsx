@@ -59,7 +59,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
       }}
     >
       {/* Header Builder */}
-      <header className="border-b-2 border-zinc-900 pb-2 mb-3 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1">
+      <header className="pb-2 mb-2 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-zinc-950 uppercase">
             {name || "Tu Nombre"}

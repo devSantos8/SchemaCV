@@ -60,7 +60,7 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
       }}
     >
       {/* Encabezado Académico Internacional Formal */}
-      <header className="text-center pb-2.5 mb-3 border-b border-zinc-950">
+      <header className="text-center pb-2 mb-2.5">
         <h1 className="text-[20pt] font-bold text-zinc-950 uppercase tracking-tight mb-0.5">
           {name || "Nombre Completo"}
         </h1>

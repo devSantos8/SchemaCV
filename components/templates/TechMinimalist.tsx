@@ -59,7 +59,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
       }}
     >
       {/* Header Compacto con Identidad Técnica */}
-      <header className="border-b border-zinc-200 pb-3 mb-3">
+      <header className="pb-2.5 mb-2.5">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-zinc-950">

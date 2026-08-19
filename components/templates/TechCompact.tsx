@@ -59,7 +59,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
       }}
     >
       {/* Header Compacto Tech en 1 Sola Línea */}
-      <header className="border-b border-zinc-950 pb-2 mb-2 flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
+      <header className="pb-2 mb-2 flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
         <div>
           <h1 className="text-[18pt] font-black tracking-tight text-zinc-950 uppercase">
             {name || "Nombre Completo"}
