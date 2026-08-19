@@ -427,52 +427,58 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <aside
         className={`fixed inset-y-0 left-0 z-40 border-r border-border bg-card/95 backdrop-blur-xl flex flex-col justify-between transition-all duration-200 lg:static lg:translate-x-0 ${
           isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${isSidebarCollapsed ? "w-20" : "w-64"}`}
+        } ${isSidebarCollapsed ? "w-[68px]" : "w-64"}`}
       >
-        <div className="flex flex-col p-4 gap-6">
-          {/* Header del Sidebar: Logo Centrado y Botón Colapsar */}
-          <div className="relative flex items-center justify-center min-h-[40px] pt-1">
-            <div
-              onClick={() => setActiveSection("home")}
-              className="flex items-baseline gap-1 cursor-pointer select-none group"
-            >
-              {!isSidebarCollapsed ? (
-                <>
-                  <span className="text-xl font-black tracking-tight text-foreground font-sans group-hover:opacity-90">
-                    Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
-                  </span>
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block animate-pulse" />
-                </>
-              ) : (
-                <div className="h-9 w-9 rounded-xl bg-foreground text-background flex items-center justify-center font-black text-sm shadow-sm">
-                  S<span className="text-emerald-400">.</span>
-                </div>
-              )}
+        <div className={`flex flex-col ${isSidebarCollapsed ? "px-2 py-4 gap-5" : "p-4 gap-6"}`}>
+          {/* Header del Sidebar */}
+          {!isSidebarCollapsed ? (
+            <div className="flex items-center justify-between min-h-[40px] px-1">
+              <div
+                onClick={() => setActiveSection("home")}
+                className="flex items-baseline gap-1 cursor-pointer select-none group"
+              >
+                <span className="text-xl font-black tracking-tight text-foreground font-sans group-hover:opacity-90">
+                  Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
+                </span>
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block animate-pulse" />
+              </div>
+
+              {/* Botón Contraer Sidebar (Desktop) */}
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed(true)}
+                className="hidden lg:flex p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                title="Contraer menú lateral"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </button>
+
+              {/* Botón Cerrar (Móvil) */}
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-
-            {/* Botón de Colapsar Sidebar (Desktop) */}
-            <button
-              type="button"
-              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-              className="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              title={isSidebarCollapsed ? "Expandir menú lateral" : "Contraer menú lateral"}
-            >
-              {isSidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-            </button>
-
-            {/* Botón Cerrar (Móvil) */}
-            <button
-              type="button"
-              onClick={() => setIsMobileSidebarOpen(false)}
-              className="lg:hidden absolute right-0 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center min-h-[40px]">
+              <button
+                type="button"
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="h-10 w-10 rounded-xl bg-foreground text-background flex items-center justify-center font-black text-xs shadow-xs hover:opacity-90 transition-all cursor-pointer group"
+                title="Expandir menú lateral"
+              >
+                <span className="group-hover:hidden">S<span className="text-emerald-400">.</span></span>
+                <PanelLeftOpen className="h-4 w-4 hidden group-hover:block" />
+              </button>
+            </div>
+          )}
 
           {/* Menú de Navegación por Apartados */}
-          <nav className="space-y-4">
-            <div className="space-y-1">
+          <nav className={isSidebarCollapsed ? "space-y-2 flex flex-col items-center" : "space-y-4"}>
+            <div className={`space-y-1 ${isSidebarCollapsed ? "w-full flex flex-col items-center" : ""}`}>
               {!isSidebarCollapsed && (
                 <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1 font-mono">
                   Principal
@@ -486,17 +492,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setActiveSection("home");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center ${
-                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
-                } rounded-xl text-xs font-semibold transition-all ${
-                  activeSection === "home"
-                    ? "bg-foreground text-background shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "home"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "home"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
                 }`}
-                title={isSidebarCollapsed ? "Inicio" : undefined}
+                title="Inicio"
               >
                 <div className="flex items-center gap-2.5">
-                  <Home className="h-4 w-4" />
+                  <Home className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Inicio</span>}
                 </div>
               </button>
@@ -508,17 +520,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setActiveSection("resumes");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center ${
-                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
-                } rounded-xl text-xs font-semibold transition-all ${
-                  activeSection === "resumes"
-                    ? "bg-foreground text-background shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "resumes"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "resumes"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
                 }`}
-                title={isSidebarCollapsed ? "Mis Currículums" : undefined}
+                title={`Mis Currículums (${profiles.length})`}
               >
                 <div className="flex items-center gap-2.5">
-                  <FileText className="h-4 w-4" />
+                  <FileText className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Mis Currículums</span>}
                 </div>
                 {!isSidebarCollapsed && (
@@ -540,17 +558,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setActiveSection("master_profile");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center ${
-                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
-                } rounded-xl text-xs font-semibold transition-all ${
-                  activeSection === "master_profile"
-                    ? "bg-foreground text-background shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "master_profile"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "master_profile"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
                 }`}
-                title={isSidebarCollapsed ? "Perfil Base Maestro" : undefined}
+                title="Perfil Base Maestro"
               >
                 <div className="flex items-center gap-2.5">
-                  <Database className="h-4 w-4 text-emerald-500" />
+                  <Database className="h-4 w-4 text-emerald-500 shrink-0" />
                   {!isSidebarCollapsed && <span>Perfil Base Maestro</span>}
                 </div>
                 {!isSidebarCollapsed && (
@@ -567,17 +591,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setActiveSection("templates");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center ${
-                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
-                } rounded-xl text-xs font-semibold transition-all ${
-                  activeSection === "templates"
-                    ? "bg-foreground text-background shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "templates"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "templates"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
                 }`}
-                title={isSidebarCollapsed ? "Plantillas ATS" : undefined}
+                title="Catálogo de Plantillas ATS"
               >
                 <div className="flex items-center gap-2.5">
-                  <LayoutGrid className="h-4 w-4 text-amber-500" />
+                  <LayoutGrid className="h-4 w-4 text-amber-500 shrink-0" />
                   {!isSidebarCollapsed && <span>Plantillas ATS</span>}
                 </div>
                 {!isSidebarCollapsed && (
@@ -592,17 +622,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setActiveSection("ai_import");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center ${
-                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
-                } rounded-xl text-xs font-semibold transition-all ${
-                  activeSection === "ai_import"
-                    ? "bg-foreground text-background shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "ai_import"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "ai_import"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
                 }`}
-                title={isSidebarCollapsed ? "Ingesta con IA" : undefined}
+                title="Ingesta Asistida por IA"
               >
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="h-4 w-4 text-cyan-500" />
+                  <Sparkles className="h-4 w-4 text-cyan-500 shrink-0" />
                   {!isSidebarCollapsed && <span>Ingesta con IA</span>}
                 </div>
                 {!isSidebarCollapsed && (
@@ -613,7 +649,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </button>
             </div>
 
-            <div className="space-y-1">
+            <div className={`space-y-1 ${isSidebarCollapsed ? "w-full flex flex-col items-center pt-2 border-t border-border/40" : ""}`}>
               {!isSidebarCollapsed && (
                 <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1 font-mono">
                   Ajustes
@@ -626,17 +662,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   setActiveSection("settings");
                   setIsMobileSidebarOpen(false);
                 }}
-                className={`w-full flex items-center ${
-                  isSidebarCollapsed ? "justify-center px-0 py-2.5" : "justify-between px-3 py-2"
-                } rounded-xl text-xs font-semibold transition-all ${
-                  activeSection === "settings"
-                    ? "bg-foreground text-background shadow-xs"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "settings"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "settings"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
                 }`}
-                title={isSidebarCollapsed ? "Configuración" : undefined}
+                title="Configuración"
               >
                 <div className="flex items-center gap-2.5">
-                  <Settings className="h-4 w-4" />
+                  <Settings className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Configuración</span>}
                 </div>
               </button>
@@ -644,19 +686,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </nav>
         </div>
 
-        {/* Footer del Sidebar: Tarjeta de Cuenta con Alta Presencia */}
-        <div className="p-3 border-t border-border/80 bg-zinc-50/80 dark:bg-zinc-900/60">
+        {/* Footer del Sidebar: Tarjeta de Cuenta */}
+        <div className={`border-t border-border/80 bg-zinc-50/80 dark:bg-zinc-900/60 ${isSidebarCollapsed ? "p-2 flex justify-center" : "p-3"}`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className={`w-full flex items-center ${
-                  isSidebarCollapsed ? "justify-center p-1.5" : "p-2.5 justify-between"
-                } rounded-2xl bg-card border border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-2xs hover:shadow-xs transition-all text-left group`}
+                className={`flex items-center transition-all cursor-pointer group ${
+                  isSidebarCollapsed
+                    ? "h-10 w-10 rounded-xl justify-center hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 relative"
+                    : "w-full p-2.5 justify-between rounded-2xl bg-card border border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-2xs hover:shadow-xs text-left"
+                }`}
+                title={isSidebarCollapsed ? `${user?.name || "Joain Monroy"} (${user?.email || "matiasmonroy483@gmail.com"})` : undefined}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="relative shrink-0">
-                    <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-bold text-xs shadow-xs">
+                    <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
                       {user?.name ? user.name.charAt(0).toUpperCase() : "J"}
                     </div>
                     <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
@@ -679,7 +724,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-card border-border p-1.5 shadow-xl">
+            <DropdownMenuContent align={isSidebarCollapsed ? "center" : "end"} side={isSidebarCollapsed ? "right" : "top"} className="w-56 bg-card border-border p-1.5 shadow-xl">
               <DropdownMenuLabel className="text-xs">
                 <div className="font-bold text-foreground">{user?.name || "Joain Monroy"}</div>
                 <div className="text-[10px] text-muted-foreground font-mono truncate">{user?.email || "matiasmonroy483@gmail.com"}</div>
