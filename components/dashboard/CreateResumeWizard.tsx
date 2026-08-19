@@ -189,21 +189,31 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
     }
   };
 
-  const handleNextFromStep1 = () => {
-    if (startMethod === "ai_upload" || startMethod === "ai_text") {
-      handleProcessAi();
-    } else if (startMethod === "blank") {
-      setProfileName("Nuevo CV en Blanco");
-      setTargetRole("Ingeniero de Software");
-      setStep(2);
-    } else {
-      const preset = PRESET_ROLES.find((p) => p.id === startMethod);
-      if (preset) {
-        setProfileName(`Perfil ${preset.title}`);
-        setTargetRole(preset.roleName);
-        setSelectedTemplate(preset.template);
+  const handleNext = () => {
+    if (step === 1) {
+      if (startMethod === "ai_upload" || startMethod === "ai_text") {
+        handleProcessAi();
+      } else if (startMethod === "blank") {
+        setProfileName("Nuevo CV en Blanco");
+        setTargetRole("Ingeniero de Software");
+        setStep(2);
+      } else {
+        const preset = PRESET_ROLES.find((p) => p.id === startMethod);
+        if (preset) {
+          setProfileName(`Perfil ${preset.title}`);
+          setTargetRole(preset.roleName);
+          setSelectedTemplate(preset.template);
+        }
+        setStep(2);
       }
-      setStep(2);
+    } else if (step === 2) {
+      if (!candidateName.trim()) {
+        setCandidateName("Candidato Profesional");
+      }
+      if (!targetRole.trim()) {
+        setTargetRole("Ingeniero de Software");
+      }
+      setStep(3);
     }
   };
 
@@ -697,11 +707,13 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
               {step < 3 ? (
                 <Button
                   size="sm"
-                  onClick={handleNextFromStep1}
+                  onClick={handleNext}
                   disabled={
                     isLoadingAi ||
-                    (startMethod === "ai_upload" && !file) ||
-                    (startMethod === "ai_text" && !pastedText.trim())
+                    (step === 1 && (
+                      (startMethod === "ai_upload" && !file) ||
+                      (startMethod === "ai_text" && !pastedText.trim())
+                    ))
                   }
                   className="h-8 px-4 text-xs gap-1.5 font-semibold rounded-lg bg-foreground text-background shadow-sm hover:opacity-90 transition-all"
                 >
