@@ -130,8 +130,8 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
                             {proj.name}
                           </span>
                           {proj.technologies && proj.technologies.length > 0 && (
-                            <span className="font-mono text-[7.5pt] text-zinc-600 bg-zinc-100 px-1 py-0.2 rounded border border-zinc-200">
-                              {proj.technologies.join(", ")}
+                            <span className="font-mono text-[8pt] text-zinc-500">
+                              ({proj.technologies.join(", ")})
                             </span>
                           )}
                         </div>

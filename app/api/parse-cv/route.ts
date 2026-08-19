@@ -19,15 +19,22 @@ function normalizeSectionHeading(str: string): string {
     .trim();
 }
 
-const isBullet = (l: string) =>
-  /^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa.]\s*/.test(l) ||
-  l.startsWith("•") ||
-  l.startsWith("-") ||
-  l.startsWith("*") ||
-  l.startsWith("·");
+const isBullet = (l: string) => {
+  const t = l.trim();
+  return (
+    /^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa.\u2013\u2014\u25cb\u25e6\u25aa]\s*/.test(t) ||
+    t.startsWith("•") ||
+    t.startsWith("-") ||
+    t.startsWith("*") ||
+    t.startsWith("·") ||
+    t.startsWith("–") ||
+    t.startsWith("—") ||
+    /^(?:Constru[ií]|Integr[eé]|Document[eé]|Desarroll[eé]|Automatic[eé]|Optimiz[eé]|Lider[eé]|Dise[nñ][eé]|Cre[eé]|Implement[eé]|Configur[eé]|Mantuve|Gestion[eé]|Coordin[eé]|Particip[eé]|Built|Developed|Designed|Implemented|Created|Led|Managed|Maintained|Automated|Optimized)\b/i.test(t)
+  );
+};
 
 const cleanBullet = (l: string) =>
-  l.replace(/^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa.]\s*/, "").trim();
+  l.replace(/^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa.\u2013\u2014\u25cb\u25e6\u25aa]\s*/, "").trim();
 
 const DATE_REGEX =
   /(?:(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\s*(\d{4})?\s*[-–—]\s*(Presente|Present|Actualidad|\d{4}|[A-Za-z]+ \d{4}))/i;
@@ -271,7 +278,6 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     for (const line of experienceLines) {
       const bullet = isBullet(line);
       const dateMatch = line.match(DATE_REGEX);
-      const hasJobKeyword = /(?:Banco|Empresa|Company|Bci|Santander|LATAM|SpA|Ltda|Inc|Corp|Ingeniero|Developer|Engineer|Consultor|Analista)/i.test(line);
 
       if (bullet) {
         if (!currentBlock) {
@@ -279,17 +285,12 @@ function parseResumeHeuristically(rawText: string): ResumeData {
           blocks.push(currentBlock);
         }
         currentBlock.bullets.push(cleanBullet(line));
-      } else if (dateMatch || (hasJobKeyword && currentBlock?.bullets && currentBlock.bullets.length > 0)) {
-        if (currentBlock && currentBlock.bullets.length > 0) {
-          currentBlock = { headerParts: [line], bullets: [] };
-          blocks.push(currentBlock);
-        } else if (currentBlock) {
-          currentBlock.headerParts.push(line);
-        } else {
-          currentBlock = { headerParts: [line], bullets: [] };
-          blocks.push(currentBlock);
-        }
+      } else if (dateMatch && currentBlock && currentBlock.bullets.length > 0 && line.length < 75) {
+        // Nuevo puesto laboral legítimo con fecha
+        currentBlock = { headerParts: [line], bullets: [] };
+        blocks.push(currentBlock);
       } else if (currentBlock && currentBlock.bullets.length > 0) {
+        // Continuación de viñeta previa
         const lastIdx = currentBlock.bullets.length - 1;
         currentBlock.bullets[lastIdx] = `${currentBlock.bullets[lastIdx]} ${line.trim()}`;
       } else {
@@ -306,12 +307,12 @@ function parseResumeHeuristically(rawText: string): ResumeData {
       const combinedHeader = block.headerParts.join(" – ");
       const dateMatch = combinedHeader.match(DATE_REGEX);
 
-      let startDate = "Mar 2024";
-      let endDate = "Presente";
+      let startDate = "Mar 2026";
+      let endDate = "presente";
       if (dateMatch) {
         const parts = dateMatch[0].split(/[-–—]/).map((d) => d.trim());
-        startDate = parts[0] || "Mar 2024";
-        endDate = parts[1] || "Presente";
+        startDate = parts[0] || "Mar 2026";
+        endDate = parts[1] || "presente";
       }
 
       const cleanHeader = combinedHeader.replace(DATE_REGEX, "").trim();
@@ -346,7 +347,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
         position,
         start_date: startDate,
         end_date: endDate,
-        current: endDate.toLowerCase().includes("present"),
+        current: endDate.toLowerCase().includes("present") || endDate.toLowerCase().includes("actual"),
         location: expLocation,
         highlights,
       });
@@ -395,7 +396,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
 
     projBlocks.forEach((pb, pIdx) => {
       const parts = pb.header.split(/[-–—|]/).map((p) => p.trim()).filter(Boolean);
-      const name = parts[0] || "Pulsar - Panel de Control y Telemetría";
+      const name = parts[0]?.replace(/^proyectos?\s*:?\s*/i, "").trim() || "Pulsar - Panel de Control y Telemetría";
 
       const fullText = `${pb.header} ${pb.bullets.join(" ")}`;
       const detectedTechs: string[] = [];
@@ -424,7 +425,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
       projects.push({
         id: `proj-${Date.now()}-${pIdx}`,
         name,
-        description: pb.bullets[0] || pb.header,
+        description: pb.bullets.length === 0 ? pb.header : "",
         technologies: detectedTechs.length > 0 ? detectedTechs : ["Docker", "GitHub Actions", "Prisma"],
         highlights: pb.bullets,
         start_date: dateMatch ? dateMatch[0] : undefined,
@@ -473,7 +474,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     });
   }
 
-  // 8. Certificaciones con Reensamblaje Multilínea
+  // 8. Certificaciones con Reensamblaje Multilínea y Fechas Precisas
   const certLines = sections.filter((s) => s.type === "certifications").flatMap((s) => s.lines);
   const certifications: CertificationEntry[] = [];
 
@@ -491,21 +492,25 @@ function parseResumeHeuristically(rawText: string): ResumeData {
 
     for (const clean of certBullets) {
       if (clean.length > 3) {
-        const matchWithIssuer = clean.match(/^([^(:]+)(?:\(([^)]+)\))?(?::\s*(.+))?$/);
+        const yearMatch = clean.match(/\b(20\d{2}|19\d{2})\b/);
+        const certDate = yearMatch ? yearMatch[0] : undefined;
+        const cleanWithoutYear = certDate ? clean.replace(/\b(20\d{2}|19\d{2})\b/, "").replace(/[-–—]\s*$/, "").trim() : clean;
+
+        const matchWithIssuer = cleanWithoutYear.match(/^([^(:]+)(?:\(([^)]+)\))?(?::\s*(.+))?$/);
         if (matchWithIssuer) {
           certifications.push({
             id: `cert-${Date.now()}-${certifications.length}`,
             name: matchWithIssuer[1].trim(),
-            issuer: matchWithIssuer[2]?.trim() || (clean.includes("AWS") ? "AWS" : "LinkedIn Learning / DataCamp"),
+            issuer: matchWithIssuer[2]?.trim() || (clean.includes("AWS") ? "AWS" : clean.includes("Coursera") ? "Coursera" : "LinkedIn Learning / DataCamp"),
             summary: matchWithIssuer[3]?.trim(),
-            date: "2024",
+            date: certDate,
           });
         } else {
           certifications.push({
             id: `cert-${Date.now()}-${certifications.length}`,
-            name: clean,
+            name: cleanWithoutYear,
             issuer: clean.includes("AWS") ? "AWS" : "Oficial",
-            date: "2024",
+            date: certDate,
           });
         }
       }
@@ -635,7 +640,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
       {
         id: `proj-${Date.now()}-0`,
         name: "Pulsar - Panel de Control y Telemetría",
-        description: "Desarrollé un dashboard de telemetría en tiempo real que centraliza repositorios, detecta configuraciones en Vercel y Docker, y monitorea healthchecks vía API de GitHub.",
+        description: "",
         technologies: ["Docker", "GitHub Actions", "OAuth 2.0", "Prisma", "Vercel", "API de GitHub"],
         highlights: [
           "Desarrollé un dashboard de telemetría en tiempo real que centraliza repositorios, detecta configuraciones en Vercel y Docker, y monitorea healthchecks vía API de GitHub.",
@@ -665,26 +670,26 @@ function parseResumeHeuristically(rawText: string): ResumeData {
         name: "Google AI Essentials",
         issuer: "Coursera",
         summary: "Prompting, GenIA e Integración de Modelos de IA",
-        date: "2024",
+        date: undefined,
       },
       {
         id: `cert-${Date.now()}-1`,
         name: "AWS Academy Graduate",
         issuer: "AWS",
         summary: "Cloud Foundations, Cloud Developing, Generative AI Foundations, Machine Learning, NLP",
-        date: "2024",
+        date: undefined,
       },
       {
         id: `cert-${Date.now()}-2`,
         name: "DevOps Essential",
         issuer: "LinkedIn Learning",
-        date: "2024",
+        date: undefined,
       },
       {
         id: `cert-${Date.now()}-3`,
         name: "Git Fundamentals",
         issuer: "DataCamp",
-        date: "2024",
+        date: undefined,
       },
     ],
     custom_sections: [],

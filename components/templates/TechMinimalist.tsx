@@ -116,22 +116,15 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                 <h2 className="text-[9pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-200 pb-0.5 mb-1.5 flex items-center justify-between">
                   <span>{labels.skills}</span>
                 </h2>
-                <div className="grid grid-cols-1 gap-1 text-[8.5pt]">
+                <div className="space-y-1 text-[8.5pt]">
                   {skills.map((cat) => (
-                    <div key={cat.id || cat.category} className="flex flex-wrap items-baseline gap-x-1.5">
-                      <span className="font-semibold text-zinc-900 min-w-[130px]">
+                    <div key={cat.id || cat.category} className="leading-snug">
+                      <span className="font-semibold text-zinc-900 mr-1.5">
                         {cat.category}:
                       </span>
-                      <div className="flex flex-wrap gap-1">
-                        {cat.skills.map((skill, sIdx) => (
-                          <span
-                            key={sIdx}
-                            className="bg-zinc-100 text-zinc-800 px-1.5 py-0.2 rounded font-mono text-[7.5pt] border border-zinc-200"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+                      <span className="text-zinc-700">
+                        {cat.skills.join(", ")}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -186,10 +179,15 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                   {projects.map((proj) => (
                     <div key={proj.id} className="page-break-avoid">
                       <div className="flex justify-between items-baseline">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-[9pt] text-zinc-950">
                             {proj.name}
                           </span>
+                          {proj.technologies && proj.technologies.length > 0 && (
+                            <span className="font-mono text-[8pt] text-zinc-500">
+                              ({proj.technologies.join(", ")})
+                            </span>
+                          )}
                           {proj.github_url && (
                             <a
                               href={proj.github_url}
@@ -217,20 +215,8 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                           </span>
                         )}
                       </div>
-                      {proj.technologies && proj.technologies.length > 0 && (
-                        <div className="flex flex-wrap gap-1 my-0.5">
-                          {proj.technologies.map((t, idx) => (
-                            <span
-                              key={idx}
-                              className="text-[7.5pt] font-mono text-zinc-600 bg-zinc-50 border border-zinc-200 px-1 rounded"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      {proj.description && (
-                        <p className="text-[8.5pt] text-zinc-700 mb-0.5">{proj.description}</p>
+                      {proj.description && (!proj.highlights || proj.highlights.length === 0 || proj.highlights[0] !== proj.description) && (
+                        <p className="text-[8.5pt] text-zinc-700 my-0.5">{proj.description}</p>
                       )}
                       {proj.highlights && proj.highlights.length > 0 && (
                         <ul className="list-disc ml-4 space-y-0.5 text-[8.5pt] text-zinc-700 leading-snug">
