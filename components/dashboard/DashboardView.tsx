@@ -595,7 +595,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <Badge
                     variant="outline"
                     className={`text-[10px] font-mono px-1.5 py-0 ${
-                      activeSection === "resumes" ? "border-background/30 text-background" : "border-border text-muted-foreground"
+                      activeSection === "resumes" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
                     }`}
                   >
                     {profiles.length}
@@ -626,13 +626,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 title="Perfil Base Maestro"
               >
                 <div className="flex items-center gap-2.5">
-                  <Database className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <Database className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Perfil Base Maestro</span>}
                 </div>
                 {!isSidebarCollapsed && (
-                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-mono px-1.5 py-0 ${
+                      activeSection === "master_profile" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
                     Base
-                  </span>
+                  </Badge>
                 )}
               </button>
 
@@ -659,11 +664,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 title="Catálogo de Plantillas ATS"
               >
                 <div className="flex items-center gap-2.5">
-                  <LayoutGrid className="h-4 w-4 text-amber-500 shrink-0" />
+                  <LayoutGrid className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Plantillas ATS</span>}
                 </div>
                 {!isSidebarCollapsed && (
-                  <span className="text-[10px] font-mono opacity-80">6</span>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-mono px-1.5 py-0 ${
+                      activeSection === "templates" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
+                    11
+                  </Badge>
                 )}
               </button>
 
@@ -690,11 +702,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 title="Ingesta Asistida por IA"
               >
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="h-4 w-4 text-cyan-500 shrink-0" />
+                  <Sparkles className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Ingesta con IA</span>}
                 </div>
                 {!isSidebarCollapsed && (
-                  <Badge variant="outline" className="text-[9px] font-mono">
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] font-mono px-1.5 py-0 ${
+                      activeSection === "ai_import" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
                     PDF
                   </Badge>
                 )}
@@ -723,11 +740,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 title="Job Tracker & Match Analyzer"
               >
                 <div className="flex items-center gap-2.5">
-                  <Briefcase className="h-4 w-4 text-violet-500 shrink-0" />
+                  <Briefcase className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Job Tracker</span>}
                 </div>
                 {!isSidebarCollapsed && (
-                  <Badge variant="outline" className="text-[9px] font-mono text-violet-600 border-violet-300 dark:border-violet-800">
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] font-mono px-1.5 py-0 ${
+                      activeSection === "job_tracker" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
                     Nuevo
                   </Badge>
                 )}
