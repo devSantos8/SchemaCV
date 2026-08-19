@@ -14,6 +14,8 @@ import {
   Sparkles,
   ExternalLink,
   ChevronDown,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import {
@@ -39,6 +41,48 @@ import { SectionOrganizer } from "./SectionOrganizer";
 
 export const FormEditor: React.FC = () => {
   const { resumeData, setResumeData } = useResumeStore();
+  const hiddenSections = new Set(resumeData.hidden_sections || []);
+
+  // Alternar visibilidad de sección completa
+  const handleToggleSectionVisibility = (sectionId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const nextHidden = new Set(resumeData.hidden_sections || []);
+    if (nextHidden.has(sectionId)) {
+      nextHidden.delete(sectionId);
+    } else {
+      nextHidden.add(sectionId);
+    }
+    setResumeData({ hidden_sections: Array.from(nextHidden) });
+  };
+
+  // Alternar visibilidad de entradas individuales
+  const handleToggleExperienceVisibility = (id: string) => {
+    const updated = (resumeData.experience || []).map((exp) =>
+      exp.id === id ? { ...exp, hidden: !exp.hidden } : exp
+    );
+    setResumeData({ experience: updated });
+  };
+
+  const handleToggleProjectVisibility = (id: string) => {
+    const updated = (resumeData.projects || []).map((p) =>
+      p.id === id ? { ...p, hidden: !p.hidden } : p
+    );
+    setResumeData({ projects: updated });
+  };
+
+  const handleToggleEducationVisibility = (id: string) => {
+    const updated = (resumeData.education || []).map((e) =>
+      e.id === id ? { ...e, hidden: !e.hidden } : e
+    );
+    setResumeData({ education: updated });
+  };
+
+  const handleToggleCertificationVisibility = (id: string) => {
+    const updated = (resumeData.certifications || []).map((c) =>
+      c.id === id ? { ...c, hidden: !c.hidden } : c
+    );
+    setResumeData({ certifications: updated });
+  };
 
   // 1. Manejadores de Información Personal
   const handlePersonalChange = (field: string, value: string) => {
@@ -250,7 +294,7 @@ export const FormEditor: React.FC = () => {
                 <Input
                   value={resumeData.name || ""}
                   onChange={(e) => handlePersonalChange("name", e.target.value)}
-                  placeholder="ej. Joain Matias Monroy"
+                  placeholder="ej. Carlos Mendoza Rivera"
                   className="h-8 text-xs"
                 />
               </div>
@@ -310,16 +354,41 @@ export const FormEditor: React.FC = () => {
             {/* Resumen Profesional */}
             <div className="space-y-1 pt-1">
               <div className="flex items-center justify-between">
-                <Label className="text-xs">Resumen Profesional (Bio / Summary)</Label>
-                <span className="text-[10px] text-muted-foreground">
-                  ATS: 2-4 líneas concisas con tu propuesta de valor
-                </span>
+                <div className="flex items-center gap-2">
+                  <Label className="text-xs font-semibold">Resumen Profesional (Bio / Summary)</Label>
+                  {hiddenSections.has("summary") && (
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 font-medium">
+                      Oculto en CV
+                    </span>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleToggleSectionVisibility("summary", e)}
+                  className={`h-6 px-1.5 gap-1 text-[11px] ${
+                    hiddenSections.has("summary") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title={hiddenSections.has("summary") ? "Mostrar resumen en el CV" : "Ocultar resumen del CV"}
+                >
+                  {hiddenSections.has("summary") ? (
+                    <>
+                      <EyeOff className="h-3 w-3" />
+                      <span className="text-[10px]">Oculto</span>
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-3 w-3 text-emerald-600" />
+                      <span className="text-[10px] text-emerald-600">Visible</span>
+                    </>
+                  )}
+                </Button>
               </div>
               <Textarea
                 value={resumeData.summary || ""}
                 onChange={(e) => handlePersonalChange("summary", e.target.value)}
                 placeholder="Ingeniero de Software con experiencia en..."
-                className="text-xs min-h-[70px] resize-y"
+                className={`text-xs min-h-[70px] resize-y ${hiddenSections.has("summary") ? "opacity-60 bg-zinc-50 dark:bg-zinc-900/50" : ""}`}
               />
             </div>
 
@@ -384,7 +453,7 @@ export const FormEditor: React.FC = () => {
               <div className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 text-foreground">
                 <ListOrdered className="h-4 w-4" />
               </div>
-              <span>Organizador Modular de Secciones (Drag & Drop)</span>
+              <span>Organizador Modular & Visibilidad (Drag & Drop)</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
@@ -395,14 +464,62 @@ export const FormEditor: React.FC = () => {
         {/* 3. COMPETENCIAS TÉCNICAS (TAXONOMÍA) */}
         <AccordionItem
           value="skills"
-          className="border border-border rounded-lg bg-card overflow-hidden px-4"
+          className={`border rounded-lg overflow-hidden px-4 transition-all ${
+            hiddenSections.has("skills")
+              ? "bg-zinc-50/40 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800"
+              : "border-border bg-card"
+          }`}
         >
           <AccordionTrigger className="hover:no-underline py-3">
-            <div className="flex items-center gap-2.5 text-sm font-semibold">
-              <div className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 text-foreground">
-                <Layers className="h-4 w-4" />
+            <div className="flex items-center justify-between w-full pr-3">
+              <div className="flex items-center gap-2.5 text-sm font-semibold">
+                <div className={`p-1 rounded ${
+                  hiddenSections.has("skills")
+                    ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-foreground"
+                }`}>
+                  <Layers className="h-4 w-4" />
+                </div>
+                <span className={hiddenSections.has("skills") ? "line-through text-muted-foreground" : ""}>
+                  Competencias Técnicas & Taxonomía de Skills
+                </span>
+                {hiddenSections.has("skills") && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
+                    Sección Oculta
+                  </span>
+                )}
               </div>
-              <span>Competencias Técnicas & Taxonomía de Skills</span>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("skills", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("skills");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
+                  hiddenSections.has("skills") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={hiddenSections.has("skills") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
+              >
+                {hiddenSections.has("skills") ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Oculta</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
+                  </>
+                )}
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4">
@@ -413,19 +530,65 @@ export const FormEditor: React.FC = () => {
         {/* 4. EXPERIENCIA LABORAL */}
         <AccordionItem
           value="experience"
-          className="border border-border rounded-lg bg-card overflow-hidden px-4"
+          className={`border rounded-lg overflow-hidden px-4 transition-all ${
+            hiddenSections.has("experience")
+              ? "bg-zinc-50/40 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800"
+              : "border-border bg-card"
+          }`}
         >
           <AccordionTrigger className="hover:no-underline py-3">
             <div className="flex items-center justify-between w-full pr-3">
               <div className="flex items-center gap-2.5 text-sm font-semibold">
-                <div className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 text-foreground">
+                <div className={`p-1 rounded ${
+                  hiddenSections.has("experience")
+                    ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-foreground"
+                }`}>
                   <Briefcase className="h-4 w-4" />
                 </div>
-                <span>Experiencia Laboral</span>
+                <span className={hiddenSections.has("experience") ? "line-through text-muted-foreground" : ""}>
+                  Experiencia Laboral
+                </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.experience?.length || 0})
                 </span>
+                {hiddenSections.has("experience") && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
+                    Sección Oculta
+                  </span>
+                )}
               </div>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("experience", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("experience");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
+                  hiddenSections.has("experience") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={hiddenSections.has("experience") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
+              >
+                {hiddenSections.has("experience") ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Oculta</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
+                  </>
+                )}
+              </span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-2 pb-4 space-y-4">
@@ -442,127 +605,166 @@ export const FormEditor: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {(resumeData.experience || []).map((exp) => (
-                <div
-                  key={exp.id}
-                  className="p-3.5 rounded-lg border border-border bg-card space-y-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">
-                      {exp.position || "Cargo"} en {exp.company || "Empresa"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveExperience(exp.id)}
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+              {(resumeData.experience || []).map((exp) => {
+                const isItemHidden = !!exp.hidden;
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Empresa / Organización *</Label>
-                      <Input
-                        value={exp.company}
-                        onChange={(e) => handleUpdateExperience(exp.id, { company: e.target.value })}
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Cargo / Posición *</Label>
-                      <Input
-                        value={exp.position}
-                        onChange={(e) => handleUpdateExperience(exp.id, { position: e.target.value })}
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Ubicación (ej. Santiago, Chile / Remoto)</Label>
-                      <Input
-                        value={exp.location || ""}
-                        onChange={(e) => handleUpdateExperience(exp.id, { location: e.target.value })}
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <Label className="text-[11px]">Fechas (Inicio – Fin)</Label>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-muted-foreground">Actual</span>
-                          <Switch
-                            checked={exp.current}
-                            onCheckedChange={(checked) =>
-                              handleUpdateExperience(exp.id, {
-                                current: checked,
-                                end_date: checked ? "Presente" : "",
-                              })
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Mar 2022"
-                          value={exp.start_date}
-                          onChange={(e) => handleUpdateExperience(exp.id, { start_date: e.target.value })}
-                          className="h-7 text-xs w-1/2"
-                        />
-                        <Input
-                          placeholder="Presente"
-                          disabled={exp.current}
-                          value={exp.end_date || ""}
-                          onChange={(e) => handleUpdateExperience(exp.id, { end_date: e.target.value })}
-                          className="h-7 text-xs w-1/2"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Viñetas de logros STAR / XYZ */}
-                  <div className="space-y-2 pt-1 border-t border-border">
+                return (
+                  <div
+                    key={exp.id}
+                    className={`p-3.5 rounded-lg border space-y-3 transition-all ${
+                      isItemHidden
+                        ? "bg-zinc-50/50 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800 opacity-60"
+                        : "border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700"
+                    }`}
+                  >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <Sparkles className="h-3 w-3 text-amber-500" />
-                        <Label className="text-[11px] font-semibold">
-                          Logros e Impacto Cuantificable (Fórmula STAR/XYZ)
-                        </Label>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold ${isItemHidden ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                          {exp.position || "Cargo"} en {exp.company || "Empresa"}
+                        </span>
+                        {isItemHidden && (
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 font-medium">
+                            Oculto en CV
+                          </span>
+                        )}
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleAddHighlightExp(exp.id)}
-                        className="h-6 text-[10px] px-2 gap-1 text-muted-foreground hover:text-foreground"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Añadir Viñeta
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleExperienceVisibility(exp.id)}
+                          className={`h-6 px-1.5 gap-1 text-[11px] ${
+                            isItemHidden ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          title={isItemHidden ? "Mostrar experiencia en el CV" : "Ocultar experiencia del CV"}
+                        >
+                          {isItemHidden ? (
+                            <>
+                              <EyeOff className="h-3 w-3" />
+                              <span className="text-[10px]">Oculto</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-3 w-3 text-emerald-600" />
+                              <span className="text-[10px] text-emerald-600">Visible</span>
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveExperience(exp.id)}
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          title="Eliminar experiencia"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      {(exp.highlights || []).map((hl, hIdx) => (
-                        <div key={hIdx} className="flex gap-1.5 items-start">
-                          <span className="text-muted-foreground text-xs mt-1">•</span>
-                          <Textarea
-                            value={hl}
-                            onChange={(e) => handleUpdateHighlightExp(exp.id, hIdx, e.target.value)}
-                            className="text-xs min-h-[44px] py-1.5 leading-tight flex-1 resize-y"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveHighlightExp(exp.id, hIdx)}
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Empresa / Organización *</Label>
+                        <Input
+                          value={exp.company}
+                          onChange={(e) => handleUpdateExperience(exp.id, { company: e.target.value })}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Cargo / Posición *</Label>
+                        <Input
+                          value={exp.position}
+                          onChange={(e) => handleUpdateExperience(exp.id, { position: e.target.value })}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Ubicación (ej. Santiago, Chile / Remoto)</Label>
+                        <Input
+                          value={exp.location || ""}
+                          onChange={(e) => handleUpdateExperience(exp.id, { location: e.target.value })}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center">
+                          <Label className="text-[11px]">Fechas (Inicio – Fin)</Label>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] text-muted-foreground">Actual</span>
+                            <Switch
+                              checked={exp.current}
+                              onCheckedChange={(checked) =>
+                                handleUpdateExperience(exp.id, {
+                                  current: checked,
+                                  end_date: checked ? "Presente" : "",
+                                })
+                              }
+                            />
+                          </div>
                         </div>
-                      ))}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Mar 2022"
+                            value={exp.start_date}
+                            onChange={(e) => handleUpdateExperience(exp.id, { start_date: e.target.value })}
+                            className="h-7 text-xs w-1/2"
+                          />
+                          <Input
+                            placeholder="Presente"
+                            disabled={exp.current}
+                            value={exp.end_date || ""}
+                            onChange={(e) => handleUpdateExperience(exp.id, { end_date: e.target.value })}
+                            className="h-7 text-xs w-1/2"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Viñetas de logros STAR / XYZ */}
+                    <div className="space-y-2 pt-1 border-t border-border">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1">
+                          <Sparkles className="h-3 w-3 text-amber-500" />
+                          <Label className="text-[11px] font-semibold">
+                            Logros e Impacto Cuantificable (Fórmula STAR/XYZ)
+                          </Label>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAddHighlightExp(exp.id)}
+                          className="h-6 text-[10px] px-2 gap-1 text-muted-foreground hover:text-foreground"
+                        >
+                          <Plus className="h-3 w-3" />
+                          Añadir Viñeta
+                        </Button>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        {(exp.highlights || []).map((hl, hIdx) => (
+                          <div key={hIdx} className="flex gap-1.5 items-start">
+                            <span className="text-muted-foreground text-xs mt-1">•</span>
+                            <Textarea
+                              value={hl}
+                              onChange={(e) => handleUpdateHighlightExp(exp.id, hIdx, e.target.value)}
+                              className="text-xs min-h-[44px] py-1.5 leading-tight flex-1 resize-y"
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveHighlightExp(exp.id, hIdx)}
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -570,16 +772,64 @@ export const FormEditor: React.FC = () => {
         {/* 5. PROYECTOS DESTACADOS */}
         <AccordionItem
           value="projects"
-          className="border border-border rounded-lg bg-card overflow-hidden px-4"
+          className={`border rounded-lg overflow-hidden px-4 transition-all ${
+            hiddenSections.has("projects")
+              ? "bg-zinc-50/40 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800"
+              : "border-border bg-card"
+          }`}
         >
           <AccordionTrigger className="hover:no-underline py-3">
-            <div className="flex items-center gap-2.5 text-sm font-semibold">
-              <div className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 text-foreground">
-                <FolderGit2 className="h-4 w-4" />
+            <div className="flex items-center justify-between w-full pr-3">
+              <div className="flex items-center gap-2.5 text-sm font-semibold">
+                <div className={`p-1 rounded ${
+                  hiddenSections.has("projects")
+                    ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-foreground"
+                }`}>
+                  <FolderGit2 className="h-4 w-4" />
+                </div>
+                <span className={hiddenSections.has("projects") ? "line-through text-muted-foreground" : ""}>
+                  Proyectos & Ingeniería
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  ({resumeData.projects?.length || 0})
+                </span>
+                {hiddenSections.has("projects") && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
+                    Sección Oculta
+                  </span>
+                )}
               </div>
-              <span>Proyectos & Ingeniería</span>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                ({resumeData.projects?.length || 0})
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("projects", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("projects");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
+                  hiddenSections.has("projects") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={hiddenSections.has("projects") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
+              >
+                {hiddenSections.has("projects") ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Oculta</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
+                  </>
+                )}
               </span>
             </div>
           </AccordionTrigger>
@@ -597,80 +847,119 @@ export const FormEditor: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {(resumeData.projects || []).map((proj) => (
-                <div
-                  key={proj.id}
-                  className="p-3 rounded-lg border border-border bg-card space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">
-                      {proj.name || "Proyecto"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveProject(proj.id)}
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+              {(resumeData.projects || []).map((proj) => {
+                const isProjHidden = !!proj.hidden;
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Nombre del Proyecto *</Label>
-                      <Input
-                        value={proj.name}
-                        onChange={(e) => handleUpdateProject(proj.id, { name: e.target.value })}
-                        className="h-7 text-xs"
-                      />
+                return (
+                  <div
+                    key={proj.id}
+                    className={`p-3 rounded-lg border space-y-2.5 transition-all ${
+                      isProjHidden
+                        ? "bg-zinc-50/50 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800 opacity-60"
+                        : "border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold ${isProjHidden ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                          {proj.name || "Proyecto"}
+                        </span>
+                        {isProjHidden && (
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 font-medium">
+                            Oculto en CV
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleProjectVisibility(proj.id)}
+                          className={`h-6 px-1.5 gap-1 text-[11px] ${
+                            isProjHidden ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          title={isProjHidden ? "Mostrar proyecto en el CV" : "Ocultar proyecto del CV"}
+                        >
+                          {isProjHidden ? (
+                            <>
+                              <EyeOff className="h-3 w-3" />
+                              <span className="text-[10px]">Oculto</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-3 w-3 text-emerald-600" />
+                              <span className="text-[10px] text-emerald-600">Visible</span>
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveProject(proj.id)}
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          title="Eliminar proyecto"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Tecnologías (separadas por coma)</Label>
-                      <Input
-                        value={proj.technologies?.join(", ") || ""}
-                        onChange={(e) =>
-                          handleUpdateProject(proj.id, {
-                            technologies: e.target.value
-                              .split(",")
-                              .map((t) => t.trim())
-                              .filter(Boolean),
-                          })
-                        }
-                        placeholder="React, TypeScript, Docker"
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">URL Repositorio (GitHub)</Label>
-                      <Input
-                        value={proj.github_url || ""}
-                        onChange={(e) => handleUpdateProject(proj.id, { github_url: e.target.value })}
-                        placeholder="https://github.com/..."
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">URL Demo en Vivo</Label>
-                      <Input
-                        value={proj.url || ""}
-                        onChange={(e) => handleUpdateProject(proj.id, { url: e.target.value })}
-                        placeholder="https://..."
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">Descripción / Logro principal</Label>
-                    <Textarea
-                      value={proj.description || ""}
-                      onChange={(e) => handleUpdateProject(proj.id, { description: e.target.value })}
-                      className="text-xs min-h-[48px] resize-y"
-                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Nombre del Proyecto *</Label>
+                        <Input
+                          value={proj.name}
+                          onChange={(e) => handleUpdateProject(proj.id, { name: e.target.value })}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Tecnologías (separadas por coma)</Label>
+                        <Input
+                          value={proj.technologies?.join(", ") || ""}
+                          onChange={(e) =>
+                            handleUpdateProject(proj.id, {
+                              technologies: e.target.value
+                                .split(",")
+                                .map((t) => t.trim())
+                                .filter(Boolean),
+                            })
+                          }
+                          placeholder="React, TypeScript, Docker"
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">URL Repositorio (GitHub)</Label>
+                        <Input
+                          value={proj.github_url || ""}
+                          onChange={(e) => handleUpdateProject(proj.id, { github_url: e.target.value })}
+                          placeholder="https://github.com/..."
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">URL Demo en Vivo</Label>
+                        <Input
+                          value={proj.url || ""}
+                          onChange={(e) => handleUpdateProject(proj.id, { url: e.target.value })}
+                          placeholder="https://..."
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-[11px]">Descripción / Logro principal</Label>
+                      <Textarea
+                        value={proj.description || ""}
+                        onChange={(e) => handleUpdateProject(proj.id, { description: e.target.value })}
+                        className="text-xs min-h-[48px] resize-y"
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -678,16 +967,64 @@ export const FormEditor: React.FC = () => {
         {/* 6. EDUCACIÓN */}
         <AccordionItem
           value="education"
-          className="border border-border rounded-lg bg-card overflow-hidden px-4"
+          className={`border rounded-lg overflow-hidden px-4 transition-all ${
+            hiddenSections.has("education")
+              ? "bg-zinc-50/40 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800"
+              : "border-border bg-card"
+          }`}
         >
           <AccordionTrigger className="hover:no-underline py-3">
-            <div className="flex items-center gap-2.5 text-sm font-semibold">
-              <div className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 text-foreground">
-                <GraduationCap className="h-4 w-4" />
+            <div className="flex items-center justify-between w-full pr-3">
+              <div className="flex items-center gap-2.5 text-sm font-semibold">
+                <div className={`p-1 rounded ${
+                  hiddenSections.has("education")
+                    ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-foreground"
+                }`}>
+                  <GraduationCap className="h-4 w-4" />
+                </div>
+                <span className={hiddenSections.has("education") ? "line-through text-muted-foreground" : ""}>
+                  Educación & Formación
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  ({resumeData.education?.length || 0})
+                </span>
+                {hiddenSections.has("education") && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
+                    Sección Oculta
+                  </span>
+                )}
               </div>
-              <span>Educación & Formación</span>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                ({resumeData.education?.length || 0})
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("education", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("education");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
+                  hiddenSections.has("education") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={hiddenSections.has("education") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
+              >
+                {hiddenSections.has("education") ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Oculta</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
+                  </>
+                )}
               </span>
             </div>
           </AccordionTrigger>
@@ -705,70 +1042,109 @@ export const FormEditor: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {(resumeData.education || []).map((edu) => (
-                <div
-                  key={edu.id}
-                  className="p-3 rounded-lg border border-border bg-card space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-foreground">
-                      {edu.degree || "Título"} en {edu.institution || "Institución"}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveEducation(edu.id)}
-                      className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+              {(resumeData.education || []).map((edu) => {
+                const isEduHidden = !!edu.hidden;
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Institución / Universidad *</Label>
-                      <Input
-                        value={edu.institution}
-                        onChange={(e) => handleUpdateEducation(edu.id, { institution: e.target.value })}
-                        className="h-7 text-xs"
-                      />
+                return (
+                  <div
+                    key={edu.id}
+                    className={`p-3 rounded-lg border space-y-2.5 transition-all ${
+                      isEduHidden
+                        ? "bg-zinc-50/50 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800 opacity-60"
+                        : "border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold ${isEduHidden ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                          {edu.degree || "Título"} en {edu.institution || "Institución"}
+                        </span>
+                        {isEduHidden && (
+                          <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 font-medium">
+                            Oculto en CV
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleEducationVisibility(edu.id)}
+                          className={`h-6 px-1.5 gap-1 text-[11px] ${
+                            isEduHidden ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          title={isEduHidden ? "Mostrar educación en el CV" : "Ocultar educación del CV"}
+                        >
+                          {isEduHidden ? (
+                            <>
+                              <EyeOff className="h-3 w-3" />
+                              <span className="text-[10px]">Oculto</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="h-3 w-3 text-emerald-600" />
+                              <span className="text-[10px] text-emerald-600">Visible</span>
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveEducation(edu.id)}
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          title="Eliminar educación"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Título / Grado Académico *</Label>
-                      <Input
-                        value={edu.degree}
-                        onChange={(e) => handleUpdateEducation(edu.id, { degree: e.target.value })}
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Área de Estudio / Especialidad</Label>
-                      <Input
-                        value={edu.area || ""}
-                        onChange={(e) => handleUpdateEducation(edu.id, { area: e.target.value })}
-                        className="h-7 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[11px]">Fechas (Inicio – Fin)</Label>
-                      <div className="flex gap-2">
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Institución / Universidad *</Label>
                         <Input
-                          placeholder="2020"
-                          value={edu.start_date || ""}
-                          onChange={(e) => handleUpdateEducation(edu.id, { start_date: e.target.value })}
-                          className="h-7 text-xs w-1/2"
+                          value={edu.institution}
+                          onChange={(e) => handleUpdateEducation(edu.id, { institution: e.target.value })}
+                          className="h-7 text-xs"
                         />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Título / Grado Académico *</Label>
                         <Input
-                          placeholder="2024"
-                          value={edu.end_date || ""}
-                          onChange={(e) => handleUpdateEducation(edu.id, { end_date: e.target.value })}
-                          className="h-7 text-xs w-1/2"
+                          value={edu.degree}
+                          onChange={(e) => handleUpdateEducation(edu.id, { degree: e.target.value })}
+                          className="h-7 text-xs"
                         />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Área de Estudio / Especialidad</Label>
+                        <Input
+                          value={edu.area || ""}
+                          onChange={(e) => handleUpdateEducation(edu.id, { area: e.target.value })}
+                          className="h-7 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[11px]">Fechas (Inicio – Fin)</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="2020"
+                            value={edu.start_date || ""}
+                            onChange={(e) => handleUpdateEducation(edu.id, { start_date: e.target.value })}
+                            className="h-7 text-xs w-1/2"
+                          />
+                          <Input
+                            placeholder="2024"
+                            value={edu.end_date || ""}
+                            onChange={(e) => handleUpdateEducation(edu.id, { end_date: e.target.value })}
+                            className="h-7 text-xs w-1/2"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </AccordionContent>
         </AccordionItem>
@@ -776,16 +1152,64 @@ export const FormEditor: React.FC = () => {
         {/* 7. CERTIFICACIONES */}
         <AccordionItem
           value="certifications"
-          className="border border-border rounded-lg bg-card overflow-hidden px-4"
+          className={`border rounded-lg overflow-hidden px-4 transition-all ${
+            hiddenSections.has("certifications")
+              ? "bg-zinc-50/40 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800"
+              : "border-border bg-card"
+          }`}
         >
           <AccordionTrigger className="hover:no-underline py-3">
-            <div className="flex items-center gap-2.5 text-sm font-semibold">
-              <div className="p-1 rounded bg-zinc-100 dark:bg-zinc-800 text-foreground">
-                <Award className="h-4 w-4" />
+            <div className="flex items-center justify-between w-full pr-3">
+              <div className="flex items-center gap-2.5 text-sm font-semibold">
+                <div className={`p-1 rounded ${
+                  hiddenSections.has("certifications")
+                    ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
+                    : "bg-zinc-100 dark:bg-zinc-800 text-foreground"
+                }`}>
+                  <Award className="h-4 w-4" />
+                </div>
+                <span className={hiddenSections.has("certifications") ? "line-through text-muted-foreground" : ""}>
+                  Certificaciones
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  ({resumeData.certifications?.length || 0})
+                </span>
+                {hiddenSections.has("certifications") && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
+                    Sección Oculta
+                  </span>
+                )}
               </div>
-              <span>Certificaciones</span>
-              <span className="text-[10px] text-muted-foreground font-mono">
-                ({resumeData.certifications?.length || 0})
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("certifications", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("certifications");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${
+                  hiddenSections.has("certifications") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={hiddenSections.has("certifications") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
+              >
+                {hiddenSections.has("certifications") ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Oculta</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
+                  </>
+                )}
               </span>
             </div>
           </AccordionTrigger>
@@ -803,39 +1227,63 @@ export const FormEditor: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              {(resumeData.certifications || []).map((cert) => (
-                <div
-                  key={cert.id}
-                  className="flex gap-2 items-center p-2.5 rounded-lg border border-border bg-card"
-                >
-                  <Input
-                    value={cert.name}
-                    onChange={(e) => handleUpdateCertification(cert.id, { name: e.target.value })}
-                    placeholder="Nombre (ej. AWS Solutions Architect)"
-                    className="h-7 text-xs w-2/5"
-                  />
-                  <Input
-                    value={cert.issuer}
-                    onChange={(e) => handleUpdateCertification(cert.id, { issuer: e.target.value })}
-                    placeholder="Emisor (ej. Amazon Web Services)"
-                    className="h-7 text-xs w-2/5"
-                  />
-                  <Input
-                    value={cert.date || ""}
-                    onChange={(e) => handleUpdateCertification(cert.id, { date: e.target.value })}
-                    placeholder="Año"
-                    className="h-7 text-xs w-1/5"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveCertification(cert.id)}
-                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+              {(resumeData.certifications || []).map((cert) => {
+                const isCertHidden = !!cert.hidden;
+
+                return (
+                  <div
+                    key={cert.id}
+                    className={`flex gap-2 items-center p-2.5 rounded-lg border transition-all ${
+                      isCertHidden
+                        ? "bg-zinc-50/50 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800 opacity-60"
+                        : "border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700"
+                    }`}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              ))}
+                    <Input
+                      value={cert.name}
+                      onChange={(e) => handleUpdateCertification(cert.id, { name: e.target.value })}
+                      placeholder="Nombre (ej. AWS Solutions Architect)"
+                      className="h-7 text-xs w-2/5"
+                    />
+                    <Input
+                      value={cert.issuer}
+                      onChange={(e) => handleUpdateCertification(cert.id, { issuer: e.target.value })}
+                      placeholder="Emisor (ej. Amazon Web Services)"
+                      className="h-7 text-xs w-2/5"
+                    />
+                    <Input
+                      value={cert.date || ""}
+                      onChange={(e) => handleUpdateCertification(cert.id, { date: e.target.value })}
+                      placeholder="Año"
+                      className="h-7 text-xs w-1/5"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleCertificationVisibility(cert.id)}
+                      className={`h-7 px-1.5 gap-1 text-[11px] ${
+                        isCertHidden ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      title={isCertHidden ? "Mostrar certificación en el CV" : "Ocultar certificación del CV"}
+                    >
+                      {isCertHidden ? (
+                        <EyeOff className="h-3.5 w-3.5" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveCertification(cert.id)}
+                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                      title="Eliminar certificación"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </AccordionContent>
         </AccordionItem>

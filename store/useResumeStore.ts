@@ -36,9 +36,14 @@ interface ResumeStoreState {
   paperSize: PaperSize;
   zoom: number;
 
+  // Perfil Base Maestro (Información Completa de Carrera)
+  masterProfileData: ResumeData;
+
   // Modales y estados de UI
   isImportModalOpen: boolean;
   isProfileModalOpen: boolean;
+  isTemplateGalleryOpen: boolean;
+  isMasterProfileModalOpen: boolean;
   isExporting: boolean;
   isSaving: boolean;
 
@@ -69,9 +74,17 @@ interface ResumeStoreState {
   // Acciones de Reordenamiento de Secciones
   setSectionOrder: (newOrder: string[]) => void;
 
+  // Acciones de Perfil Base Maestro
+  updateMasterProfileData: (updater: Partial<ResumeData> | ((prev: ResumeData) => Partial<ResumeData>)) => void;
+  syncActiveCvWithMaster: () => void;
+  saveActiveCvAsMaster: () => void;
+  createProfileFromMaster: (name: string, targetRole: string, templateId?: TemplateId) => void;
+
   // Acciones de Modales
   setImportModalOpen: (open: boolean) => void;
   setProfileModalOpen: (open: boolean) => void;
+  setTemplateGalleryOpen: (open: boolean) => void;
+  setMasterProfileModalOpen: (open: boolean) => void;
   setIsExporting: (exporting: boolean) => void;
 
   // Carga e Importación completa
@@ -102,8 +115,12 @@ export const useResumeStore = create<ResumeStoreState>()(
       paperSize: initialProfile.paperSize,
       zoom: 100,
 
+      masterProfileData: SAMPLE_RESUME_FULLSTACK,
+
       isImportModalOpen: false,
       isProfileModalOpen: false,
+      isTemplateGalleryOpen: false,
+      isMasterProfileModalOpen: false,
       isExporting: false,
       isSaving: false,
 
@@ -416,9 +433,85 @@ export const useResumeStore = create<ResumeStoreState>()(
         get().setResumeData({ section_order: newOrder });
       },
 
+      // Acciones de Perfil Base Maestro
+      updateMasterProfileData: (updater) => {
+        set((state) => {
+          const updatedPartial = typeof updater === "function" ? updater(state.masterProfileData) : updater;
+          return {
+            masterProfileData: {
+              ...state.masterProfileData,
+              ...updatedPartial,
+            },
+          };
+        });
+      },
+
+      syncActiveCvWithMaster: () => {
+        const { masterProfileData, resumeData } = get();
+        const yaml = resumeDataToYaml(masterProfileData);
+        set((state) => ({
+          resumeData: JSON.parse(JSON.stringify(masterProfileData)),
+          yamlContent: yaml,
+          yamlError: null,
+          historyPast: [...state.historyPast, resumeData].slice(-MAX_HISTORY_LENGTH),
+          historyFuture: [],
+          canUndo: true,
+          canRedo: false,
+          profiles: state.profiles.map((p) =>
+            p.id === state.activeProfileId
+              ? { ...p, data: masterProfileData, updatedAt: new Date().toISOString() }
+              : p
+          ),
+        }));
+      },
+
+      saveActiveCvAsMaster: () => {
+        const { resumeData } = get();
+        set({
+          masterProfileData: JSON.parse(JSON.stringify(resumeData)),
+        });
+      },
+
+      createProfileFromMaster: (name, targetRole, templateId) => {
+        const { masterProfileData, activeTemplate, paperSize, profiles } = get();
+        const newId = `profile-${Date.now()}`;
+        const newProfileData: ResumeData = {
+          ...JSON.parse(JSON.stringify(masterProfileData)),
+          headline: targetRole || masterProfileData.headline,
+        };
+
+        const chosenTemplate = templateId || activeTemplate;
+
+        const newProfile: ResumeProfile = {
+          id: newId,
+          name,
+          targetRole,
+          templateId: chosenTemplate,
+          paperSize,
+          data: newProfileData,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        set({
+          profiles: [...profiles, newProfile],
+          activeProfileId: newId,
+          resumeData: newProfileData,
+          yamlContent: resumeDataToYaml(newProfileData),
+          yamlError: null,
+          activeTemplate: chosenTemplate,
+          historyPast: [],
+          historyFuture: [],
+          canUndo: false,
+          canRedo: false,
+        });
+      },
+
       // Modales y estados
       setImportModalOpen: (open: boolean) => set({ isImportModalOpen: open }),
       setProfileModalOpen: (open: boolean) => set({ isProfileModalOpen: open }),
+      setTemplateGalleryOpen: (open: boolean) => set({ isTemplateGalleryOpen: open }),
+      setMasterProfileModalOpen: (open: boolean) => set({ isMasterProfileModalOpen: open }),
       setIsExporting: (exporting: boolean) => set({ isExporting: exporting }),
 
       // Cargar CV importado
@@ -467,6 +560,7 @@ export const useResumeStore = create<ResumeStoreState>()(
       partialize: (state) => ({
         profiles: state.profiles,
         activeProfileId: state.activeProfileId,
+        masterProfileData: state.masterProfileData,
         activeTemplate: state.activeTemplate,
         paperSize: state.paperSize,
         zoom: state.zoom,

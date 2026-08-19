@@ -1,15 +1,23 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Header } from "@/components/navigation/Header";
 import { DualModeEditor } from "@/components/editor/DualModeEditor";
 import { ResumePreview } from "@/components/preview/ResumePreview";
 import { ImportResumeModal } from "@/components/editor/ImportResumeModal";
 import { ProfileManagerModal } from "@/components/navigation/ProfileManagerModal";
+import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
+import { MasterProfileModal } from "@/components/dashboard/MasterProfileModal";
+import { DashboardView } from "@/components/dashboard/DashboardView";
+import { ProfileSettingsView } from "@/components/settings/ProfileSettingsView";
+import { AuthView } from "@/components/auth/AuthView";
 import { useResumeStore } from "@/store/useResumeStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function SchemaCVApp() {
+  const [currentView, setCurrentView] = useState<"dashboard" | "workspace" | "settings">("dashboard");
   const { undo, redo, canUndo, canRedo, activeTab } = useResumeStore();
+  const { isAuthenticated } = useAuthStore();
 
   // Atajos de teclado globales para Deshacer (Ctrl+Z) y Rehacer (Ctrl+Y / Ctrl+Shift+Z)
   useEffect(() => {
@@ -17,7 +25,6 @@ export default function SchemaCVApp() {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
       if (!isCtrlOrCmd) return;
 
-      // Si el foco está en un input o textarea editable, dejamos que el navegador maneje el undo de texto local a menos que no haya selección
       const target = e.target as HTMLElement;
       const isInputField =
         target &&
@@ -26,8 +33,7 @@ export default function SchemaCVApp() {
           target.isContentEditable ||
           target.classList.contains("cm-content"));
 
-      // Si estamos en la pestaña visual y fuera de un input específico, o reordenando/borrando elementos
-      if (!isInputField) {
+      if (!isInputField && currentView === "workspace") {
         if (e.key === "z" && !e.shiftKey) {
           e.preventDefault();
           if (canUndo) undo();
@@ -40,12 +46,36 @@ export default function SchemaCVApp() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, canUndo, canRedo, activeTab]);
+  }, [undo, redo, canUndo, canRedo, activeTab, currentView]);
 
+  // Si el usuario no está autenticado, mostrar portal de Login / Register / Demo
+  if (!isAuthenticated) {
+    return <AuthView />;
+  }
+
+  // Si estamos en la vista de Configuración de Perfil (Apartado Completo)
+  if (currentView === "settings") {
+    return <ProfileSettingsView onBack={() => setCurrentView("dashboard")} />;
+  }
+
+  // Si estamos en la vista de Dashboard
+  if (currentView === "dashboard") {
+    return (
+      <DashboardView
+        onOpenWorkspace={() => setCurrentView("workspace")}
+        onOpenSettings={() => setCurrentView("settings")}
+      />
+    );
+  }
+
+  // Si estamos en la vista de Workspace (Editor Dual ⟷ Vista Previa)
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-foreground select-none print:h-auto print:overflow-visible print:bg-white">
-      {/* 1. Header de Navegación y Herramientas */}
-      <Header />
+      {/* 1. Header con botón de volver al Dashboard */}
+      <Header
+        onBackToDashboard={() => setCurrentView("dashboard")}
+        onOpenSettings={() => setCurrentView("settings")}
+      />
 
       {/* 2. Área de Trabajo Principal Dividida (Editor Dual ⟷ Vista Previa ATS) */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden print:block print:overflow-visible">
@@ -60,9 +90,11 @@ export default function SchemaCVApp() {
         </section>
       </main>
 
-      {/* 3. Modales de Ingesta y Perfiles */}
+      {/* 3. Modales de Ingesta, Perfiles, Plantillas y Base Maestra */}
       <ImportResumeModal />
       <ProfileManagerModal />
+      <TemplateGalleryModal />
+      <MasterProfileModal />
     </div>
   );
 }

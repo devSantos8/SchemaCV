@@ -28,6 +28,8 @@ import {
   Award,
   RotateCcw,
   Sparkles,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { Button } from "@/components/ui/button";
@@ -71,9 +73,11 @@ const SECTION_CONFIG: Record<
 interface SortableItemProps {
   id: string;
   index: number;
+  isHidden: boolean;
+  onToggleVisibility: (id: string) => void;
 }
 
-function SortableItem({ id, index }: SortableItemProps) {
+function SortableItem({ id, index, isHidden, onToggleVisibility }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -103,6 +107,8 @@ function SortableItem({ id, index }: SortableItemProps) {
       className={`flex items-center justify-between p-3 rounded-lg border transition-all select-none ${
         isDragging
           ? "bg-zinc-100 dark:bg-zinc-800 border-zinc-400 dark:border-zinc-600 shadow-lg scale-[1.02]"
+          : isHidden
+          ? "bg-zinc-50/50 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800 opacity-60"
           : "bg-card hover:bg-zinc-50/70 dark:hover:bg-zinc-900/50 border-border"
       }`}
     >
@@ -117,30 +123,64 @@ function SortableItem({ id, index }: SortableItemProps) {
           <GripVertical className="h-4 w-4" />
         </button>
 
-        <div className="flex items-center justify-center h-8 w-8 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+        <div className={`flex items-center justify-center h-8 w-8 rounded-md ${
+          isHidden
+            ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
+            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+        }`}>
           <Icon className="h-4 w-4" />
         </div>
 
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-foreground">
+            <span className={`text-xs font-semibold ${isHidden ? "line-through text-muted-foreground" : "text-foreground"}`}>
               {config.label}
             </span>
             <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.2 bg-zinc-100 dark:bg-zinc-800 rounded">
               #{index + 1}
             </span>
+            {isHidden && (
+              <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                Oculta en CV
+              </span>
+            )}
           </div>
           <p className="text-[11px] text-muted-foreground line-clamp-1">
             {config.description}
           </p>
         </div>
       </div>
+
+      {/* Botón de Visibilidad (Ojo) */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onToggleVisibility(id)}
+        className={`h-7 px-2 gap-1 text-xs transition-colors ${
+          isHidden
+            ? "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+            : "text-muted-foreground hover:text-foreground"
+        }`}
+        title={isHidden ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
+      >
+        {isHidden ? (
+          <>
+            <EyeOff className="h-3.5 w-3.5" />
+            <span className="text-[10px]">Oculta</span>
+          </>
+        ) : (
+          <>
+            <Eye className="h-3.5 w-3.5 text-emerald-600" />
+            <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
+          </>
+        )}
+      </Button>
     </div>
   );
 }
 
 export const SectionOrganizer: React.FC = () => {
-  const { resumeData, setSectionOrder } = useResumeStore();
+  const { resumeData, setSectionOrder, setResumeData } = useResumeStore();
   const sections = resumeData.section_order || [
     "summary",
     "skills",
@@ -149,6 +189,17 @@ export const SectionOrganizer: React.FC = () => {
     "education",
     "certifications",
   ];
+  const hiddenSections = new Set(resumeData.hidden_sections || []);
+
+  const handleToggleVisibility = (sectionId: string) => {
+    const nextHidden = new Set(resumeData.hidden_sections || []);
+    if (nextHidden.has(sectionId)) {
+      nextHidden.delete(sectionId);
+    } else {
+      nextHidden.add(sectionId);
+    }
+    setResumeData({ hidden_sections: Array.from(nextHidden) });
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -187,10 +238,10 @@ export const SectionOrganizer: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-semibold text-foreground">
-            Orden Modular de Secciones
+            Orden Modular & Visibilidad de Secciones
           </h3>
           <p className="text-xs text-muted-foreground">
-            Arrastra los elementos para cambiar la jerarquía de lectura del ATS.
+            Arrastra para reordenar o haz clic en el ojo para ocultar/mostrar secciones en el CV.
           </p>
         </div>
         <Button
@@ -212,7 +263,13 @@ export const SectionOrganizer: React.FC = () => {
         <SortableContext items={sections} strategy={verticalListSortingStrategy}>
           <div className="space-y-2">
             {sections.map((sectionId, idx) => (
-              <SortableItem key={sectionId} id={sectionId} index={idx} />
+              <SortableItem
+                key={sectionId}
+                id={sectionId}
+                index={idx}
+                isHidden={hiddenSections.has(sectionId)}
+                onToggleVisibility={handleToggleVisibility}
+              />
             ))}
           </div>
         </SortableContext>

@@ -1,62 +1,85 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
+import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
 
 export async function POST(req: NextRequest) {
   let browser = null;
   try {
-    const { html, paperSize = "letter" } = await req.json();
+    const body = await req.json();
+    const { html, resumeData, templateId = "tech_minimalist", paperSize = "letter" } = body;
 
-    if (!html) {
-      return NextResponse.json({ error: "El contenido HTML es requerido." }, { status: 400 });
+    let documentHtml = html;
+
+    // Si se envían los datos del CV y la plantilla en vez del HTML crudo, lo compilamos con el exportador puro
+    if (!documentHtml && resumeData) {
+      documentHtml = generateTemplateHtml(resumeData, templateId, paperSize);
+    }
+
+    if (!documentHtml) {
+      return NextResponse.json(
+        { error: "Se requiere 'html' o 'resumeData' para compilar el PDF." },
+        { status: 400 }
+      );
     }
 
     browser = await puppeteer.launch({
       headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--font-render-hinting=none",
+      ],
     });
 
     const page = await browser.newPage();
+    const isA4 = paperSize === "a4";
 
-    // Establecer contenido con estilos Tailwind y fuentes
-    await page.setContent(
-      `<!DOCTYPE html>
-      <html lang="es">
-        <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link rel="preconnect" href="https://fonts.googleapis.com">
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-          <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-          <script src="https://cdn.tailwindcss.com"></script>
-          <style>
-            @page {
-              size: ${paperSize === "a4" ? "A4" : "letter"};
-              margin: 0;
-            }
-            body {
-              margin: 0;
-              padding: 0;
-              background-color: white;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            .page-break-avoid {
-              break-inside: avoid;
-              page-break-inside: avoid;
-            }
-          </style>
-        </head>
-        <body>
-          <div id="print-root">
-            ${html}
-          </div>
-        </body>
-      </html>`,
-      { waitUntil: "domcontentloaded", timeout: 30000 }
-    );
+    const fullHtml = `<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @page {
+        size: ${isA4 ? "A4 portrait" : "letter portrait"};
+        margin: 0;
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: white !important;
+        color: #09090b !important;
+      }
+      .page-break-avoid {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="print-root" style="width: 100%; margin: 0; padding: 0;">
+      ${documentHtml}
+    </div>
+  </body>
+</html>`;
+
+    await page.setContent(fullHtml, {
+      waitUntil: "domcontentloaded",
+      timeout: 30000,
+    });
 
     const pdfBuffer = await page.pdf({
-      format: paperSize === "a4" ? "A4" : "Letter",
+      format: isA4 ? "A4" : "Letter",
       printBackground: true,
       margin: {
         top: "0mm",
@@ -74,7 +97,7 @@ export async function POST(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="SchemaCV_Export_${Date.now()}.pdf"`,
+        "Content-Disposition": `attachment; filename="SchemaCV_Export.pdf"`,
       },
     });
   } catch (error: any) {

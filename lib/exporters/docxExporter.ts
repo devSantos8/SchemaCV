@@ -11,12 +11,13 @@ import {
   convertInchesToTwip,
   ExternalHyperlink,
 } from "docx";
-import { ResumeData } from "@/types/resume";
+import { ResumeData, getVisibleResumeData } from "@/types/resume";
 
 /**
  * Genera un documento Microsoft Word (.docx) nativo, 100% optimizado para ATS.
  */
-export async function generateResumeDocx(resume: ResumeData): Promise<Blob> {
+export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
+  const resume = getVisibleResumeData(rawResume);
   const children: (Paragraph | ExternalHyperlink)[] = [];
 
   // 1. Encabezado / Nombre
@@ -448,5 +449,8 @@ export async function generateResumeDocx(resume: ResumeData): Promise<Blob> {
     ],
   });
 
-  return await Packer.toBlob(doc);
+  const buffer = await Packer.toBlob(doc);
+  return new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
 }
