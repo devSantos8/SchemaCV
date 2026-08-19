@@ -448,5 +448,8 @@ export async function generateResumeDocx(resume: ResumeData): Promise<Blob> {
     ],
   });
 
-  return await Packer.toBlob(doc);
+  const buffer = await Packer.toBlob(doc);
+  return new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
 }

@@ -6,7 +6,6 @@ import {
   Plus,
   Sparkles,
   FileText,
-  Download,
   Copy,
   Trash2,
   ExternalLink,
@@ -15,9 +14,8 @@ import {
   LogOut,
   Moon,
   Sun,
-  CheckCircle2,
-  TrendingUp,
   FileDown,
+  FileCode,
   Layers,
   GraduationCap,
   Terminal,
@@ -25,12 +23,14 @@ import {
   MoreVertical,
   ShieldCheck,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { TemplateId, ResumeProfile } from "@/types/resume";
 import { TEMPLATE_METADATA } from "@/components/templates/TemplateRenderer";
 import { generateResumeDocx } from "@/lib/exporters/docxExporter";
+import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -69,6 +69,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [downloadingDocxId, setDownloadingDocxId] = useState<string | null>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
 
   const toggleDarkMode = () => {
     const root = document.documentElement;
@@ -86,11 +87,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
     onOpenWorkspace();
   };
 
+  // Descarga directa de Word (.docx)
   const handleDownloadDocx = async (profile: ResumeProfile) => {
     try {
       setDownloadingDocxId(profile.id);
       const blob = await generateResumeDocx(profile.data);
-      const url = URL.createObjectURL(blob);
+      const docxBlob = new Blob([blob], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+      const url = URL.createObjectURL(docxBlob);
       const a = document.createElement("a");
       a.href = url;
       const safeName = (profile.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
@@ -105,6 +110,75 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
     } finally {
       setDownloadingDocxId(null);
     }
+  };
+
+  // Descarga directa de PDF Vectorial (.pdf)
+  const handleDownloadPdf = async (profile: ResumeProfile) => {
+    try {
+      setDownloadingPdfId(profile.id);
+      const res = await fetch("/api/export/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeData: profile.data,
+          templateId: profile.templateId,
+          paperSize: profile.paperSize || "letter",
+        }),
+      });
+
+      if (!res.ok) {
+        // Fallback: abrir en editor para imprimir
+        handleOpenResume(profile.id);
+        return;
+      }
+
+      const blob = await res.blob();
+      const pdfBlob = new Blob([blob], { type: "application/pdf" });
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = (profile.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
+      a.download = `${safeName}_ATS_${profile.paperSize || "letter"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Error exportando PDF:", err);
+      handleOpenResume(profile.id);
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  };
+
+  // Descarga de YAML
+  const handleDownloadYaml = (profile: ResumeProfile) => {
+    const yamlString = resumeDataToYaml(profile.data);
+    const blob = new Blob([yamlString], { type: "text/yaml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = (profile.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
+    a.download = `${safeName}_SchemaCV.yaml`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Descarga de JSON
+  const handleDownloadJson = (profile: ResumeProfile) => {
+    const jsonString = JSON.stringify(profile.data, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = (profile.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
+    a.download = `${safeName}_SchemaCV.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -217,7 +291,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
               Crea y personaliza versiones de tu currículum optimizadas para los filtros de
-              selección ATS (Workday, Taleo, Greenhouse) con sincronización YAML y exportación multiformato.
+              selección ATS con sincronización YAML y exportación multiformato (PDF, Word, YAML).
             </p>
           </div>
 
@@ -225,7 +299,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
             <Button
               size="sm"
               onClick={() => setIsWizardOpen(true)}
-              className="h-9 text-xs gap-1.5 font-semibold"
+              className="h-9 text-xs gap-1.5 font-semibold bg-foreground text-background"
             >
               <Sparkles className="h-3.5 w-3.5 text-amber-400" />
               <span>Crear con Asistente</span>
@@ -266,9 +340,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
           </div>
 
           <div className="p-4 rounded-xl border border-border bg-card space-y-1">
-            <span className="text-[11px] text-muted-foreground font-medium">Formatos de Exportación</span>
-            <div className="text-2xl font-extrabold text-foreground">PDF & DOCX</div>
-            <div className="text-[10px] text-muted-foreground">Vectorial y Word nativo</div>
+            <span className="text-[11px] text-muted-foreground font-medium">Formatos Listos</span>
+            <div className="text-2xl font-extrabold text-foreground">PDF & Word</div>
+            <div className="text-[10px] text-muted-foreground">Vectorial (.pdf) y DOCX (.docx)</div>
           </div>
         </div>
 
@@ -278,7 +352,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
             <div>
               <h2 className="text-base font-bold text-foreground">Tus Versiones de Currículum</h2>
               <p className="text-xs text-muted-foreground">
-                Selecciona cualquier perfil para editarlo en el espacio de trabajo o expórtalo directamente.
+                Selecciona cualquier perfil para editarlo en el espacio de trabajo o expórtalo directamente en PDF o Word.
               </p>
             </div>
             <Button
@@ -302,6 +376,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
               const experienceCount = profile.data.experience?.length || 0;
               const skillsCount = profile.data.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0;
               const projectsCount = profile.data.projects?.length || 0;
+
+              const isDownloadingPdf = downloadingPdfId === profile.id;
+              const isDownloadingDocx = downloadingDocxId === profile.id;
 
               return (
                 <div
@@ -343,37 +420,67 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                             <MoreVertical className="h-3.5 w-3.5" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 bg-card border-border">
+                        <DropdownMenuContent align="end" className="w-52 bg-card/95 backdrop-blur-md border-border p-1.5">
                           <DropdownMenuItem
                             onClick={() => handleOpenResume(profile.id)}
-                            className="text-xs cursor-pointer gap-2"
+                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
                           >
                             <ExternalLink className="h-3.5 w-3.5" />
                             <span>Abrir en Editor</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => duplicateProfile(profile.id)}
-                            className="text-xs cursor-pointer gap-2"
+                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
                           >
                             <Copy className="h-3.5 w-3.5" />
                             <span>Duplicar Versión</span>
                           </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+
+                          <DropdownMenuItem
+                            onClick={() => handleDownloadPdf(profile)}
+                            disabled={isDownloadingPdf}
+                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                          >
+                            <FileDown className="h-3.5 w-3.5 text-rose-500" />
+                            <span>Descargar PDF Vectorial</span>
+                          </DropdownMenuItem>
+
                           <DropdownMenuItem
                             onClick={() => handleDownloadDocx(profile)}
-                            className="text-xs cursor-pointer gap-2"
+                            disabled={isDownloadingDocx}
+                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
                           >
-                            <FileDown className="h-3.5 w-3.5 text-blue-500" />
+                            <FileText className="h-3.5 w-3.5 text-blue-500" />
                             <span>Descargar Word (.docx)</span>
                           </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleDownloadYaml(profile)}
+                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                          >
+                            <FileCode className="h-3.5 w-3.5 text-emerald-500" />
+                            <span>Descargar YAML (.yaml)</span>
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleDownloadJson(profile)}
+                            className="text-xs cursor-pointer gap-2 p-2 rounded-md"
+                          >
+                            <FileCode className="h-3.5 w-3.5 text-amber-500" />
+                            <span>Descargar JSON (.json)</span>
+                          </DropdownMenuItem>
+
                           {profiles.length > 1 && (
                             <>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => deleteProfile(profile.id)}
-                                className="text-xs cursor-pointer gap-2 text-rose-500 hover:text-rose-600"
+                                className="text-xs cursor-pointer gap-2 p-2 rounded-md text-rose-500 hover:text-rose-600"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                                <span>Eliminar</span>
+                                <span>Eliminar Perfil</span>
                               </DropdownMenuItem>
                             </>
                           )}
@@ -405,25 +512,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                     </div>
                   </div>
 
-                  {/* Acciones principales de la tarjeta */}
-                  <div className="pt-4 flex gap-2">
+                  {/* Acciones principales de la tarjeta con soporte PDF y Word */}
+                  <div className="pt-4 flex items-center gap-1.5">
                     <Button
                       size="sm"
                       onClick={() => handleOpenResume(profile.id)}
                       className="flex-1 h-8 text-xs font-semibold"
                     >
-                      <span>Abrir en Editor</span>
+                      <span>Abrir Editor</span>
                       <ChevronRight className="h-3.5 w-3.5 ml-1" />
                     </Button>
+
+                    {/* Botón Descarga Directa PDF */}
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={downloadingDocxId === profile.id}
+                      disabled={isDownloadingPdf}
+                      onClick={() => handleDownloadPdf(profile)}
+                      className="h-8 px-2.5 text-xs gap-1 hover:border-rose-500 hover:text-rose-600 dark:hover:text-rose-400"
+                      title="Descargar PDF Vectorial directo"
+                    >
+                      {isDownloadingPdf ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <FileDown className="h-3.5 w-3.5 text-rose-500" />
+                          <span className="text-[11px] font-medium">PDF</span>
+                        </>
+                      )}
+                    </Button>
+
+                    {/* Botón Descarga Directa Word */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={isDownloadingDocx}
                       onClick={() => handleDownloadDocx(profile)}
-                      className="h-8 text-xs px-2.5"
+                      className="h-8 px-2.5 text-xs gap-1 hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
                       title="Descargar Word DOCX directo"
                     >
-                      <FileDown className="h-3.5 w-3.5 text-blue-500" />
+                      {isDownloadingDocx ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <FileText className="h-3.5 w-3.5 text-blue-500" />
+                          <span className="text-[11px] font-medium">Word</span>
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
