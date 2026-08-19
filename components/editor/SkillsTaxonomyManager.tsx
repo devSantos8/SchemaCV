@@ -14,6 +14,8 @@ import {
   Trash2,
   Eye,
   EyeOff,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { SkillCategory } from "@/types/resume";
@@ -42,6 +44,15 @@ export const SkillsTaxonomyManager: React.FC = () => {
   const [newSkillInput, setNewSkillInput] = useState<Record<string, string>>({});
   const [newCategoryName, setNewCategoryName] = useState("");
   const [isAddingCustomCategory, setIsAddingCustomCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+
+  // Renombrar subtítulo / categoría de skills
+  const handleUpdateCategoryName = (categoryId: string, newName: string) => {
+    const updated = skills.map((cat) =>
+      cat.id === categoryId ? { ...cat, category: newName } : cat
+    );
+    setResumeData({ skills: updated });
+  };
 
   // Alternar visibilidad de categoría de skills
   const handleToggleCategoryVisibility = (categoryId: string) => {
@@ -166,27 +177,69 @@ export const SkillsTaxonomyManager: React.FC = () => {
             >
               {/* Header de Categoría */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`p-1 rounded ${
+                <div className="flex items-center gap-2 flex-1 mr-2 min-w-0">
+                  <div className={`p-1 rounded shrink-0 ${
                     isHidden
                       ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
                       : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
                   }`}>
                     <Icon className="h-3.5 w-3.5" />
                   </div>
-                  <span className={`text-xs font-bold ${isHidden ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                    {category.category}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    ({category.skills.length})
-                  </span>
-                  {isHidden && (
-                    <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
-                      Oculto en CV
-                    </span>
+
+                  {editingCategoryId === category.id ? (
+                    <div className="flex items-center gap-1.5 flex-1 max-w-xs">
+                      <Input
+                        value={category.category}
+                        onChange={(e) => handleUpdateCategoryName(category.id, e.target.value)}
+                        onBlur={() => setEditingCategoryId(null)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "Escape") setEditingCategoryId(null);
+                        }}
+                        autoFocus
+                        placeholder="Nombre del subtítulo"
+                        className="h-6 text-xs font-bold px-2 py-0"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingCategoryId(null)}
+                        className="h-6 w-6 p-0 text-emerald-600 hover:text-emerald-700 shrink-0"
+                        title="Guardar nombre"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 group/cat truncate">
+                      <span
+                        onClick={() => setEditingCategoryId(category.id)}
+                        className={`text-xs font-bold cursor-pointer hover:text-primary hover:underline decoration-dotted underline-offset-2 transition-colors truncate ${
+                          isHidden ? "line-through text-muted-foreground" : "text-foreground"
+                        }`}
+                        title="Haz clic para editar el nombre de este subtítulo"
+                      >
+                        {category.category}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setEditingCategoryId(category.id)}
+                        className="opacity-0 group-hover/cat:opacity-100 p-0.5 text-muted-foreground hover:text-foreground rounded transition-opacity shrink-0"
+                        title="Editar subtítulo"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </button>
+                      <span className="text-[10px] text-muted-foreground font-mono shrink-0">
+                        ({category.skills.length})
+                      </span>
+                      {isHidden && (
+                        <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 shrink-0">
+                          Oculto en CV
+                        </span>
+                      )}
+                    </div>
                   )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0">
                   <Button
                     variant="ghost"
                     size="sm"
