@@ -54,6 +54,12 @@ import {
   Download,
   RefreshCw,
   AlertTriangle,
+  Bell,
+  Lock,
+  HelpCircle,
+  FileCheck,
+  CheckCircle,
+  Sliders,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -122,6 +128,7 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
 };
 
 type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "ai_import" | "settings";
+type SettingsSubTab = "account" | "workspace" | "notifications" | "security" | "support" | "terms";
 
 interface DashboardViewProps {
   onOpenWorkspace: () => void;
@@ -175,20 +182,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isMasterSaved, setIsMasterSaved] = useState(false);
   const [masterSubSection, setMasterSubSection] = useState<"general" | "social" | "experience" | "skills" | "projects" | "education" | "certifications">("general");
 
-  // Estados de Configuración
-  const [settingsSubSection, setSettingsSubSection] = useState<"profile" | "preferences" | "data">("profile");
-  const [settingsForm, setSettingsForm] = useState({
-    name: user?.name || "Joain Matias Monroy Santos",
-    email: user?.email || "matiasmonroy483@gmail.com",
-    headline: user?.headline || "Senior Full Stack & Cloud Developer",
-    location: user?.location || "Santiago, Chile",
-    phone: user?.phone || "+56 9 4900 2793",
-    bio: user?.bio || "Ingeniero de Software enfocado en arquitecturas escalables, sistemas cloud y diseño de experiencias web de alto impacto.",
-    githubUrl: user?.githubUrl || "https://github.com/devSantos8",
-    linkedinUrl: user?.linkedinUrl || "https://linkedin.com/in/jmonroys17",
-    websiteUrl: user?.websiteUrl || "https://jmonroys.dev",
-  });
+  // Estados de Configuración Estilo Propel
+  const [settingsSubTab, setSettingsSubTab] = useState<SettingsSubTab>("account");
+  const [firstName, setFirstName] = useState(user?.name ? user.name.split(" ")[0] : "Joain");
+  const [lastName, setLastName] = useState(user?.name ? user.name.split(" ").slice(1).join(" ") : "Monroy Santos");
+  const [settingsEmail, setSettingsEmail] = useState(user?.email || "matiasmonroy483@gmail.com");
+  const [settingsHeadline, setSettingsHeadline] = useState(user?.headline || "Senior Full Stack & Cloud Developer");
+  const [settingsPhone, setSettingsPhone] = useState(user?.phone || "+56 9 4900 2793");
+  const [settingsLocation, setSettingsLocation] = useState(user?.location || "Santiago, Chile");
+  const [settingsBio, setSettingsBio] = useState(user?.bio || "Ingeniero de Software enfocado en arquitecturas escalables, sistemas cloud y diseño de experiencias web de alto impacto.");
+  const [settingsGithub, setSettingsGithub] = useState(user?.githubUrl || "https://github.com/devSantos8");
+  const [settingsLinkedin, setSettingsLinkedin] = useState(user?.linkedinUrl || "https://linkedin.com/in/jmonroys17");
+  const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "https://jmonroys.dev");
   const [isSettingsSaved, setIsSettingsSaved] = useState(false);
+
+  // Notificaciones & Toggles de Configuración
+  const [notif1PageWarning, setNotif1PageWarning] = useState(true);
+  const [notifYamlSync, setNotifYamlSync] = useState(true);
+  const [notifStarSuggestions, setNotifStarSuggestions] = useState(true);
+  const [notifAutoSave, setNotifAutoSave] = useState(true);
+
+  // Búsqueda de soporte
+  const [supportSearchQuery, setSupportSearchQuery] = useState("");
 
   // Estados de la Galería de Plantillas
   const [templatePreviewSample, setTemplatePreviewSample] = useState(true);
@@ -199,19 +214,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [masterProfileData]);
 
   useEffect(() => {
-    if (user) {
-      setSettingsForm((prev) => ({
-        ...prev,
-        name: user.name || prev.name,
-        email: user.email || prev.email,
-        headline: user.headline || prev.headline,
-        location: user.location || prev.location,
-        phone: user.phone || prev.phone,
-        bio: user.bio || prev.bio,
-        githubUrl: user.githubUrl || prev.githubUrl,
-        linkedinUrl: user.linkedinUrl || prev.linkedinUrl,
-        websiteUrl: user.websiteUrl || prev.websiteUrl,
-      }));
+    if (user?.name) {
+      const parts = user.name.split(" ");
+      setFirstName(parts[0] || "Joain");
+      setLastName(parts.slice(1).join(" ") || "Monroy Santos");
     }
   }, [user]);
 
@@ -237,18 +243,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setTimeout(() => setIsMasterSaved(false), 2500);
   };
 
-  const handleSaveSettings = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveSettings = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
     updateUserProfile({
-      name: settingsForm.name,
-      email: settingsForm.email,
-      headline: settingsForm.headline,
-      location: settingsForm.location,
-      phone: settingsForm.phone,
-      bio: settingsForm.bio,
-      githubUrl: settingsForm.githubUrl,
-      linkedinUrl: settingsForm.linkedinUrl,
-      websiteUrl: settingsForm.websiteUrl,
+      name: fullName,
+      email: settingsEmail,
+      headline: settingsHeadline,
+      location: settingsLocation,
+      phone: settingsPhone,
+      bio: settingsBio,
+      githubUrl: settingsGithub,
+      linkedinUrl: settingsLinkedin,
+      websiteUrl: settingsWebsite,
     });
     setIsSettingsSaved(true);
     setTimeout(() => setIsSettingsSaved(false), 2500);
@@ -395,7 +402,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground select-none">
-      {/* 1. SIDEBAR LATERAL DINÁMICO (COLAPSABLE, CENTRADO & ELEGANTE) */}
+      {/* 1. SIDEBAR LATERAL DINÁMICO */}
       <aside
         className={`fixed inset-y-0 left-0 z-40 border-r border-border bg-card/95 backdrop-blur-xl flex flex-col justify-between transition-all duration-200 lg:static lg:translate-x-0 ${
           isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -451,7 +458,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               )}
 
-              {/* Botón Inicio / Home */}
+              {/* Botón Inicio */}
               <button
                 type="button"
                 onClick={() => {
@@ -712,7 +719,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 {activeSection === "master_profile" && "Perfil Base Maestro"}
                 {activeSection === "templates" && "Catálogo de Plantillas ATS"}
                 {activeSection === "ai_import" && "Ingesta Asistida por IA"}
-                {activeSection === "settings" && "Configuración del Sistema"}
+                {activeSection === "settings" && "Configuración"}
               </h1>
               {activeSection === "home" && (
                 <Badge variant="secondary" className="text-[10px] font-mono py-0 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
@@ -774,19 +781,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </Button>
               </div>
             )}
-
-            {activeSection === "settings" && (
-              <Button
-                size="sm"
-                onClick={handleSaveSettings}
-                className={`h-8 px-3.5 text-xs font-semibold rounded-xl gap-1.5 ${
-                  isSettingsSaved ? "bg-emerald-600 text-white" : "bg-foreground text-background"
-                }`}
-              >
-                {isSettingsSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-                <span>{isSettingsSaved ? "Ajustes Guardados" : "Guardar Ajustes"}</span>
-              </Button>
-            )}
           </div>
         </header>
 
@@ -804,7 +798,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </p>
               </div>
 
-              {/* 4 Métricas Reales y Dinámicas */}
+              {/* 4 Métricas Reales */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div
                   onClick={() => setActiveSection("resumes")}
@@ -1105,14 +1099,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
-          {/* APARTADO 2: PERFIL BASE MAESTRO (EXPANDIDO & ROBUSTO) */}
+          {/* APARTADO 2: PERFIL BASE MAESTRO (12 COLS) */}
           {activeSection === "master_profile" && (
             <div className="max-w-7xl mx-auto space-y-6">
-              {/* Layout Asimétrico 2 Columnas de Alta Productividad */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                {/* Columna Izquierda: Navegación de Secciones de la Base (3 cols) */}
                 <div className="lg:col-span-3 space-y-4">
-                  {/* Tarjeta de Resumen de Carrera */}
                   <div className="p-4 rounded-2xl border border-border bg-card space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
@@ -1148,7 +1139,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Menú de Subsecciones de la Base */}
                   <div className="p-2 rounded-2xl border border-border bg-card space-y-1">
                     <button
                       type="button"
@@ -1263,9 +1253,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   </div>
                 </div>
 
-                {/* Columna Derecha: Formulario Extendido y Espacioso (9 cols) */}
                 <div className="lg:col-span-9 p-6 rounded-2xl border border-border bg-card space-y-6">
-                  {/* SUBSECCIÓN 1: DATOS PERSONALES */}
                   {masterSubSection === "general" && (
                     <div className="space-y-4">
                       <div>
@@ -1341,7 +1329,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* SUBSECCIÓN 2: ENLACES & REDES */}
                   {masterSubSection === "social" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
@@ -1409,7 +1396,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* SUBSECCIÓN 3: HISTORIAL LABORAL */}
                   {masterSubSection === "experience" && (
                     <div className="space-y-4">
                       <div className="flex justify-between items-center">
@@ -1505,7 +1491,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               />
                             </div>
 
-                            {/* Viñetas / Highlights */}
                             <div className="space-y-1.5 pt-1">
                               <Label className="text-[11px] font-semibold text-muted-foreground">Viñetas de Logros (Framework STAR/XYZ):</Label>
                               {exp.highlights?.map((h, hIdx) => (
@@ -1553,7 +1538,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* SUBSECCIÓN 4: HABILIDADES */}
                   {masterSubSection === "skills" && (
                     <div className="space-y-4">
                       <div>
@@ -1594,7 +1578,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* SUBSECCIÓN 5: PROYECTOS */}
                   {masterSubSection === "projects" && (
                     <div className="space-y-4">
                       <div>
@@ -1653,7 +1636,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* SUBSECCIÓN 6: EDUCACIÓN */}
                   {masterSubSection === "education" && (
                     <div className="space-y-4">
                       <div>
@@ -1691,7 +1673,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* SUBSECCIÓN 7: CERTIFICACIONES */}
                   {masterSubSection === "certifications" && (
                     <div className="space-y-4">
                       <div>
@@ -1895,210 +1876,582 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
-          {/* APARTADO 5: CONFIGURACIÓN DEL SISTEMA (ROBUSTA & COMPLETA) */}
+          {/* APARTADO 5: CONFIGURACIÓN ELEGANTE ESTILO PROPEL / HIGH-END SAAS */}
           {activeSection === "settings" && (
             <div className="max-w-6xl mx-auto space-y-6">
-              {/* Navegación de Subpestañas de Configuración */}
-              <div className="flex border-b border-border/80 pb-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setSettingsSubSection("profile")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    settingsSubSection === "profile"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
-                  }`}
-                >
-                  Perfil de Usuario & Contacto
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSettingsSubSection("preferences")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    settingsSubSection === "preferences"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
-                  }`}
-                >
-                  Preferencias del Espacio de Trabajo
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setSettingsSubSection("data")}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                    settingsSubSection === "data"
-                      ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
-                  }`}
-                >
-                  Respaldo & Almacenamiento Local
-                </button>
+              {/* Título Principal */}
+              <div className="pb-1">
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">Settings</h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Gestiona tu información personal, preferencias del espacio de trabajo y respaldo de datos.
+                </p>
               </div>
 
-              {/* CONTENIDO 1: PERFIL DE USUARIO */}
-              {settingsSubSection === "profile" && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                  <div className="lg:col-span-4 p-5 rounded-2xl border border-border bg-card space-y-4 text-center flex flex-col items-center">
-                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-black text-2xl shadow-md">
-                      {settingsForm.name ? settingsForm.name.charAt(0).toUpperCase() : "J"}
-                    </div>
-                    <div className="space-y-0.5">
-                      <h3 className="font-bold text-sm text-foreground">{settingsForm.name}</h3>
-                      <p className="text-xs text-muted-foreground">{settingsForm.headline}</p>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] font-mono">
-                      @devSantos8
-                    </Badge>
-                  </div>
+              {/* Layout 2 Columnas Estilo Propel */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Columna Izquierda: Menú Vertical de Configuración (3 cols) */}
+                <div className="lg:col-span-3 space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => setSettingsSubTab("account")}
+                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
+                      settingsSubTab === "account"
+                        ? "bg-foreground text-background shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span>Account Information</span>
+                    {settingsSubTab === "account" && <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
 
-                  <div className="lg:col-span-8 p-6 rounded-2xl border border-border bg-card space-y-4">
-                    <h3 className="font-bold text-sm text-foreground">Información Personal</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold">Nombre Completo</Label>
-                        <Input
-                          value={settingsForm.name}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, name: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold">Correo Electrónico</Label>
-                        <Input
-                          value={settingsForm.email}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, email: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold">Titular Profesional</Label>
-                        <Input
-                          value={settingsForm.headline}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, headline: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold">Ubicación</Label>
-                        <Input
-                          value={settingsForm.location}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, location: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold">Teléfono</Label>
-                        <Input
-                          value={settingsForm.phone}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, phone: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs font-semibold">Portafolio Web</Label>
-                        <Input
-                          value={settingsForm.websiteUrl}
-                          onChange={(e) => setSettingsForm({ ...settingsForm, websiteUrl: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsSubTab("workspace")}
+                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
+                      settingsSubTab === "workspace"
+                        ? "bg-foreground text-background shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span>Workspace & Format</span>
+                    {settingsSubTab === "workspace" && <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
 
-                    <div className="space-y-1 pt-2">
-                      <Label className="text-xs font-semibold">Biografía</Label>
-                      <Textarea
-                        value={settingsForm.bio}
-                        onChange={(e) => setSettingsForm({ ...settingsForm, bio: e.target.value })}
-                        className="text-xs min-h-[70px]"
-                      />
-                    </div>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSettingsSubTab("notifications")}
+                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
+                      settingsSubTab === "notifications"
+                        ? "bg-foreground text-background shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span>Notifications & Alerts</span>
+                    {settingsSubTab === "notifications" && <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSettingsSubTab("security")}
+                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
+                      settingsSubTab === "security"
+                        ? "bg-foreground text-background shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span>Backup & Privacy</span>
+                    {settingsSubTab === "security" && <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSettingsSubTab("support")}
+                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
+                      settingsSubTab === "support"
+                        ? "bg-foreground text-background shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span>Support Center & FAQ</span>
+                    {settingsSubTab === "support" && <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSettingsSubTab("terms")}
+                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
+                      settingsSubTab === "terms"
+                        ? "bg-foreground text-background shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span>Terms & Privacy</span>
+                    {settingsSubTab === "terms" && <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
                 </div>
-              )}
 
-              {/* CONTENIDO 2: PREFERENCIAS DEL WORKSPACE */}
-              {settingsSubSection === "preferences" && (
-                <div className="p-6 rounded-2xl border border-border bg-card space-y-6 max-w-3xl">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-sm text-foreground">Preferencias Predeterminadas</h3>
-                    <p className="text-xs text-muted-foreground">Configura el comportamiento por defecto de nuevos CVs.</p>
-                  </div>
+                {/* Columna Derecha: Canvas de Configuración Estilo Propel (9 cols) */}
+                <div className="lg:col-span-9 p-6 sm:p-8 rounded-3xl border border-border bg-card shadow-xs space-y-6">
+                  {/* TAB 1: ACCOUNT INFORMATION */}
+                  {settingsSubTab === "account" && (
+                    <form onSubmit={handleSaveSettings} className="space-y-6">
+                      {/* Header del Tab */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
+                        <div>
+                          <h3 className="text-base font-bold text-foreground">Account Information</h3>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Update your photo and personal details here.
+                          </p>
+                        </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Tamaño de Hoja Predeterminado</Label>
-                      <select
-                        value={paperSize}
-                        onChange={(e) => setPaperSize(e.target.value as any)}
-                        className="w-full h-8 px-2 text-xs rounded-lg border border-border bg-background"
-                      >
-                        <option value="letter">US Letter (8.5 × 11 in)</option>
-                        <option value="a4">A4 (210 × 297 mm)</option>
-                      </select>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (user?.name) {
+                                const parts = user.name.split(" ");
+                                setFirstName(parts[0] || "Joain");
+                                setLastName(parts.slice(1).join(" ") || "Monroy Santos");
+                              }
+                            }}
+                            className="h-8 text-xs"
+                          >
+                            Cancel
+                          </Button>
+
+                          <Button
+                            type="submit"
+                            size="sm"
+                            className={`h-8 px-4 text-xs font-semibold rounded-xl gap-1.5 ${
+                              isSettingsSaved
+                                ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                                : "bg-foreground text-background hover:opacity-90"
+                            }`}
+                          >
+                            {isSettingsSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                            <span>{isSettingsSaved ? "Saved" : "Save Changes"}</span>
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Fila 1: Your Photo */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start py-2">
+                        <div className="md:col-span-4 space-y-0.5">
+                          <Label className="text-xs font-bold text-foreground">Your photo</Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            This will be displayed on your profile and workspace.
+                          </p>
+                        </div>
+
+                        <div className="md:col-span-8 flex flex-col sm:flex-row items-center gap-4">
+                          <div className="h-16 w-16 rounded-full bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-black text-xl shadow-sm shrink-0">
+                            {firstName ? firstName.charAt(0).toUpperCase() : "J"}
+                          </div>
+
+                          <div className="flex-1 w-full p-4 rounded-2xl border-2 border-dashed border-border/80 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center cursor-pointer transition-colors group">
+                            <Upload className="h-5 w-5 text-muted-foreground group-hover:text-foreground mb-1" />
+                            <span className="text-xs font-semibold text-foreground">
+                              Click to upload <span className="font-normal text-muted-foreground">or drag and drop</span>
+                            </span>
+                            <span className="text-[10px] text-muted-foreground mt-0.5">
+                              SVG, PNG, JPG or GIF (max. 800×800px)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/60" />
+
+                      {/* Fila 2: Name */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
+                        <div className="md:col-span-4">
+                          <Label className="text-xs font-bold text-foreground">Name</Label>
+                        </div>
+                        <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <Input
+                              value={firstName}
+                              onChange={(e) => setFirstName(e.target.value)}
+                              placeholder="First name"
+                              className="h-8.5 text-xs rounded-xl bg-background"
+                            />
+                          </div>
+                          <div>
+                            <Input
+                              value={lastName}
+                              onChange={(e) => setLastName(e.target.value)}
+                              placeholder="Last name"
+                              className="h-8.5 text-xs rounded-xl bg-background"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/60" />
+
+                      {/* Fila 3: Email Address */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
+                        <div className="md:col-span-4 space-y-0.5">
+                          <Label className="text-xs font-bold text-foreground">Email address</Label>
+                          <p className="text-[10px] text-muted-foreground">Used for account identification.</p>
+                        </div>
+                        <div className="md:col-span-8 space-y-1">
+                          <div className="relative">
+                            <Mail className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              value={settingsEmail}
+                              onChange={(e) => setSettingsEmail(e.target.value)}
+                              placeholder="email@domain.com"
+                              className="h-8.5 text-xs pl-8.5 rounded-xl bg-background"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
+                            <CheckCircle className="h-3 w-3" />
+                            <span>Local storage active & verified</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/60" />
+
+                      {/* Fila 4: Phone Number */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
+                        <div className="md:col-span-4">
+                          <Label className="text-xs font-bold text-foreground">Phone Number</Label>
+                        </div>
+                        <div className="md:col-span-8">
+                          <div className="relative">
+                            <Phone className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              value={settingsPhone}
+                              onChange={(e) => setSettingsPhone(e.target.value)}
+                              placeholder="+56 9 1234 5678"
+                              className="h-8.5 text-xs pl-8.5 rounded-xl bg-background"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/60" />
+
+                      {/* Fila 5: Country & City */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
+                        <div className="md:col-span-4">
+                          <Label className="text-xs font-bold text-foreground">Country & City</Label>
+                        </div>
+                        <div className="md:col-span-8">
+                          <div className="relative">
+                            <MapPin className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                              value={settingsLocation}
+                              onChange={(e) => setSettingsLocation(e.target.value)}
+                              placeholder="Santiago, Chile"
+                              className="h-8.5 text-xs pl-8.5 rounded-xl bg-background"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/60" />
+
+                      {/* Fila 6: Headline & Bio */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start py-1">
+                        <div className="md:col-span-4 space-y-0.5">
+                          <Label className="text-xs font-bold text-foreground">Headline & Bio</Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            Brief description for your professional profile.
+                          </p>
+                        </div>
+                        <div className="md:col-span-8 space-y-2">
+                          <Input
+                            value={settingsHeadline}
+                            onChange={(e) => setSettingsHeadline(e.target.value)}
+                            placeholder="Senior Software Engineer & Architect"
+                            className="h-8.5 text-xs rounded-xl bg-background"
+                          />
+                          <Textarea
+                            value={settingsBio}
+                            onChange={(e) => setSettingsBio(e.target.value)}
+                            placeholder="Write a few sentences about your focus..."
+                            className="text-xs min-h-[80px] rounded-xl bg-background leading-relaxed"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="border-t border-border/60" />
+
+                      {/* Fila 7: Social Links */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start py-1">
+                        <div className="md:col-span-4">
+                          <Label className="text-xs font-bold text-foreground">Social Links</Label>
+                        </div>
+                        <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          <Input
+                            value={settingsGithub}
+                            onChange={(e) => setSettingsGithub(e.target.value)}
+                            placeholder="GitHub URL"
+                            className="h-8 text-xs rounded-xl bg-background"
+                          />
+                          <Input
+                            value={settingsLinkedin}
+                            onChange={(e) => setSettingsLinkedin(e.target.value)}
+                            placeholder="LinkedIn URL"
+                            className="h-8 text-xs rounded-xl bg-background"
+                          />
+                          <Input
+                            value={settingsWebsite}
+                            onChange={(e) => setSettingsWebsite(e.target.value)}
+                            placeholder="Website URL"
+                            className="h-8 text-xs rounded-xl bg-background"
+                          />
+                        </div>
+                      </div>
+                    </form>
+                  )}
+
+                  {/* TAB 2: WORKSPACE & FORMAT */}
+                  {settingsSubTab === "workspace" && (
+                    <div className="space-y-6">
+                      <div className="pb-4 border-b border-border/80">
+                        <h3 className="text-base font-bold text-foreground">Workspace & Format Preferences</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Configure default paper standard and visual rendering for new resumes.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">Paper Size Standard</Label>
+                          <select
+                            value={paperSize}
+                            onChange={(e) => setPaperSize(e.target.value as any)}
+                            className="w-full h-8.5 px-3 text-xs rounded-xl border border-border bg-background"
+                          >
+                            <option value="letter">US Letter (8.5 × 11 in) — US Standard</option>
+                            <option value="a4">A4 (210 × 297 mm) — International Standard</option>
+                          </select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-bold">Default ATS Template</Label>
+                          <select
+                            value={activeTemplate}
+                            onChange={(e) => setActiveTemplate(e.target.value as any)}
+                            className="w-full h-8.5 px-3 text-xs rounded-xl border border-border bg-background"
+                          >
+                            {templateKeys.map((k) => (
+                              <option key={k} value={k}>
+                                {TEMPLATE_METADATA[k].name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl border border-border bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <h4 className="font-bold text-xs text-foreground">Visual Theme Mode</h4>
+                          <p className="text-[11px] text-muted-foreground">Switch between high contrast light and dark modes.</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={toggleDarkMode}
+                          className="h-8 text-xs gap-1.5 rounded-xl border-border"
+                        >
+                          {isDarkMode ? <Sun className="h-3.5 w-3.5 text-amber-500" /> : <Moon className="h-3.5 w-3.5 text-indigo-500" />}
+                          <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+                        </Button>
+                      </div>
                     </div>
+                  )}
 
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold">Plantilla Predeterminada</Label>
-                      <select
-                        value={activeTemplate}
-                        onChange={(e) => setActiveTemplate(e.target.value as any)}
-                        className="w-full h-8 px-2 text-xs rounded-lg border border-border bg-background"
-                      >
-                        {templateKeys.map((k) => (
-                          <option key={k} value={k}>
-                            {TEMPLATE_METADATA[k].name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                  {/* TAB 3: NOTIFICATIONS & ALERTS */}
+                  {settingsSubTab === "notifications" && (
+                    <div className="space-y-6">
+                      <div className="pb-4 border-b border-border/80">
+                        <h3 className="text-base font-bold text-foreground">Notifications & Editor Guidance</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Control automated alerts and assistance while writing your resume.
+                        </p>
+                      </div>
 
-                  <div className="pt-3 border-t border-border/60 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-xs text-foreground">Tema Visual</h4>
-                      <p className="text-[11px] text-muted-foreground">Alterna entre modo claro y oscuro.</p>
+                      <div className="space-y-3">
+                        <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
+                          <div className="space-y-0.5 pr-4">
+                            <span className="font-bold text-xs text-foreground">Single-Page Overflow Alerts</span>
+                            <p className="text-[11px] text-muted-foreground">
+                              Display real-time cutoff line and warning when content exceeds 1 physical sheet.
+                            </p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={notif1PageWarning}
+                            onChange={(e) => setNotif1PageWarning(e.target.checked)}
+                            className="h-4 w-4 rounded accent-foreground cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
+                          <div className="space-y-0.5 pr-4">
+                            <span className="font-bold text-xs text-foreground">Real-Time YAML Syntax Validation</span>
+                            <p className="text-[11px] text-muted-foreground">
+                              Highlight syntax errors instantly in CodeMirror and prevent corrupted schema states.
+                            </p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={notifYamlSync}
+                            onChange={(e) => setNotifYamlSync(e.target.checked)}
+                            className="h-4 w-4 rounded accent-foreground cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
+                          <div className="space-y-0.5 pr-4">
+                            <span className="font-bold text-xs text-foreground">STAR / XYZ Metric Recommendations</span>
+                            <p className="text-[11px] text-muted-foreground">
+                              Provide suggestions for strong action verbs and quantified impact metrics.
+                            </p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={notifStarSuggestions}
+                            onChange={(e) => setNotifStarSuggestions(e.target.checked)}
+                            className="h-4 w-4 rounded accent-foreground cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
+                          <div className="space-y-0.5 pr-4">
+                            <span className="font-bold text-xs text-foreground">Continuous Local-First Autosave</span>
+                            <p className="text-[11px] text-muted-foreground">
+                              Automatically sync changes to browser local storage on every keystroke.
+                            </p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={notifAutoSave}
+                            onChange={(e) => setNotifAutoSave(e.target.checked)}
+                            className="h-4 w-4 rounded accent-foreground cursor-pointer"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={toggleDarkMode}
-                      className="h-8 text-xs gap-1.5"
-                    >
-                      {isDarkMode ? <Sun className="h-3.5 w-3.5 text-amber-500" /> : <Moon className="h-3.5 w-3.5 text-indigo-500" />}
-                      <span>{isDarkMode ? "Modo Claro" : "Modo Oscuro"}</span>
-                    </Button>
-                  </div>
+                  )}
+
+                  {/* TAB 4: BACKUP & PRIVACY */}
+                  {settingsSubTab === "security" && (
+                    <div className="space-y-6">
+                      <div className="pb-4 border-b border-border/80">
+                        <h3 className="text-base font-bold text-foreground">Backup & Data Portability</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Manage your local storage data and export full portable JSON snapshots.
+                        </p>
+                      </div>
+
+                      <div className="p-5 rounded-2xl border border-border bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="text-xs font-bold text-foreground">Full JSON Career Snapshot</div>
+                          <p className="text-[11px] text-muted-foreground max-w-md">
+                            Export all your {profiles.length} CV versions and your entire Master Career Database into a single JSON file.
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={handleExportFullBackup}
+                          className="h-8 px-4 text-xs font-semibold bg-foreground text-background rounded-xl gap-1.5 shrink-0"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          <span>Export Backup</span>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 5: SUPPORT CENTER & FAQ (Estilo Propel Image 3) */}
+                  {settingsSubTab === "support" && (
+                    <div className="space-y-6">
+                      <div className="pb-4 border-b border-border/80">
+                        <h3 className="text-base font-bold text-foreground">Support Center & ATS Guides</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Documentation, algorithm best practices and resume engineering guidelines.
+                        </p>
+                      </div>
+
+                      <div className="relative">
+                        <Search className="h-3.5 w-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={supportSearchQuery}
+                          onChange={(e) => setSupportSearchQuery(e.target.value)}
+                          placeholder="Search ATS guides, typography standards, parsing rules..."
+                          className="h-9 text-xs pl-9 rounded-xl bg-background border-border/80"
+                        />
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <div className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all flex items-center justify-between group">
+                          <div className="space-y-0.5">
+                            <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+                              <span>Guía de Compatibilidad ATS (Workday, Taleo, Greenhouse, Lever)</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              Por qué una estructura plana de 1 columna evita el 98% de descartes automáticos.
+                            </p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                        </div>
+
+                        <div className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all flex items-center justify-between group">
+                          <div className="space-y-0.5">
+                            <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <FileCheck className="h-3.5 w-3.5 text-blue-500" />
+                              <span>Estrategias para condensar tu CV a 1 página estricta</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              Técnicas de densidad tipográfica y síntesis de viñetas para mantener el impacto en 1 hoja.
+                            </p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                        </div>
+
+                        <div className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all flex items-center justify-between group">
+                          <div className="space-y-0.5">
+                            <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <Zap className="h-3.5 w-3.5 text-amber-500" />
+                              <span>Framework STAR / XYZ para viñetas cuantificadas</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              Estructura: Acción + Contexto + Métrica de Resultado (ej. "Redujo latencia en 38%").
+                            </p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                        </div>
+
+                        <div className="p-4 rounded-2xl border border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer transition-all flex items-center justify-between group">
+                          <div className="space-y-0.5">
+                            <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <FileCode className="h-3.5 w-3.5 text-purple-500" />
+                              <span>Exportación Vectorial (PDF) vs Semántica (Word DOCX)</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">
+                              Diferencias entre motores de renderizado y cuándo conviene postular en DOCX o PDF.
+                            </p>
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 6: TERMS & PRIVACY */}
+                  {settingsSubTab === "terms" && (
+                    <div className="space-y-4">
+                      <div className="pb-3 border-b border-border/80">
+                        <h3 className="text-base font-bold text-foreground">Terms of Service & Local Privacy</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          SchemaCV is designed with strict Local-First privacy principles.
+                        </p>
+                      </div>
+
+                      <div className="text-xs text-muted-foreground space-y-3 leading-relaxed">
+                        <p>
+                          1. <strong>Local-First Architecture:</strong> All resume data, master profile information, and YAML specifications are stored directly in your web browser's LocalStorage. No personal data is sent to external databases.
+                        </p>
+                        <p>
+                          2. <strong>AI Document Extraction:</strong> When using the AI resume extractor, files are temporarily processed via encrypted serverless endpoints solely for structure extraction and immediately discarded.
+                        </p>
+                        <p>
+                          3. <strong>Open Standards:</strong> Your CV schema is 100% compatible with open-source YAML standards (RenderCV compatible), allowing you to version your career history in Git.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-
-              {/* CONTENIDO 3: RESPALDO Y ALMACENAMIENTO LOCAL */}
-              {settingsSubSection === "data" && (
-                <div className="p-6 rounded-2xl border border-border bg-card space-y-6 max-w-3xl">
-                  <div className="space-y-1">
-                    <h3 className="font-bold text-sm text-foreground">Almacenamiento Local (Local-First)</h3>
-                    <p className="text-xs text-muted-foreground">
-                      SchemaCV almacena todos tus datos de forma privada en tu navegador. Puedes exportar una copia completa en cualquier momento.
-                    </p>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-border flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <div className="text-xs font-bold text-foreground">Copia de Seguridad Integral</div>
-                      <div className="text-[11px] text-muted-foreground">Exporta tus {profiles.length} CVs y tu Perfil Base Maestro en un archivo JSON.</div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={handleExportFullBackup}
-                      className="h-8 text-xs font-semibold bg-foreground text-background gap-1.5"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      <span>Exportar Backup</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           )}
         </div>
