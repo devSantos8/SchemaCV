@@ -153,7 +153,9 @@ export type TemplateId =
   | "harvard"
   | "tech_minimalist"
   | "modern_executive"
-  | "skills_first";
+  | "skills_first"
+  | "stanford_clean"
+  | "compact_swiss";
 
 export type PaperSize = "letter" | "a4";
 
