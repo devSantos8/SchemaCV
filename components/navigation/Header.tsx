@@ -24,6 +24,7 @@ import {
   ArrowLeft,
   Share2,
   CheckCircle2,
+  Settings,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -51,9 +52,10 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
 
 interface HeaderProps {
   onBackToDashboard?: () => void;
+  onOpenSettings?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onBackToDashboard }) => {
+export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSettings }) => {
   const {
     profiles,
     activeProfileId,
@@ -71,7 +73,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard }) => {
     setProfileModalOpen,
   } = useResumeStore();
 
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, setSettingsModalOpen } = useAuthStore();
 
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -486,6 +488,16 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard }) => {
         </DropdownMenu>
 
         <div className="h-4 w-[1px] bg-border/80 mx-0.5" />
+
+        {/* Configuración de Perfil */}
+        <button
+          type="button"
+          onClick={onOpenSettings || (() => setSettingsModalOpen(true))}
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
+          title="Configuración de Perfil y Cuenta"
+        >
+          <Settings className="h-4 w-4" />
+        </button>
 
         {/* Modo Oscuro */}
         <button

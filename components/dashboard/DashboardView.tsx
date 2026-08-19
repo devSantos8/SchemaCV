@@ -60,9 +60,13 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
 
 interface DashboardViewProps {
   onOpenWorkspace: () => void;
+  onOpenSettings?: () => void;
 }
 
-export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace }) => {
+export const DashboardView: React.FC<DashboardViewProps> = ({
+  onOpenWorkspace,
+  onOpenSettings,
+}) => {
   const {
     profiles,
     activeProfileId,
@@ -277,7 +281,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setSettingsModalOpen(true)}
+                  onClick={onOpenSettings || (() => setSettingsModalOpen(true))}
                   className="text-xs cursor-pointer gap-2 p-2 rounded-md"
                 >
                   <Settings className="h-3.5 w-3.5 text-muted-foreground" />
@@ -332,7 +336,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ onOpenWorkspace })
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Columna Izquierda: Tarjeta de Perfil Hero con Banner y Avatar (4 cols) */}
           <div className="lg:col-span-4 flex justify-center">
-            <ProfileHeroCard onOpenWorkspace={onOpenWorkspace} />
+            <ProfileHeroCard
+              onOpenWorkspace={onOpenWorkspace}
+              onOpenSettings={onOpenSettings}
+            />
           </div>
 
           {/* Columna Derecha: Bento Widgets de Ingesta & ATS Health (8 cols) */}

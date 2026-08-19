@@ -37,11 +37,23 @@ const LinkedinIcon: React.FC<{ className?: string }> = ({ className = "h-3.5 w-3
 
 interface ProfileHeroCardProps {
   onOpenWorkspace: () => void;
+  onOpenSettings?: () => void;
 }
 
-export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({ onOpenWorkspace }) => {
+export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
+  onOpenWorkspace,
+  onOpenSettings,
+}) => {
   const { user, setSettingsModalOpen } = useAuthStore();
   const { profiles } = useResumeStore();
+
+  const handleOpenSettingsClick = () => {
+    if (onOpenSettings) {
+      onOpenSettings();
+    } else {
+      setSettingsModalOpen(true);
+    }
+  };
 
   const currentTheme =
     BANNER_THEMES.find((t) => t.id === user?.bannerTheme) || BANNER_THEMES[0];
@@ -69,7 +81,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({ onOpenWorkspac
         {/* Botón de Configuración Rápida en el Banner */}
         <button
           type="button"
-          onClick={() => setSettingsModalOpen(true)}
+          onClick={handleOpenSettingsClick}
           className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-sm"
           title="Configurar Perfil Profesional"
         >
@@ -146,7 +158,7 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({ onOpenWorkspac
           )}
           <button
             type="button"
-            onClick={() => setSettingsModalOpen(true)}
+            onClick={handleOpenSettingsClick}
             className="h-7 px-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-[11px] font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
           >
             <Edit3 className="h-3 w-3" />

@@ -7,12 +7,13 @@ import { ResumePreview } from "@/components/preview/ResumePreview";
 import { ImportResumeModal } from "@/components/editor/ImportResumeModal";
 import { ProfileManagerModal } from "@/components/navigation/ProfileManagerModal";
 import { DashboardView } from "@/components/dashboard/DashboardView";
+import { ProfileSettingsView } from "@/components/settings/ProfileSettingsView";
 import { AuthView } from "@/components/auth/AuthView";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function SchemaCVApp() {
-  const [currentView, setCurrentView] = useState<"dashboard" | "workspace">("dashboard");
+  const [currentView, setCurrentView] = useState<"dashboard" | "workspace" | "settings">("dashboard");
   const { undo, redo, canUndo, canRedo, activeTab } = useResumeStore();
   const { isAuthenticated } = useAuthStore();
 
@@ -50,16 +51,29 @@ export default function SchemaCVApp() {
     return <AuthView />;
   }
 
+  // Si estamos en la vista de Configuración de Perfil (Apartado Completo)
+  if (currentView === "settings") {
+    return <ProfileSettingsView onBack={() => setCurrentView("dashboard")} />;
+  }
+
   // Si estamos en la vista de Dashboard
   if (currentView === "dashboard") {
-    return <DashboardView onOpenWorkspace={() => setCurrentView("workspace")} />;
+    return (
+      <DashboardView
+        onOpenWorkspace={() => setCurrentView("workspace")}
+        onOpenSettings={() => setCurrentView("settings")}
+      />
+    );
   }
 
   // Si estamos en la vista de Workspace (Editor Dual ⟷ Vista Previa)
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-foreground select-none print:h-auto print:overflow-visible print:bg-white">
       {/* 1. Header con botón de volver al Dashboard */}
-      <Header onBackToDashboard={() => setCurrentView("dashboard")} />
+      <Header
+        onBackToDashboard={() => setCurrentView("dashboard")}
+        onOpenSettings={() => setCurrentView("settings")}
+      />
 
       {/* 2. Área de Trabajo Principal Dividida (Editor Dual ⟷ Vista Previa ATS) */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden print:block print:overflow-visible">
