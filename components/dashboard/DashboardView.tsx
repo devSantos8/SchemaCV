@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Home,
   Plus,
@@ -49,6 +49,11 @@ import {
   X,
   Clock,
   Zap,
+  Award,
+  Link as LinkIcon,
+  Download,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -140,6 +145,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setActiveTemplate,
     activeTemplate,
     paperSize,
+    setPaperSize,
   } = useResumeStore();
 
   const {
@@ -167,15 +173,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   // Estados del Perfil Base Maestro
   const [masterFormData, setMasterFormData] = useState<ResumeData>(masterProfileData);
   const [isMasterSaved, setIsMasterSaved] = useState(false);
-  const [masterTab, setMasterTab] = useState<"general" | "experience" | "skills" | "projects" | "education">("general");
+  const [masterSubSection, setMasterSubSection] = useState<"general" | "social" | "experience" | "skills" | "projects" | "education" | "certifications">("general");
+
+  // Estados de Configuración
+  const [settingsSubSection, setSettingsSubSection] = useState<"profile" | "preferences" | "data">("profile");
+  const [settingsForm, setSettingsForm] = useState({
+    name: user?.name || "Joain Matias Monroy Santos",
+    email: user?.email || "matiasmonroy483@gmail.com",
+    headline: user?.headline || "Senior Full Stack & Cloud Developer",
+    location: user?.location || "Santiago, Chile",
+    phone: user?.phone || "+56 9 4900 2793",
+    bio: user?.bio || "Ingeniero de Software enfocado en arquitecturas escalables, sistemas cloud y diseño de experiencias web de alto impacto.",
+    githubUrl: user?.githubUrl || "https://github.com/devSantos8",
+    linkedinUrl: user?.linkedinUrl || "https://linkedin.com/in/jmonroys17",
+    websiteUrl: user?.websiteUrl || "https://jmonroys.dev",
+  });
+  const [isSettingsSaved, setIsSettingsSaved] = useState(false);
 
   // Estados de la Galería de Plantillas
   const [templatePreviewSample, setTemplatePreviewSample] = useState(true);
 
   // Sincronizar formulario maestro si cambia el store
-  React.useEffect(() => {
+  useEffect(() => {
     setMasterFormData(JSON.parse(JSON.stringify(masterProfileData)));
   }, [masterProfileData]);
+
+  useEffect(() => {
+    if (user) {
+      setSettingsForm((prev) => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email,
+        headline: user.headline || prev.headline,
+        location: user.location || prev.location,
+        phone: user.phone || prev.phone,
+        bio: user.bio || prev.bio,
+        githubUrl: user.githubUrl || prev.githubUrl,
+        linkedinUrl: user.linkedinUrl || prev.linkedinUrl,
+        websiteUrl: user.websiteUrl || prev.websiteUrl,
+      }));
+    }
+  }, [user]);
 
   const toggleDarkMode = () => {
     const root = document.documentElement;
@@ -197,6 +235,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateMasterProfileData(masterFormData);
     setIsMasterSaved(true);
     setTimeout(() => setIsMasterSaved(false), 2500);
+  };
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateUserProfile({
+      name: settingsForm.name,
+      email: settingsForm.email,
+      headline: settingsForm.headline,
+      location: settingsForm.location,
+      phone: settingsForm.phone,
+      bio: settingsForm.bio,
+      githubUrl: settingsForm.githubUrl,
+      linkedinUrl: settingsForm.linkedinUrl,
+      websiteUrl: settingsForm.websiteUrl,
+    });
+    setIsSettingsSaved(true);
+    setTimeout(() => setIsSettingsSaved(false), 2500);
   };
 
   // Subida de CV con IA
@@ -301,15 +356,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Exportar JSON
-  const handleDownloadJson = (profile: ResumeProfile) => {
-    const jsonString = JSON.stringify(profile.data, null, 2);
-    const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
+  // Exportar Backup Completo JSON
+  const handleExportFullBackup = () => {
+    const backupData = {
+      version: "schemacv-v1",
+      exportedAt: new Date().toISOString(),
+      profiles,
+      masterProfileData,
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const safeName = (profile.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
-    a.download = `${safeName}_SchemaCV.json`;
+    a.download = `SchemaCV_Full_Backup_${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -329,6 +388,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const masterSkillsCount = masterProfileData.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0;
   const masterProjCount = masterProfileData.projects?.length || 0;
   const masterEduCount = masterProfileData.education?.length || 0;
+  const masterCertCount = masterProfileData.certifications?.length || 0;
 
   const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0];
   const templateKeys = Object.keys(TEMPLATE_METADATA) as TemplateId[];
@@ -344,7 +404,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="flex flex-col p-4 gap-6">
           {/* Header del Sidebar: Logo Centrado y Botón Colapsar */}
           <div className="relative flex items-center justify-center min-h-[40px] pt-1">
-            {/* Logo Centrado */}
             <div
               onClick={() => setActiveSection("home")}
               className="flex items-baseline gap-1 cursor-pointer select-none group"
@@ -568,7 +627,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 } rounded-2xl bg-card border border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-2xs hover:shadow-xs transition-all text-left group`}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  {/* Avatar con Indicador */}
                   <div className="relative shrink-0">
                     <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-bold text-xs shadow-xs">
                       {user?.name ? user.name.charAt(0).toUpperCase() : "J"}
@@ -651,10 +709,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <h1 className="text-sm font-bold text-foreground capitalize">
                 {activeSection === "home" && "Panel Principal"}
                 {activeSection === "resumes" && "Mis Currículums"}
-                {activeSection === "master_profile" && "Perfil Base de Carrera"}
+                {activeSection === "master_profile" && "Perfil Base Maestro"}
                 {activeSection === "templates" && "Catálogo de Plantillas ATS"}
                 {activeSection === "ai_import" && "Ingesta Asistida por IA"}
-                {activeSection === "settings" && "Configuración de Perfil"}
+                {activeSection === "settings" && "Configuración del Sistema"}
               </h1>
               {activeSection === "home" && (
                 <Badge variant="secondary" className="text-[10px] font-mono py-0 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20">
@@ -689,15 +747,44 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
 
             {activeSection === "master_profile" && (
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const count = profiles.length + 1;
+                    createProfileFromMaster(`CV Versión ${count}`, masterFormData.headline || "Nuevo Rol");
+                    onOpenWorkspace();
+                  }}
+                  className="h-8 px-3 text-xs font-semibold rounded-xl border-border hover:bg-zinc-100 dark:hover:bg-zinc-800 gap-1.5"
+                >
+                  <Plus className="h-3.5 w-3.5 text-emerald-500" />
+                  <span>Crear CV desde Base</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={handleSaveMasterProfile}
+                  className={`h-8 px-3.5 text-xs font-semibold rounded-xl gap-1.5 ${
+                    isMasterSaved ? "bg-emerald-600 text-white" : "bg-foreground text-background"
+                  }`}
+                >
+                  {isMasterSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{isMasterSaved ? "Guardado en Base" : "Guardar en Base"}</span>
+                </Button>
+              </div>
+            )}
+
+            {activeSection === "settings" && (
               <Button
                 size="sm"
-                onClick={handleSaveMasterProfile}
+                onClick={handleSaveSettings}
                 className={`h-8 px-3.5 text-xs font-semibold rounded-xl gap-1.5 ${
-                  isMasterSaved ? "bg-emerald-600 text-white" : "bg-foreground text-background"
+                  isSettingsSaved ? "bg-emerald-600 text-white" : "bg-foreground text-background"
                 }`}
               >
-                {isMasterSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-                <span>{isMasterSaved ? "Guardado en Base" : "Guardar en Base"}</span>
+                {isSettingsSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                <span>{isSettingsSaved ? "Ajustes Guardados" : "Guardar Ajustes"}</span>
               </Button>
             )}
           </div>
@@ -708,7 +795,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {/* APARTADO 0: INICIO / HOME */}
           {activeSection === "home" && (
             <div className="max-w-5xl mx-auto space-y-8">
-              {/* Saludo y Resumen Ejecutivo */}
               <div className="space-y-1">
                 <h2 className="text-2xl font-bold tracking-tight text-foreground">
                   Hola, {user?.name?.split(" ")[0] || "Joain"}
@@ -785,7 +871,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-              {/* Tarjetas de Accesos Directos (Redirecciones Rápidas) */}
+              {/* Tarjetas de Accesos Directos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
                   onClick={onOpenWorkspace}
@@ -876,7 +962,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {/* APARTADO 1: MIS CURRÍCULUMS */}
           {activeSection === "resumes" && (
             <div className="max-w-6xl mx-auto space-y-6">
-              {/* Barra de Filtro & Búsqueda */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="relative w-full sm:w-72">
                   <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -893,7 +978,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-              {/* Grid de Tarjetas de Currículum */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {filteredProfiles.map((profile) => {
                   const isActive = profile.id === activeProfileId;
@@ -910,7 +994,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           : "border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700"
                       }`}
                     >
-                      {/* Cabecera de la Tarjeta */}
                       <div className={`px-4 py-2 flex items-center justify-between border-b ${accent.border} ${accent.bg}`}>
                         <div className="flex items-center gap-1.5 text-[11px] font-semibold">
                           <Icon className="h-3.5 w-3.5" />
@@ -921,7 +1004,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </span>
                       </div>
 
-                      {/* Cuerpo de la Tarjeta */}
                       <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
                         <div className="space-y-1">
                           <h3 className="font-bold text-sm text-foreground truncate">
@@ -940,7 +1022,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Acciones de la Tarjeta */}
                         <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
                           <Button
                             size="sm"
@@ -951,7 +1032,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             <ArrowRight className="h-3 w-3" />
                           </Button>
 
-                          {/* Menú de Opciones */}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -1009,7 +1089,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   );
                 })}
 
-                {/* Tarjeta para Crear Nueva Versión */}
                 <div
                   onClick={() => setIsWizardOpen(true)}
                   className="rounded-2xl border-2 border-dashed border-border/80 hover:border-zinc-400 dark:hover:border-zinc-600 bg-card/30 p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-card min-h-[190px] group"
@@ -1026,211 +1105,630 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
-          {/* APARTADO 2: PERFIL BASE MAESTRO */}
+          {/* APARTADO 2: PERFIL BASE MAESTRO (EXPANDIDO & ROBUSTO) */}
           {activeSection === "master_profile" && (
-            <div className="max-w-4xl mx-auto space-y-6">
-              <div className="p-5 rounded-2xl border border-border bg-card space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
-                  <div className="space-y-0.5">
-                    <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                      <Database className="h-4 w-4 text-emerald-500" />
-                      <span>Base de Datos de Carrera Completa</span>
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      Tu repositorio maestro con todos tus empleos, proyectos y skills sin límite de páginas.
-                    </p>
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Layout Asimétrico 2 Columnas de Alta Productividad */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Columna Izquierda: Navegación de Secciones de la Base (3 cols) */}
+                <div className="lg:col-span-3 space-y-4">
+                  {/* Tarjeta de Resumen de Carrera */}
+                  <div className="p-4 rounded-2xl border border-border bg-card space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                        <Database className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-xs text-foreground truncate">
+                          {masterFormData.name || "Nombre"}
+                        </h3>
+                        <p className="text-[10px] text-muted-foreground truncate">
+                          {masterFormData.headline || "Titular"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-border/60 text-[11px] font-mono text-muted-foreground space-y-1">
+                      <div className="flex justify-between">
+                        <span>Experiencias:</span>
+                        <span className="font-bold text-foreground">{masterExpCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Habilidades:</span>
+                        <span className="font-bold text-foreground">{masterSkillsCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Proyectos:</span>
+                        <span className="font-bold text-foreground">{masterProjCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Educación:</span>
+                        <span className="font-bold text-foreground">{masterEduCount}</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      const count = profiles.length + 1;
-                      createProfileFromMaster(`CV Versión ${count}`, masterFormData.headline || "Nuevo Rol");
-                      onOpenWorkspace();
-                    }}
-                    className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1.5"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>Crear CV desde esta Base</span>
-                  </Button>
+                  {/* Menú de Subsecciones de la Base */}
+                  <div className="p-2 rounded-2xl border border-border bg-card space-y-1">
+                    <button
+                      type="button"
+                      onClick={() => setMasterSubSection("general")}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        masterSubSection === "general"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <User className="h-3.5 w-3.5" />
+                        <span>Datos Personales</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMasterSubSection("social")}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        masterSubSection === "social"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-3.5 w-3.5" />
+                        <span>Enlaces & Redes</span>
+                      </div>
+                      <span className="text-[10px] font-mono opacity-80">{masterFormData.social_networks?.length || 0}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMasterSubSection("experience")}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        masterSubSection === "experience"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Briefcase className="h-3.5 w-3.5" />
+                        <span>Historial Laboral</span>
+                      </div>
+                      <Badge variant="outline" className="text-[9px] font-mono px-1 py-0">{masterExpCount}</Badge>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMasterSubSection("skills")}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        masterSubSection === "skills"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Layers className="h-3.5 w-3.5" />
+                        <span>Habilidades Técnicas</span>
+                      </div>
+                      <Badge variant="outline" className="text-[9px] font-mono px-1 py-0">{masterSkillsCount}</Badge>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMasterSubSection("projects")}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        masterSubSection === "projects"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <FolderGit2 className="h-3.5 w-3.5" />
+                        <span>Proyectos</span>
+                      </div>
+                      <Badge variant="outline" className="text-[9px] font-mono px-1 py-0">{masterProjCount}</Badge>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMasterSubSection("education")}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        masterSubSection === "education"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="h-3.5 w-3.5" />
+                        <span>Educación</span>
+                      </div>
+                      <Badge variant="outline" className="text-[9px] font-mono px-1 py-0">{masterEduCount}</Badge>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setMasterSubSection("certifications")}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                        masterSubSection === "certifications"
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Award className="h-3.5 w-3.5" />
+                        <span>Certificaciones</span>
+                      </div>
+                      <Badge variant="outline" className="text-[9px] font-mono px-1 py-0">{masterCertCount}</Badge>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Pestañas de Edición del Perfil Base */}
-                <Tabs value={masterTab} onValueChange={(v) => setMasterTab(v as any)} className="w-full">
-                  <TabsList className="grid grid-cols-5 w-full max-w-xl h-8 bg-zinc-100 dark:bg-zinc-800 text-xs mb-4">
-                    <TabsTrigger value="general" className="text-xs">General</TabsTrigger>
-                    <TabsTrigger value="experience" className="text-xs">Experiencia</TabsTrigger>
-                    <TabsTrigger value="skills" className="text-xs">Skills</TabsTrigger>
-                    <TabsTrigger value="projects" className="text-xs">Proyectos</TabsTrigger>
-                    <TabsTrigger value="education" className="text-xs">Educación</TabsTrigger>
-                  </TabsList>
+                {/* Columna Derecha: Formulario Extendido y Espacioso (9 cols) */}
+                <div className="lg:col-span-9 p-6 rounded-2xl border border-border bg-card space-y-6">
+                  {/* SUBSECCIÓN 1: DATOS PERSONALES */}
+                  {masterSubSection === "general" && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground">Datos Personales & Titular</h3>
+                        <p className="text-xs text-muted-foreground">Tu información de contacto central.</p>
+                      </div>
 
-                  <TabsContent value="general" className="space-y-4 m-0">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold">Nombre Completo</Label>
-                        <Input
-                          value={masterFormData.name || ""}
-                          onChange={(e) => setMasterFormData({ ...masterFormData, name: e.target.value })}
-                          className="h-8 text-xs"
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Nombre Completo</Label>
+                          <Input
+                            value={masterFormData.name || ""}
+                            onChange={(e) => setMasterFormData({ ...masterFormData, name: e.target.value })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Titular Profesional Principal</Label>
+                          <Input
+                            value={masterFormData.headline || ""}
+                            onChange={(e) => setMasterFormData({ ...masterFormData, headline: e.target.value })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Correo Electrónico</Label>
+                          <Input
+                            value={masterFormData.email || ""}
+                            onChange={(e) => setMasterFormData({ ...masterFormData, email: e.target.value })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Teléfono</Label>
+                          <Input
+                            value={masterFormData.phone || ""}
+                            onChange={(e) => setMasterFormData({ ...masterFormData, phone: e.target.value })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Ubicación (Ciudad, País)</Label>
+                          <Input
+                            value={masterFormData.location || ""}
+                            onChange={(e) => setMasterFormData({ ...masterFormData, location: e.target.value })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">Sitio Web Personal / Portafolio</Label>
+                          <Input
+                            value={masterFormData.website || ""}
+                            onChange={(e) => setMasterFormData({ ...masterFormData, website: e.target.value })}
+                            className="h-8 text-xs"
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold">Titular Profesional</Label>
-                        <Input
-                          value={masterFormData.headline || ""}
-                          onChange={(e) => setMasterFormData({ ...masterFormData, headline: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold">Email</Label>
-                        <Input
-                          value={masterFormData.email || ""}
-                          onChange={(e) => setMasterFormData({ ...masterFormData, email: e.target.value })}
-                          className="h-8 text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold">Teléfono</Label>
-                        <Input
-                          value={masterFormData.phone || ""}
-                          onChange={(e) => setMasterFormData({ ...masterFormData, phone: e.target.value })}
-                          className="h-8 text-xs"
+
+                      <div className="space-y-1.5 pt-2">
+                        <Label className="text-xs font-semibold">Resumen Profesional Maestro (Bio Completa)</Label>
+                        <Textarea
+                          value={masterFormData.summary || ""}
+                          onChange={(e) => setMasterFormData({ ...masterFormData, summary: e.target.value })}
+                          placeholder="Escribe tu trayectoria completa, especialidad y principales fortalezas técnicas..."
+                          className="text-xs min-h-[120px] leading-relaxed"
                         />
                       </div>
                     </div>
+                  )}
 
-                    <div className="space-y-1.5 pt-2">
-                      <Label className="text-xs font-semibold">Resumen Profesional Completo</Label>
-                      <Textarea
-                        value={masterFormData.summary || ""}
-                        onChange={(e) => setMasterFormData({ ...masterFormData, summary: e.target.value })}
-                        className="text-xs min-h-[90px] leading-relaxed"
-                      />
-                    </div>
-                  </TabsContent>
+                  {/* SUBSECCIÓN 2: ENLACES & REDES */}
+                  {masterSubSection === "social" && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">Redes Sociales & Enlaces Profesionales</h3>
+                          <p className="text-xs text-muted-foreground">GitHub, LinkedIn, Twitter/X, Portafolios.</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const newNet = { network: "GitHub", username: "usuario", url: "https://github.com/usuario" };
+                            setMasterFormData({
+                              ...masterFormData,
+                              social_networks: [...(masterFormData.social_networks || []), newNet],
+                            });
+                          }}
+                          className="h-7 text-xs bg-foreground text-background gap-1"
+                        >
+                          <Plus className="h-3 w-3" />
+                          <span>Añadir Enlace</span>
+                        </Button>
+                      </div>
 
-                  <TabsContent value="experience" className="space-y-3 m-0">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-semibold text-muted-foreground">
-                        {masterFormData.experience?.length || 0} Empleos registrados
-                      </span>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          const newEntry = {
-                            id: `exp-${Date.now()}`,
-                            company: "Nueva Empresa",
-                            position: "Cargo",
-                            start_date: "2024",
-                            end_date: "Presente",
-                            current: true,
-                            highlights: ["Responsabilidad o logro medible."],
-                          };
-                          setMasterFormData({
-                            ...masterFormData,
-                            experience: [newEntry, ...(masterFormData.experience || [])],
-                          });
-                        }}
-                        className="h-7 text-xs bg-foreground text-background"
-                      >
-                        <Plus className="h-3 w-3 mr-1" />
-                        <span>Añadir Empleo</span>
-                      </Button>
-                    </div>
-
-                    <div className="space-y-2.5">
-                      {masterFormData.experience?.map((exp, idx) => (
-                        <div key={exp.id} className="p-3 rounded-xl border border-border bg-card/60 space-y-2 text-xs">
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold">{exp.position} – {exp.company}</span>
+                      <div className="space-y-3">
+                        {masterFormData.social_networks?.map((net, idx) => (
+                          <div key={idx} className="p-3.5 rounded-xl border border-border bg-card/60 flex items-center gap-3">
+                            <div className="w-32">
+                              <Input
+                                value={net.network}
+                                onChange={(e) => {
+                                  const updated = [...(masterFormData.social_networks || [])];
+                                  updated[idx].network = e.target.value;
+                                  setMasterFormData({ ...masterFormData, social_networks: updated });
+                                }}
+                                placeholder="Red (ej: GitHub)"
+                                className="h-7 text-xs font-semibold"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Input
+                                value={net.url}
+                                onChange={(e) => {
+                                  const updated = [...(masterFormData.social_networks || [])];
+                                  updated[idx].url = e.target.value;
+                                  setMasterFormData({ ...masterFormData, social_networks: updated });
+                                }}
+                                placeholder="https://..."
+                                className="h-7 text-xs"
+                              />
+                            </div>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => {
-                                const updated = masterFormData.experience.filter((_, i) => i !== idx);
-                                setMasterFormData({ ...masterFormData, experience: updated });
+                                const updated = masterFormData.social_networks?.filter((_, i) => i !== idx);
+                                setMasterFormData({ ...masterFormData, social_networks: updated });
                               }}
-                              className="h-6 w-6 p-0 text-muted-foreground hover:text-rose-500"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-rose-500"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUBSECCIÓN 3: HISTORIAL LABORAL */}
+                  {masterSubSection === "experience" && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">Historial Completo de Empleos ({masterExpCount})</h3>
+                          <p className="text-xs text-muted-foreground">Toda tu trayectoria laboral con viñetas cuantificadas.</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const newExp = {
+                              id: `exp-${Date.now()}`,
+                              company: "Nueva Empresa",
+                              position: "Nuevo Cargo",
+                              location: "",
+                              start_date: "2024",
+                              end_date: "Presente",
+                              current: true,
+                              highlights: ["Diseñé e implementé funcionalidad con métricas medibles."],
+                            };
+                            setMasterFormData({
+                              ...masterFormData,
+                              experience: [newExp, ...(masterFormData.experience || [])],
+                            });
+                          }}
+                          className="h-7 text-xs bg-foreground text-background gap-1"
+                        >
+                          <Plus className="h-3 w-3" />
+                          <span>Añadir Empleo</span>
+                        </Button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {masterFormData.experience?.map((exp, idx) => (
+                          <div key={exp.id} className="p-4 rounded-2xl border border-border bg-card/60 space-y-3 text-xs">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-sm text-foreground">
+                                {exp.position} — <span className="text-muted-foreground font-normal">{exp.company}</span>
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const updated = masterFormData.experience.filter((_, i) => i !== idx);
+                                  setMasterFormData({ ...masterFormData, experience: updated });
+                                }}
+                                className="h-6 w-6 p-0 text-muted-foreground hover:text-rose-500"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                              <Input
+                                value={exp.company}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.experience];
+                                  updated[idx].company = e.target.value;
+                                  setMasterFormData({ ...masterFormData, experience: updated });
+                                }}
+                                placeholder="Empresa"
+                                className="h-7 text-xs"
+                              />
+                              <Input
+                                value={exp.position}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.experience];
+                                  updated[idx].position = e.target.value;
+                                  setMasterFormData({ ...masterFormData, experience: updated });
+                                }}
+                                placeholder="Cargo"
+                                className="h-7 text-xs"
+                              />
+                              <Input
+                                value={exp.start_date}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.experience];
+                                  updated[idx].start_date = e.target.value;
+                                  setMasterFormData({ ...masterFormData, experience: updated });
+                                }}
+                                placeholder="Inicio (ej: 2022-03)"
+                                className="h-7 text-xs"
+                              />
+                              <Input
+                                value={exp.end_date}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.experience];
+                                  updated[idx].end_date = e.target.value;
+                                  setMasterFormData({ ...masterFormData, experience: updated });
+                                }}
+                                placeholder="Fin (ej: Presente)"
+                                className="h-7 text-xs"
+                              />
+                            </div>
+
+                            {/* Viñetas / Highlights */}
+                            <div className="space-y-1.5 pt-1">
+                              <Label className="text-[11px] font-semibold text-muted-foreground">Viñetas de Logros (Framework STAR/XYZ):</Label>
+                              {exp.highlights?.map((h, hIdx) => (
+                                <div key={hIdx} className="flex items-start gap-1.5">
+                                  <span className="text-muted-foreground pt-1.5">•</span>
+                                  <Textarea
+                                    value={h}
+                                    onChange={(e) => {
+                                      const updated = [...masterFormData.experience];
+                                      updated[idx].highlights[hIdx] = e.target.value;
+                                      setMasterFormData({ ...masterFormData, experience: updated });
+                                    }}
+                                    className="text-xs min-h-[45px] leading-snug"
+                                  />
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      const updated = [...masterFormData.experience];
+                                      updated[idx].highlights = updated[idx].highlights.filter((_, i) => i !== hIdx);
+                                      setMasterFormData({ ...masterFormData, experience: updated });
+                                    }}
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-rose-500 shrink-0"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  const updated = [...masterFormData.experience];
+                                  updated[idx].highlights = [...(updated[idx].highlights || []), "Nuevo logro o métrica."];
+                                  setMasterFormData({ ...masterFormData, experience: updated });
+                                }}
+                                className="h-6 text-[11px] text-muted-foreground hover:text-foreground"
+                              >
+                                + Añadir Viñeta
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUBSECCIÓN 4: HABILIDADES */}
+                  {masterSubSection === "skills" && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground">Catálogo de Habilidades Técnicas ({masterSkillsCount})</h3>
+                        <p className="text-xs text-muted-foreground">Organiza tus tecnologías y competencias por categorías.</p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {masterFormData.skills?.map((cat, catIdx) => (
+                          <div key={cat.id} className="p-4 rounded-xl border border-border bg-card/60 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <Input
+                                value={cat.category}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.skills];
+                                  updated[catIdx].category = e.target.value;
+                                  setMasterFormData({ ...masterFormData, skills: updated });
+                                }}
+                                className="h-7 text-xs font-bold w-60"
+                              />
+                              <span className="text-[11px] font-mono text-muted-foreground">
+                                {cat.skills.length} skills
+                              </span>
+                            </div>
                             <Input
-                              value={exp.company}
+                              value={cat.skills.join(", ")}
                               onChange={(e) => {
-                                const updated = [...masterFormData.experience];
-                                updated[idx].company = e.target.value;
-                                setMasterFormData({ ...masterFormData, experience: updated });
+                                const updated = [...masterFormData.skills];
+                                updated[catIdx].skills = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                setMasterFormData({ ...masterFormData, skills: updated });
                               }}
-                              placeholder="Empresa"
-                              className="h-7 text-xs"
-                            />
-                            <Input
-                              value={exp.position}
-                              onChange={(e) => {
-                                const updated = [...masterFormData.experience];
-                                updated[idx].position = e.target.value;
-                                setMasterFormData({ ...masterFormData, experience: updated });
-                              }}
-                              placeholder="Cargo"
-                              className="h-7 text-xs"
+                              placeholder="Separadas por comas..."
+                              className="h-8 text-xs font-mono"
                             />
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="skills" className="space-y-3 m-0">
-                    <div className="space-y-2.5">
-                      {masterFormData.skills?.map((cat, catIdx) => (
-                        <div key={cat.id} className="p-3 rounded-xl border border-border bg-card/60 space-y-1.5">
-                          <span className="font-bold text-xs font-mono">{cat.category}</span>
-                          <Input
-                            value={cat.skills.join(", ")}
-                            onChange={(e) => {
-                              const updated = [...masterFormData.skills];
-                              updated[catIdx].skills = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
-                              setMasterFormData({ ...masterFormData, skills: updated });
-                            }}
-                            className="h-7 text-xs font-mono"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="projects" className="space-y-3 m-0">
-                    <div className="space-y-2.5">
-                      {masterFormData.projects?.map((proj, idx) => (
-                        <div key={proj.id} className="p-3 rounded-xl border border-border bg-card/60 space-y-1 text-xs">
-                          <span className="font-bold text-foreground">{proj.name}</span>
-                          <Textarea
-                            value={proj.description || ""}
-                            onChange={(e) => {
-                              const updated = [...masterFormData.projects];
-                              updated[idx].description = e.target.value;
-                              setMasterFormData({ ...masterFormData, projects: updated });
-                            }}
-                            className="text-xs min-h-[50px]"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="education" className="space-y-2.5 m-0">
-                    {masterFormData.education?.map((edu) => (
-                      <div key={edu.id} className="p-3 rounded-xl border border-border bg-card/60 text-xs">
-                        <div className="font-bold text-foreground">{edu.degree}</div>
-                        <div className="text-muted-foreground">{edu.institution}</div>
+                        ))}
                       </div>
-                    ))}
-                  </TabsContent>
-                </Tabs>
+                    </div>
+                  )}
+
+                  {/* SUBSECCIÓN 5: PROYECTOS */}
+                  {masterSubSection === "projects" && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground">Repositorio de Proyectos ({masterProjCount})</h3>
+                        <p className="text-xs text-muted-foreground">Tus desarrollos, productos y arquitecturas destacadas.</p>
+                      </div>
+
+                      <div className="space-y-3">
+                        {masterFormData.projects?.map((proj, idx) => (
+                          <div key={proj.id} className="p-4 rounded-xl border border-border bg-card/60 space-y-2 text-xs">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <Input
+                                value={proj.name}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.projects];
+                                  updated[idx].name = e.target.value;
+                                  setMasterFormData({ ...masterFormData, projects: updated });
+                                }}
+                                placeholder="Nombre del proyecto"
+                                className="h-7 text-xs font-bold"
+                              />
+                              <Input
+                                value={proj.url || ""}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.projects];
+                                  updated[idx].url = e.target.value;
+                                  setMasterFormData({ ...masterFormData, projects: updated });
+                                }}
+                                placeholder="URL demo / web"
+                                className="h-7 text-xs"
+                              />
+                              <Input
+                                value={proj.github_url || ""}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.projects];
+                                  updated[idx].github_url = e.target.value;
+                                  setMasterFormData({ ...masterFormData, projects: updated });
+                                }}
+                                placeholder="URL GitHub"
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                            <Textarea
+                              value={proj.description || ""}
+                              onChange={(e) => {
+                                const updated = [...masterFormData.projects];
+                                updated[idx].description = e.target.value;
+                                setMasterFormData({ ...masterFormData, projects: updated });
+                              }}
+                              placeholder="Descripción técnica del proyecto..."
+                              className="text-xs min-h-[60px]"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUBSECCIÓN 6: EDUCACIÓN */}
+                  {masterSubSection === "education" && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground">Educación & Títulos ({masterEduCount})</h3>
+                      </div>
+
+                      <div className="space-y-3">
+                        {masterFormData.education?.map((edu, idx) => (
+                          <div key={edu.id} className="p-4 rounded-xl border border-border bg-card/60 space-y-2 text-xs">
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input
+                                value={edu.institution}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.education];
+                                  updated[idx].institution = e.target.value;
+                                  setMasterFormData({ ...masterFormData, education: updated });
+                                }}
+                                placeholder="Institución"
+                                className="h-7 text-xs"
+                              />
+                              <Input
+                                value={edu.degree}
+                                onChange={(e) => {
+                                  const updated = [...masterFormData.education];
+                                  updated[idx].degree = e.target.value;
+                                  setMasterFormData({ ...masterFormData, education: updated });
+                                }}
+                                placeholder="Título / Grado"
+                                className="h-7 text-xs font-bold"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* SUBSECCIÓN 7: CERTIFICACIONES */}
+                  {masterSubSection === "certifications" && (
+                    <div className="space-y-4">
+                      <div>
+                        <h3 className="text-sm font-bold text-foreground">Certificaciones & Licencias ({masterCertCount})</h3>
+                      </div>
+
+                      <div className="space-y-3">
+                        {masterFormData.certifications?.map((cert, idx) => (
+                          <div key={cert.id} className="p-4 rounded-xl border border-border bg-card/60 space-y-2 text-xs">
+                            <div className="grid grid-cols-2 gap-2">
+                              <Input
+                                value={cert.name}
+                                onChange={(e) => {
+                                  const updated = [...(masterFormData.certifications || [])];
+                                  updated[idx].name = e.target.value;
+                                  setMasterFormData({ ...masterFormData, certifications: updated });
+                                }}
+                                placeholder="Nombre de Certificación"
+                                className="h-7 text-xs font-bold"
+                              />
+                              <Input
+                                value={cert.issuer}
+                                onChange={(e) => {
+                                  const updated = [...(masterFormData.certifications || [])];
+                                  updated[idx].issuer = e.target.value;
+                                  setMasterFormData({ ...masterFormData, certifications: updated });
+                                }}
+                                placeholder="Entidad Emisora (ej: AWS, Google)"
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -1268,7 +1766,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
-              {/* Grid de Plantillas */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {templateKeys.map((tempId) => {
                   const meta = TEMPLATE_METADATA[tempId];
@@ -1283,7 +1780,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         isSelected ? "border-emerald-600 ring-2 ring-emerald-500/20" : "border-border/80"
                       }`}
                     >
-                      {/* Miniatura renderizada */}
                       <div className="relative h-60 bg-zinc-100 dark:bg-zinc-900 border-b border-border/60 overflow-hidden flex justify-center items-start pt-2">
                         <div className="w-[230px] h-[280px] overflow-hidden rounded-xs border border-zinc-200 shadow-sm relative bg-white shrink-0">
                           <div
@@ -1294,7 +1790,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Overlay hover */}
                         <div className="absolute inset-0 bg-zinc-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-2xs p-3">
                           <Button
                             size="sm"
@@ -1316,7 +1811,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         )}
                       </div>
 
-                      {/* Info */}
                       <div className="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between">
@@ -1401,26 +1895,210 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
-          {/* APARTADO 5: CONFIGURACIÓN */}
+          {/* APARTADO 5: CONFIGURACIÓN DEL SISTEMA (ROBUSTA & COMPLETA) */}
           {activeSection === "settings" && (
-            <div className="max-w-2xl mx-auto space-y-6">
-              <div className="p-6 rounded-3xl border border-border bg-card space-y-4">
-                <h2 className="text-base font-bold text-foreground">Configuración de Usuario</h2>
-                <div className="space-y-3 text-xs">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Nombre de Usuario</Label>
-                    <Input value={user?.name || ""} disabled className="h-8 text-xs bg-zinc-100 dark:bg-zinc-800" />
+            <div className="max-w-6xl mx-auto space-y-6">
+              {/* Navegación de Subpestañas de Configuración */}
+              <div className="flex border-b border-border/80 pb-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSettingsSubSection("profile")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    settingsSubSection === "profile"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  Perfil de Usuario & Contacto
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSettingsSubSection("preferences")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    settingsSubSection === "preferences"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  Preferencias del Espacio de Trabajo
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSettingsSubSection("data")}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                    settingsSubSection === "data"
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  Respaldo & Almacenamiento Local
+                </button>
+              </div>
+
+              {/* CONTENIDO 1: PERFIL DE USUARIO */}
+              {settingsSubSection === "profile" && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                  <div className="lg:col-span-4 p-5 rounded-2xl border border-border bg-card space-y-4 text-center flex flex-col items-center">
+                    <div className="h-20 w-20 rounded-2xl bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-black text-2xl shadow-md">
+                      {settingsForm.name ? settingsForm.name.charAt(0).toUpperCase() : "J"}
+                    </div>
+                    <div className="space-y-0.5">
+                      <h3 className="font-bold text-sm text-foreground">{settingsForm.name}</h3>
+                      <p className="text-xs text-muted-foreground">{settingsForm.headline}</p>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] font-mono">
+                      @devSantos8
+                    </Badge>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Correo Electrónico</Label>
-                    <Input value={user?.email || ""} disabled className="h-8 text-xs bg-zinc-100 dark:bg-zinc-800" />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Rol Profesional</Label>
-                    <Input value={user?.headline || ""} disabled className="h-8 text-xs bg-zinc-100 dark:bg-zinc-800" />
+
+                  <div className="lg:col-span-8 p-6 rounded-2xl border border-border bg-card space-y-4">
+                    <h3 className="font-bold text-sm text-foreground">Información Personal</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold">Nombre Completo</Label>
+                        <Input
+                          value={settingsForm.name}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, name: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold">Correo Electrónico</Label>
+                        <Input
+                          value={settingsForm.email}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, email: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold">Titular Profesional</Label>
+                        <Input
+                          value={settingsForm.headline}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, headline: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold">Ubicación</Label>
+                        <Input
+                          value={settingsForm.location}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, location: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold">Teléfono</Label>
+                        <Input
+                          value={settingsForm.phone}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, phone: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-semibold">Portafolio Web</Label>
+                        <Input
+                          value={settingsForm.websiteUrl}
+                          onChange={(e) => setSettingsForm({ ...settingsForm, websiteUrl: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 pt-2">
+                      <Label className="text-xs font-semibold">Biografía</Label>
+                      <Textarea
+                        value={settingsForm.bio}
+                        onChange={(e) => setSettingsForm({ ...settingsForm, bio: e.target.value })}
+                        className="text-xs min-h-[70px]"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* CONTENIDO 2: PREFERENCIAS DEL WORKSPACE */}
+              {settingsSubSection === "preferences" && (
+                <div className="p-6 rounded-2xl border border-border bg-card space-y-6 max-w-3xl">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-sm text-foreground">Preferencias Predeterminadas</h3>
+                    <p className="text-xs text-muted-foreground">Configura el comportamiento por defecto de nuevos CVs.</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Tamaño de Hoja Predeterminado</Label>
+                      <select
+                        value={paperSize}
+                        onChange={(e) => setPaperSize(e.target.value as any)}
+                        className="w-full h-8 px-2 text-xs rounded-lg border border-border bg-background"
+                      >
+                        <option value="letter">US Letter (8.5 × 11 in)</option>
+                        <option value="a4">A4 (210 × 297 mm)</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Plantilla Predeterminada</Label>
+                      <select
+                        value={activeTemplate}
+                        onChange={(e) => setActiveTemplate(e.target.value as any)}
+                        className="w-full h-8 px-2 text-xs rounded-lg border border-border bg-background"
+                      >
+                        {templateKeys.map((k) => (
+                          <option key={k} value={k}>
+                            {TEMPLATE_METADATA[k].name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="pt-3 border-t border-border/60 flex items-center justify-between">
+                    <div>
+                      <h4 className="font-bold text-xs text-foreground">Tema Visual</h4>
+                      <p className="text-[11px] text-muted-foreground">Alterna entre modo claro y oscuro.</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleDarkMode}
+                      className="h-8 text-xs gap-1.5"
+                    >
+                      {isDarkMode ? <Sun className="h-3.5 w-3.5 text-amber-500" /> : <Moon className="h-3.5 w-3.5 text-indigo-500" />}
+                      <span>{isDarkMode ? "Modo Claro" : "Modo Oscuro"}</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTENIDO 3: RESPALDO Y ALMACENAMIENTO LOCAL */}
+              {settingsSubSection === "data" && (
+                <div className="p-6 rounded-2xl border border-border bg-card space-y-6 max-w-3xl">
+                  <div className="space-y-1">
+                    <h3 className="font-bold text-sm text-foreground">Almacenamiento Local (Local-First)</h3>
+                    <p className="text-xs text-muted-foreground">
+                      SchemaCV almacena todos tus datos de forma privada en tu navegador. Puedes exportar una copia completa en cualquier momento.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-border flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <div className="text-xs font-bold text-foreground">Copia de Seguridad Integral</div>
+                      <div className="text-[11px] text-muted-foreground">Exporta tus {profiles.length} CVs y tu Perfil Base Maestro en un archivo JSON.</div>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={handleExportFullBackup}
+                      className="h-8 text-xs font-semibold bg-foreground text-background gap-1.5"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span>Exportar Backup</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
