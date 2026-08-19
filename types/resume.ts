@@ -21,6 +21,7 @@ export const ExperienceEntrySchema = z.object({
   current: z.boolean().default(false),
   highlights: z.array(z.string()).default([]).describe("Viñetas con impacto cuantitativo (STAR/XYZ)"),
   summary: z.string().optional(),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
 });
 
 export type ExperienceEntry = z.infer<typeof ExperienceEntrySchema>;
@@ -37,6 +38,7 @@ export const EducationEntrySchema = z.object({
   current: z.boolean().default(false),
   gpa: z.string().optional(),
   highlights: z.array(z.string()).default([]),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
 });
 
 export type EducationEntry = z.infer<typeof EducationEntrySchema>;
@@ -46,6 +48,7 @@ export const SkillCategorySchema = z.object({
   id: z.string(),
   category: z.string().describe("Nombre de la categoría, ej: Languages, Frameworks, Cloud & DevOps"),
   skills: z.array(z.string()).describe("Lista de habilidades individuales"),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
 });
 
 export type SkillCategory = z.infer<typeof SkillCategorySchema>;
@@ -61,6 +64,7 @@ export const ProjectEntrySchema = z.object({
   end_date: z.string().optional(),
   technologies: z.array(z.string()).default([]),
   highlights: z.array(z.string()).default([]),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
 });
 
 export type ProjectEntry = z.infer<typeof ProjectEntrySchema>;
@@ -73,6 +77,7 @@ export const CertificationEntrySchema = z.object({
   date: z.string().optional(),
   url: z.string().url().optional(),
   summary: z.string().optional(),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
 });
 
 export type CertificationEntry = z.infer<typeof CertificationEntrySchema>;
@@ -86,6 +91,7 @@ export const CustomEntrySchema = z.object({
   location: z.string().optional(),
   description: z.string().optional(),
   highlights: z.array(z.string()).default([]),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
 });
 
 export type CustomEntry = z.infer<typeof CustomEntrySchema>;
@@ -95,6 +101,7 @@ export const CustomSectionSchema = z.object({
   id: z.string(),
   title: z.string(),
   entries: z.array(CustomEntrySchema).default([]),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
 });
 
 export type CustomSection = z.infer<typeof CustomSectionSchema>;
@@ -171,7 +178,8 @@ export const ResumeSchema = z.object({
   certifications: z.array(CertificationEntrySchema).default([]),
   custom_sections: z.array(CustomSectionSchema).default([]),
   
-  // Metadatos de orden de secciones
+  // Metadatos de visibilidad y orden de secciones
+  hidden_sections: z.array(z.string()).default([]).optional().describe("Lista de IDs de secciones ocultas"),
   section_order: z.array(z.string()).default([
     "summary",
     "skills",
@@ -183,6 +191,30 @@ export const ResumeSchema = z.object({
 });
 
 export type ResumeData = z.infer<typeof ResumeSchema>;
+
+/**
+ * Filtra los datos del CV excluyendo secciones ocultas y elementos individuales marcados como hidden: true.
+ * Esto permite que el renderizado de plantillas y exportadores reflow automáticamente el contenido visible.
+ */
+export function getVisibleResumeData(data: ResumeData): ResumeData {
+  const hiddenSections = new Set(data.hidden_sections || []);
+
+  return {
+    ...data,
+    section_order: (data.section_order || []).filter((s) => !hiddenSections.has(s)),
+    skills: (data.skills || []).filter((item) => !item.hidden),
+    experience: (data.experience || []).filter((item) => !item.hidden),
+    projects: (data.projects || []).filter((item) => !item.hidden),
+    education: (data.education || []).filter((item) => !item.hidden),
+    certifications: (data.certifications || []).filter((item) => !item.hidden),
+    custom_sections: (data.custom_sections || [])
+      .filter((sec) => !sec.hidden)
+      .map((sec) => ({
+        ...sec,
+        entries: (sec.entries || []).filter((e) => !e.hidden),
+      })),
+  };
+}
 
 // Tipo de plantilla
 export type TemplateId =

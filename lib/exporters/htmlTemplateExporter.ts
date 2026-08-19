@@ -1,14 +1,15 @@
-import { ResumeData, TemplateId, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { ResumeData, TemplateId, PaperSize, SECTION_LABELS, ResumeLanguage, getVisibleResumeData } from "@/types/resume";
 
 /**
  * Compilador de HTML puro independiente (sin dependencias de react-dom/server).
  * Genera HTML semántico optimizado para renderizado PDF vectorial con Puppeteer.
  */
 export function generateTemplateHtml(
-  data: ResumeData,
+  rawData: ResumeData,
   templateId: TemplateId = "tech_minimalist",
   paperSize: PaperSize = "letter"
 ): string {
+  const data = getVisibleResumeData(rawData);
   const isA4 = paperSize === "a4";
   const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
   const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;

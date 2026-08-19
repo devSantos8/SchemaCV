@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, TemplateId, PaperSize } from "@/types/resume";
+import { ResumeData, TemplateId, PaperSize, getVisibleResumeData } from "@/types/resume";
 import { HarvardClassic } from "./HarvardClassic";
 import { TechMinimalist } from "./TechMinimalist";
 import { ModernExecutive } from "./ModernExecutive";
@@ -136,31 +136,33 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({
   data,
   paperSize,
 }) => {
+  const visibleData = getVisibleResumeData(data);
+
   switch (templateId) {
     case "harvard":
-      return <HarvardClassic data={data} paperSize={paperSize} />;
+      return <HarvardClassic data={visibleData} paperSize={paperSize} />;
     case "tech_minimalist":
-      return <TechMinimalist data={data} paperSize={paperSize} />;
+      return <TechMinimalist data={visibleData} paperSize={paperSize} />;
     case "modern_executive":
-      return <ModernExecutive data={data} paperSize={paperSize} />;
+      return <ModernExecutive data={visibleData} paperSize={paperSize} />;
     case "skills_first":
-      return <SkillsFirstBuilder data={data} paperSize={paperSize} />;
+      return <SkillsFirstBuilder data={visibleData} paperSize={paperSize} />;
     case "stanford_clean":
-      return <StanfordClean data={data} paperSize={paperSize} />;
+      return <StanfordClean data={visibleData} paperSize={paperSize} />;
     case "compact_swiss":
-      return <CompactSwiss data={data} paperSize={paperSize} />;
+      return <CompactSwiss data={visibleData} paperSize={paperSize} />;
     case "executive_serif":
-      return <ExecutiveSerif data={data} paperSize={paperSize} />;
+      return <ExecutiveSerif data={visibleData} paperSize={paperSize} />;
     case "tech_compact":
-      return <TechCompact data={data} paperSize={paperSize} />;
+      return <TechCompact data={visibleData} paperSize={paperSize} />;
     case "modern_minimal":
-      return <ModernMinimal data={data} paperSize={paperSize} />;
+      return <ModernMinimal data={visibleData} paperSize={paperSize} />;
     case "career_changer":
-      return <CareerChanger data={data} paperSize={paperSize} />;
+      return <CareerChanger data={visibleData} paperSize={paperSize} />;
     case "academic_international":
-      return <AcademicInternational data={data} paperSize={paperSize} />;
+      return <AcademicInternational data={visibleData} paperSize={paperSize} />;
     default:
-      return <TechMinimalist data={data} paperSize={paperSize} />;
+      return <TechMinimalist data={visibleData} paperSize={paperSize} />;
   }
 };
 
