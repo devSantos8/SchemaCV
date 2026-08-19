@@ -55,7 +55,7 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
       style={{
         padding: "0.5in 0.6in",
         fontSize: "10pt",
-        fontFamily: "var(--font-garamond), Georgia, Cambria, serif",
+        fontFamily: "'Times New Roman', Georgia, Cambria, serif",
       }}
     >
       {/* Encabezado ATS Centrado Clásico */}
@@ -64,7 +64,7 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
           {name || "Tu Nombre Completo"}
         </h1>
         {headline && (
-          <p className="text-[10pt] italic font-normal text-zinc-700 mb-1 font-serif">
+          <p className="text-[10pt] font-medium text-zinc-700 mb-1">
             {headline}
           </p>
         )}
@@ -140,16 +140,16 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                       <div className="flex justify-between items-baseline mb-0.5">
                         <span className="font-bold text-[10pt] text-zinc-950">
                           {exp.position}
-                          <span className="font-normal text-zinc-700"> — {exp.company}</span>
+                          <span className="font-medium text-zinc-700"> — {exp.company}</span>
                         </span>
-                        <span className="text-[9pt] italic text-zinc-600 font-sans shrink-0">
+                        <span className="text-[9pt] text-zinc-600 font-sans shrink-0 font-medium">
                           {exp.location ? `${exp.location} | ` : ""}
                           {exp.start_date} – {exp.current ? labels.present : exp.end_date}
                         </span>
                       </div>
 
                       {exp.summary && (
-                        <p className="text-[9pt] italic text-zinc-700 mb-1 leading-snug">
+                        <p className="text-[9pt] text-zinc-700 mb-1 leading-snug">
                           {exp.summary}
                         </p>
                       )}
@@ -183,20 +183,20 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                             {proj.name}
                           </span>
                           {proj.technologies && proj.technologies.length > 0 && (
-                            <span className="text-[9pt] font-sans text-zinc-600 ml-1.5">
+                            <span className="text-[9pt] font-sans text-zinc-600 ml-1.5 font-medium">
                               | {proj.technologies.join(", ")}
                             </span>
                           )}
                         </div>
                         {proj.start_date && (
-                          <span className="text-[9pt] italic text-zinc-600 font-sans shrink-0">
+                          <span className="text-[9pt] text-zinc-600 font-sans shrink-0 font-medium">
                             {proj.start_date}
                             {proj.end_date ? ` – ${proj.end_date}` : ""}
                           </span>
                         )}
                       </div>
 
-                      {proj.description && (
+                      {proj.description && (!proj.highlights || proj.highlights.length === 0 || proj.highlights[0] !== proj.description) && (
                         <p className="text-[9pt] text-zinc-700 mb-1 leading-snug">
                           {proj.description}
                         </p>
@@ -231,18 +231,18 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                             {edu.institution}
                           </span>
                           {edu.location && (
-                            <span className="text-[9pt] italic text-zinc-600 ml-1">
+                            <span className="text-[9pt] text-zinc-600 ml-1">
                               , {edu.location}
                             </span>
                           )}
                         </div>
-                        <span className="text-[9pt] italic text-zinc-600 font-sans shrink-0">
+                        <span className="text-[9pt] text-zinc-600 font-sans shrink-0 font-medium">
                           {edu.start_date ? `${edu.start_date} – ` : ""}
                           {edu.current ? labels.present : edu.end_date || ""}
                         </span>
                       </div>
                       <div className="flex justify-between items-baseline text-[9.5pt] text-zinc-800">
-                        <span className="italic">
+                        <span className="font-medium">
                           {edu.degree} {edu.area ? `en ${edu.area}` : ""}
                         </span>
                         {edu.gpa && (
@@ -279,7 +279,7 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                         <span className="text-zinc-700"> — {cert.issuer}</span>
                       </div>
                       {cert.date && (
-                        <span className="text-[9pt] italic text-zinc-600 font-sans">
+                        <span className="text-[9pt] text-zinc-600 font-sans font-medium">
                           {cert.date}
                         </span>
                       )}

@@ -202,8 +202,7 @@ export function generateTemplateHtml(
   // Estilos tipográficos según la plantilla
   const isSerif =
     templateId === "harvard" ||
-    templateId === "executive_serif" ||
-    templateId === "academic_international";
+    templateId === "executive_serif";
 
   return `
     <div class="cv-document ${templateId} ${isSerif ? "font-serif" : "font-sans"}" style="padding: 28px 36px; color: #09090b; line-height: 1.45; font-size: 11px;">
@@ -223,7 +222,7 @@ export function generateTemplateHtml(
           text-align: center;
           color: #3f3f46;
           margin: 0 0 6px 0;
-          font-style: italic;
+          font-weight: 500;
         }
         .header-contact {
           font-size: 10px;

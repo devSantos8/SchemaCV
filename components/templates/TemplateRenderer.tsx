@@ -31,8 +31,8 @@ export const TEMPLATE_METADATA: Record<
   }
 > = {
   harvard: {
-    name: "Classic Dense",
-    description: "Monocromático formal, tipografía serif (EB Garamond) y divisores horizontales nítidos.",
+    name: "Harvard Classic",
+    description: "Monocromático formal estilo Harvard, tipografía serif limpia y divisores horizontales nítidos.",
     bestFor: "Finanzas, Consultoría, Legal, Perfiles Académicos y Corporativos Tradicionales",
     iconName: "GraduationCap",
     fontFamily: "Serif (EB Garamond)",
