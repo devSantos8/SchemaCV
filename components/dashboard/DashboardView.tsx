@@ -60,6 +60,7 @@ import {
   FileCheck,
   CheckCircle,
   Sliders,
+  Key,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -128,7 +129,7 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
 };
 
 type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "ai_import" | "settings";
-type SettingsSubTab = "account" | "workspace" | "notifications" | "security" | "support" | "terms";
+type SettingsSubTab = "account" | "security" | "workspace" | "notifications" | "support" | "terms";
 
 interface DashboardViewProps {
   onOpenWorkspace: () => void;
@@ -196,6 +197,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "https://jmonroys.dev");
   const [isSettingsSaved, setIsSettingsSaved] = useState(false);
 
+  // Estados de Contraseña y Seguridad
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isPasswordSaved, setIsPasswordSaved] = useState(false);
+  const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+
   // Notificaciones & Toggles de Configuración
   const [notif1PageWarning, setNotif1PageWarning] = useState(true);
   const [notifYamlSync, setNotifYamlSync] = useState(true);
@@ -259,6 +267,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     });
     setIsSettingsSaved(true);
     setTimeout(() => setIsSettingsSaved(false), 2500);
+  };
+
+  const handleUpdatePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword !== confirmPassword) {
+      alert("Las contraseñas no coinciden o están vacías.");
+      return;
+    }
+    setIsPasswordSaved(true);
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setTimeout(() => setIsPasswordSaved(false), 2500);
   };
 
   // Subida de CV con IA
@@ -1103,7 +1124,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {activeSection === "master_profile" && (
             <div className="max-w-7xl mx-auto space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                <div className="lg:col-span-3 space-y-4">
+                <div className="lg:col-span-3 space-y-4 sticky top-0 self-start">
                   <div className="p-4 rounded-2xl border border-border bg-card space-y-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
@@ -1876,21 +1897,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
-          {/* APARTADO 5: CONFIGURACIÓN ELEGANTE ESTILO PROPEL / HIGH-END SAAS */}
+          {/* APARTADO 5: CONFIGURACIÓN EN ESPAÑOL ESTILO PROPEL CON STICKY SIDEBAR */}
           {activeSection === "settings" && (
             <div className="max-w-6xl mx-auto space-y-6">
               {/* Título Principal */}
               <div className="pb-1">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground">Settings</h2>
+                <h2 className="text-2xl font-bold tracking-tight text-foreground">Configuración</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Gestiona tu información personal, preferencias del espacio de trabajo y respaldo de datos.
+                  Administra tu información personal, preferencias del espacio de trabajo, cuenta de Gmail y seguridad.
                 </p>
               </div>
 
-              {/* Layout 2 Columnas Estilo Propel */}
+              {/* Layout 2 Columnas Estilo Propel con Sticky Sidebar en la Izquierda */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                {/* Columna Izquierda: Menú Vertical de Configuración (3 cols) */}
-                <div className="lg:col-span-3 space-y-1">
+                {/* Columna Izquierda: Menú Vertical Sticky (3 cols) */}
+                <div className="lg:col-span-3 space-y-1 sticky top-0 self-start">
                   <button
                     type="button"
                     onClick={() => setSettingsSubTab("account")}
@@ -1900,8 +1921,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                     }`}
                   >
-                    <span>Account Information</span>
+                    <span>Información de la Cuenta</span>
                     {settingsSubTab === "account" && <ChevronRight className="h-3.5 w-3.5" />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSettingsSubTab("security")}
+                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
+                      settingsSubTab === "security"
+                        ? "bg-foreground text-background shadow-xs font-bold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
+                    }`}
+                  >
+                    <span>Seguridad & Gmail</span>
+                    {settingsSubTab === "security" && <ChevronRight className="h-3.5 w-3.5" />}
                   </button>
 
                   <button
@@ -1913,7 +1947,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                     }`}
                   >
-                    <span>Workspace & Format</span>
+                    <span>Espacio de Trabajo & Formato</span>
                     {settingsSubTab === "workspace" && <ChevronRight className="h-3.5 w-3.5" />}
                   </button>
 
@@ -1926,21 +1960,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                     }`}
                   >
-                    <span>Notifications & Alerts</span>
+                    <span>Notificaciones & Alertas ATS</span>
                     {settingsSubTab === "notifications" && <ChevronRight className="h-3.5 w-3.5" />}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setSettingsSubTab("security")}
-                    className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center justify-between ${
-                      settingsSubTab === "security"
-                        ? "bg-foreground text-background shadow-xs font-bold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
-                    }`}
-                  >
-                    <span>Backup & Privacy</span>
-                    {settingsSubTab === "security" && <ChevronRight className="h-3.5 w-3.5" />}
                   </button>
 
                   <button
@@ -1952,7 +1973,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                     }`}
                   >
-                    <span>Support Center & FAQ</span>
+                    <span>Centro de Ayuda & Guías ATS</span>
                     {settingsSubTab === "support" && <ChevronRight className="h-3.5 w-3.5" />}
                   </button>
 
@@ -1965,22 +1986,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/60"
                     }`}
                   >
-                    <span>Terms & Privacy</span>
+                    <span>Términos & Privacidad Local</span>
                     {settingsSubTab === "terms" && <ChevronRight className="h-3.5 w-3.5" />}
                   </button>
                 </div>
 
-                {/* Columna Derecha: Canvas de Configuración Estilo Propel (9 cols) */}
+                {/* Columna Derecha: Formulario Extendido (9 cols) */}
                 <div className="lg:col-span-9 p-6 sm:p-8 rounded-3xl border border-border bg-card shadow-xs space-y-6">
-                  {/* TAB 1: ACCOUNT INFORMATION */}
+                  {/* TAB 1: INFORMACIÓN DE LA CUENTA */}
                   {settingsSubTab === "account" && (
                     <form onSubmit={handleSaveSettings} className="space-y-6">
-                      {/* Header del Tab */}
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
                         <div>
-                          <h3 className="text-base font-bold text-foreground">Account Information</h3>
+                          <h3 className="text-base font-bold text-foreground">Información de la Cuenta</h3>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            Update your photo and personal details here.
+                            Actualiza tu fotografía y tus datos personales principales.
                           </p>
                         </div>
 
@@ -1998,7 +2018,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             }}
                             className="h-8 text-xs"
                           >
-                            Cancel
+                            Cancelar
                           </Button>
 
                           <Button
@@ -2011,17 +2031,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             }`}
                           >
                             {isSettingsSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
-                            <span>{isSettingsSaved ? "Saved" : "Save Changes"}</span>
+                            <span>{isSettingsSaved ? "Guardado" : "Guardar Cambios"}</span>
                           </Button>
                         </div>
                       </div>
 
-                      {/* Fila 1: Your Photo */}
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start py-2">
+                      {/* Fila 1: Foto de Perfil */}
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-2">
                         <div className="md:col-span-4 space-y-0.5">
-                          <Label className="text-xs font-bold text-foreground">Your photo</Label>
+                          <Label className="text-xs font-bold text-foreground">Tu fotografía</Label>
                           <p className="text-[11px] text-muted-foreground">
-                            This will be displayed on your profile and workspace.
+                            Se mostrará en tu espacio de trabajo y perfil público.
                           </p>
                         </div>
 
@@ -2033,10 +2053,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <div className="flex-1 w-full p-4 rounded-2xl border-2 border-dashed border-border/80 hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center cursor-pointer transition-colors group">
                             <Upload className="h-5 w-5 text-muted-foreground group-hover:text-foreground mb-1" />
                             <span className="text-xs font-semibold text-foreground">
-                              Click to upload <span className="font-normal text-muted-foreground">or drag and drop</span>
+                              Haz clic para subir <span className="font-normal text-muted-foreground">o arrastra un archivo</span>
                             </span>
                             <span className="text-[10px] text-muted-foreground mt-0.5">
-                              SVG, PNG, JPG or GIF (max. 800×800px)
+                              SVG, PNG, JPG o WebP (máx. 800×800px)
                             </span>
                           </div>
                         </div>
@@ -2044,17 +2064,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                       <div className="border-t border-border/60" />
 
-                      {/* Fila 2: Name */}
+                      {/* Fila 2: Nombre */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
                         <div className="md:col-span-4">
-                          <Label className="text-xs font-bold text-foreground">Name</Label>
+                          <Label className="text-xs font-bold text-foreground">Nombre y Apellidos</Label>
                         </div>
                         <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
                             <Input
                               value={firstName}
                               onChange={(e) => setFirstName(e.target.value)}
-                              placeholder="First name"
+                              placeholder="Nombre"
                               className="h-8.5 text-xs rounded-xl bg-background"
                             />
                           </div>
@@ -2062,7 +2082,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             <Input
                               value={lastName}
                               onChange={(e) => setLastName(e.target.value)}
-                              placeholder="Last name"
+                              placeholder="Apellidos"
                               className="h-8.5 text-xs rounded-xl bg-background"
                             />
                           </div>
@@ -2071,35 +2091,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                       <div className="border-t border-border/60" />
 
-                      {/* Fila 3: Email Address */}
+                      {/* Fila 3: Correo Electrónico & Cuenta de Google */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
                         <div className="md:col-span-4 space-y-0.5">
-                          <Label className="text-xs font-bold text-foreground">Email address</Label>
-                          <p className="text-[10px] text-muted-foreground">Used for account identification.</p>
+                          <Label className="text-xs font-bold text-foreground">Correo Gmail Principal</Label>
+                          <p className="text-[10px] text-muted-foreground">Cuenta vinculada a tu perfil.</p>
                         </div>
-                        <div className="md:col-span-8 space-y-1">
+                        <div className="md:col-span-8 space-y-1.5">
                           <div className="relative">
                             <Mail className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <Input
                               value={settingsEmail}
                               onChange={(e) => setSettingsEmail(e.target.value)}
-                              placeholder="email@domain.com"
+                              placeholder="correo@gmail.com"
                               className="h-8.5 text-xs pl-8.5 rounded-xl bg-background"
                             />
                           </div>
-                          <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 dark:text-emerald-400 font-mono">
-                            <CheckCircle className="h-3 w-3" />
-                            <span>Local storage active & verified</span>
+                          <div className="flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-mono">
+                            <div className="flex items-center gap-1.5">
+                              <CheckCircle className="h-3.5 w-3.5" />
+                              <span>Gmail vinculado & Almacenamiento Local Activo</span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">Google OAuth</span>
                           </div>
                         </div>
                       </div>
 
                       <div className="border-t border-border/60" />
 
-                      {/* Fila 4: Phone Number */}
+                      {/* Fila 4: Teléfono */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
                         <div className="md:col-span-4">
-                          <Label className="text-xs font-bold text-foreground">Phone Number</Label>
+                          <Label className="text-xs font-bold text-foreground">Teléfono de Contacto</Label>
                         </div>
                         <div className="md:col-span-8">
                           <div className="relative">
@@ -2116,10 +2139,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                       <div className="border-t border-border/60" />
 
-                      {/* Fila 5: Country & City */}
+                      {/* Fila 5: Ubicación */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center py-1">
                         <div className="md:col-span-4">
-                          <Label className="text-xs font-bold text-foreground">Country & City</Label>
+                          <Label className="text-xs font-bold text-foreground">Ciudad y País</Label>
                         </div>
                         <div className="md:col-span-8">
                           <div className="relative">
@@ -2136,25 +2159,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                       <div className="border-t border-border/60" />
 
-                      {/* Fila 6: Headline & Bio */}
+                      {/* Fila 6: Titular y Biografía */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start py-1">
                         <div className="md:col-span-4 space-y-0.5">
-                          <Label className="text-xs font-bold text-foreground">Headline & Bio</Label>
+                          <Label className="text-xs font-bold text-foreground">Titular y Biografía</Label>
                           <p className="text-[11px] text-muted-foreground">
-                            Brief description for your professional profile.
+                            Resumen ejecutivo de tu perfil profesional.
                           </p>
                         </div>
                         <div className="md:col-span-8 space-y-2">
                           <Input
                             value={settingsHeadline}
                             onChange={(e) => setSettingsHeadline(e.target.value)}
-                            placeholder="Senior Software Engineer & Architect"
+                            placeholder="Senior Software Engineer & Cloud Architect"
                             className="h-8.5 text-xs rounded-xl bg-background"
                           />
                           <Textarea
                             value={settingsBio}
                             onChange={(e) => setSettingsBio(e.target.value)}
-                            placeholder="Write a few sentences about your focus..."
+                            placeholder="Escribe un breve resumen sobre tus áreas de enfoque..."
                             className="text-xs min-h-[80px] rounded-xl bg-background leading-relaxed"
                           />
                         </div>
@@ -2162,28 +2185,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                       <div className="border-t border-border/60" />
 
-                      {/* Fila 7: Social Links */}
+                      {/* Fila 7: Enlaces Profesionales */}
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start py-1">
                         <div className="md:col-span-4">
-                          <Label className="text-xs font-bold text-foreground">Social Links</Label>
+                          <Label className="text-xs font-bold text-foreground">Enlaces Profesionales</Label>
                         </div>
                         <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <Input
                             value={settingsGithub}
                             onChange={(e) => setSettingsGithub(e.target.value)}
-                            placeholder="GitHub URL"
+                            placeholder="URL GitHub"
                             className="h-8 text-xs rounded-xl bg-background"
                           />
                           <Input
                             value={settingsLinkedin}
                             onChange={(e) => setSettingsLinkedin(e.target.value)}
-                            placeholder="LinkedIn URL"
+                            placeholder="URL LinkedIn"
                             className="h-8 text-xs rounded-xl bg-background"
                           />
                           <Input
                             value={settingsWebsite}
                             onChange={(e) => setSettingsWebsite(e.target.value)}
-                            placeholder="Website URL"
+                            placeholder="URL Portafolio"
                             className="h-8 text-xs rounded-xl bg-background"
                           />
                         </div>
@@ -2191,31 +2214,167 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </form>
                   )}
 
-                  {/* TAB 2: WORKSPACE & FORMAT */}
+                  {/* TAB 2: SEGURIDAD, CONTRASEÑA & GMAIL */}
+                  {settingsSubTab === "security" && (
+                    <div className="space-y-6">
+                      <div className="pb-4 border-b border-border/80">
+                        <h3 className="text-base font-bold text-foreground">Seguridad, Contraseña & Cuenta Gmail</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Administra tu contraseña de acceso y el estado de vinculación de tu cuenta de Google.
+                        </p>
+                      </div>
+
+                      {/* Estado de Cuenta de Google / Gmail */}
+                      <div className="p-4 rounded-2xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
+                            <Mail className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-foreground">Cuenta Gmail Conectada</span>
+                              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] font-mono">
+                                Conectado
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground font-mono mt-0.5">{settingsEmail}</p>
+                          </div>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => alert(`Tu sesión está vinculada de forma segura con ${settingsEmail}`)}
+                          className="h-8 text-xs rounded-xl"
+                        >
+                          Gestionar Cuenta de Google
+                        </Button>
+                      </div>
+
+                      {/* Formulario de Cambio de Contraseña */}
+                      <form onSubmit={handleUpdatePassword} className="p-5 rounded-2xl border border-border bg-zinc-50/50 dark:bg-zinc-900/30 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                              <Key className="h-3.5 w-3.5 text-amber-500" />
+                              <span>Cambiar Contraseña</span>
+                            </h4>
+                            <p className="text-[11px] text-muted-foreground">
+                              Actualiza tu contraseña para mayor seguridad.
+                            </p>
+                          </div>
+
+                          <Button
+                            type="submit"
+                            size="sm"
+                            className={`h-8 px-3.5 text-xs font-semibold rounded-xl gap-1.5 ${
+                              isPasswordSaved ? "bg-emerald-600 text-white" : "bg-foreground text-background"
+                            }`}
+                          >
+                            {isPasswordSaved ? <Check className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
+                            <span>{isPasswordSaved ? "¡Contraseña Actualizada!" : "Actualizar Contraseña"}</span>
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold">Contraseña Actual</Label>
+                            <Input
+                              type="password"
+                              value={currentPassword}
+                              onChange={(e) => setCurrentPassword(e.target.value)}
+                              placeholder="••••••••"
+                              className="h-8 text-xs rounded-xl bg-background"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold">Nueva Contraseña</Label>
+                            <Input
+                              type="password"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              placeholder="Mínimo 8 caracteres"
+                              className="h-8 text-xs rounded-xl bg-background"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <Label className="text-xs font-semibold">Confirmar Contraseña</Label>
+                            <Input
+                              type="password"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              placeholder="Repite la nueva contraseña"
+                              className="h-8 text-xs rounded-xl bg-background"
+                            />
+                          </div>
+                        </div>
+                      </form>
+
+                      {/* Autenticación en Dos Pasos (2FA) */}
+                      <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
+                        <div className="space-y-0.5 pr-4">
+                          <span className="font-bold text-xs text-foreground">Autenticación en Dos Pasos (2FA)</span>
+                          <p className="text-[11px] text-muted-foreground">
+                            Añade una capa de seguridad adicional mediante código de verificación.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={is2FAEnabled}
+                          onChange={(e) => setIs2FAEnabled(e.target.checked)}
+                          className="h-4 w-4 rounded accent-foreground cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Respaldo JSON Integral */}
+                      <div className="p-5 rounded-2xl border border-border bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="text-xs font-bold text-foreground">Exportar Copia de Seguridad JSON</div>
+                          <p className="text-[11px] text-muted-foreground max-w-md">
+                            Descarga un archivo JSON portable con todos tus {profiles.length} CVs y la base maestra.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleExportFullBackup}
+                          className="h-8 px-4 text-xs font-semibold bg-foreground text-background rounded-xl gap-1.5 shrink-0"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          <span>Descargar Respaldo</span>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 3: ESPACIO DE TRABAJO & FORMATO */}
                   {settingsSubTab === "workspace" && (
                     <div className="space-y-6">
                       <div className="pb-4 border-b border-border/80">
-                        <h3 className="text-base font-bold text-foreground">Workspace & Format Preferences</h3>
+                        <h3 className="text-base font-bold text-foreground">Preferencias del Espacio de Trabajo</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Configure default paper standard and visual rendering for new resumes.
+                          Configura los estándares predeterminados de renderizado e impresión para nuevos currículums.
                         </p>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Paper Size Standard</Label>
+                          <Label className="text-xs font-bold">Tamaño de Hoja Predeterminado</Label>
                           <select
                             value={paperSize}
                             onChange={(e) => setPaperSize(e.target.value as any)}
                             className="w-full h-8.5 px-3 text-xs rounded-xl border border-border bg-background"
                           >
-                            <option value="letter">US Letter (8.5 × 11 in) — US Standard</option>
-                            <option value="a4">A4 (210 × 297 mm) — International Standard</option>
+                            <option value="letter">US Letter (8.5 × 11 in) — Estándar Norteamérica</option>
+                            <option value="a4">A4 (210 × 297 mm) — Estándar Internacional</option>
                           </select>
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-bold">Default ATS Template</Label>
+                          <Label className="text-xs font-bold">Plantilla ATS Predeterminada</Label>
                           <select
                             value={activeTemplate}
                             onChange={(e) => setActiveTemplate(e.target.value as any)}
@@ -2232,8 +2391,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                       <div className="p-4 rounded-2xl border border-border bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <h4 className="font-bold text-xs text-foreground">Visual Theme Mode</h4>
-                          <p className="text-[11px] text-muted-foreground">Switch between high contrast light and dark modes.</p>
+                          <h4 className="font-bold text-xs text-foreground">Modo Visual del Tema</h4>
+                          <p className="text-[11px] text-muted-foreground">Alterna entre tema claro y oscuro de alto contraste.</p>
                         </div>
                         <Button
                           variant="outline"
@@ -2242,28 +2401,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           className="h-8 text-xs gap-1.5 rounded-xl border-border"
                         >
                           {isDarkMode ? <Sun className="h-3.5 w-3.5 text-amber-500" /> : <Moon className="h-3.5 w-3.5 text-indigo-500" />}
-                          <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>
+                          <span>{isDarkMode ? "Modo Claro" : "Modo Oscuro"}</span>
                         </Button>
                       </div>
                     </div>
                   )}
 
-                  {/* TAB 3: NOTIFICATIONS & ALERTS */}
+                  {/* TAB 4: NOTIFICACIONES & ALERTAS */}
                   {settingsSubTab === "notifications" && (
                     <div className="space-y-6">
                       <div className="pb-4 border-b border-border/80">
-                        <h3 className="text-base font-bold text-foreground">Notifications & Editor Guidance</h3>
+                        <h3 className="text-base font-bold text-foreground">Notificaciones & Asistencia de Redacción</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Control automated alerts and assistance while writing your resume.
+                          Controla las guías y advertencias automatizadas durante la edición de tu CV.
                         </p>
                       </div>
 
                       <div className="space-y-3">
                         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
                           <div className="space-y-0.5 pr-4">
-                            <span className="font-bold text-xs text-foreground">Single-Page Overflow Alerts</span>
+                            <span className="font-bold text-xs text-foreground">Alertas de Desbordamiento de 1 Hoja</span>
                             <p className="text-[11px] text-muted-foreground">
-                              Display real-time cutoff line and warning when content exceeds 1 physical sheet.
+                              Muestra la línea de corte en tiempo real cuando el texto pase a la página 2.
                             </p>
                           </div>
                           <input
@@ -2276,9 +2435,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
                           <div className="space-y-0.5 pr-4">
-                            <span className="font-bold text-xs text-foreground">Real-Time YAML Syntax Validation</span>
+                            <span className="font-bold text-xs text-foreground">Validación de Sintaxis YAML en Tiempo Real</span>
                             <p className="text-[11px] text-muted-foreground">
-                              Highlight syntax errors instantly in CodeMirror and prevent corrupted schema states.
+                              Resalta errores de indentación y formato en el editor de código CodeMirror.
                             </p>
                           </div>
                           <input
@@ -2291,9 +2450,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
                           <div className="space-y-0.5 pr-4">
-                            <span className="font-bold text-xs text-foreground">STAR / XYZ Metric Recommendations</span>
+                            <span className="font-bold text-xs text-foreground">Recomendaciones del Framework STAR / XYZ</span>
                             <p className="text-[11px] text-muted-foreground">
-                              Provide suggestions for strong action verbs and quantified impact metrics.
+                              Sugiere verbos de acción y estructuras cuantificables para tus logros.
                             </p>
                           </div>
                           <input
@@ -2306,9 +2465,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                         <div className="p-4 rounded-2xl border border-border bg-card flex items-center justify-between">
                           <div className="space-y-0.5 pr-4">
-                            <span className="font-bold text-xs text-foreground">Continuous Local-First Autosave</span>
+                            <span className="font-bold text-xs text-foreground">Auto-Guardado Local Continuo (Local-First)</span>
                             <p className="text-[11px] text-muted-foreground">
-                              Automatically sync changes to browser local storage on every keystroke.
+                              Sincroniza cada cambio automáticamente en el almacenamiento local del navegador.
                             </p>
                           </div>
                           <input
@@ -2322,42 +2481,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* TAB 4: BACKUP & PRIVACY */}
-                  {settingsSubTab === "security" && (
-                    <div className="space-y-6">
-                      <div className="pb-4 border-b border-border/80">
-                        <h3 className="text-base font-bold text-foreground">Backup & Data Portability</h3>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          Manage your local storage data and export full portable JSON snapshots.
-                        </p>
-                      </div>
-
-                      <div className="p-5 rounded-2xl border border-border bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="text-xs font-bold text-foreground">Full JSON Career Snapshot</div>
-                          <p className="text-[11px] text-muted-foreground max-w-md">
-                            Export all your {profiles.length} CV versions and your entire Master Career Database into a single JSON file.
-                          </p>
-                        </div>
-                        <Button
-                          size="sm"
-                          onClick={handleExportFullBackup}
-                          className="h-8 px-4 text-xs font-semibold bg-foreground text-background rounded-xl gap-1.5 shrink-0"
-                        >
-                          <Download className="h-3.5 w-3.5" />
-                          <span>Export Backup</span>
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 5: SUPPORT CENTER & FAQ (Estilo Propel Image 3) */}
+                  {/* TAB 5: CENTRO DE AYUDA & GUÍAS ATS */}
                   {settingsSubTab === "support" && (
                     <div className="space-y-6">
                       <div className="pb-4 border-b border-border/80">
-                        <h3 className="text-base font-bold text-foreground">Support Center & ATS Guides</h3>
+                        <h3 className="text-base font-bold text-foreground">Centro de Ayuda & Guías ATS</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Documentation, algorithm best practices and resume engineering guidelines.
+                          Documentación, mejores prácticas algorítmicas y estándares de ingeniería de currículum.
                         </p>
                       </div>
 
@@ -2366,7 +2496,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <Input
                           value={supportSearchQuery}
                           onChange={(e) => setSupportSearchQuery(e.target.value)}
-                          placeholder="Search ATS guides, typography standards, parsing rules..."
+                          placeholder="Buscar guías ATS, estándares tipográficos, reglas de parseo..."
                           className="h-9 text-xs pl-9 rounded-xl bg-background border-border/80"
                         />
                       </div>
@@ -2427,25 +2557,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     </div>
                   )}
 
-                  {/* TAB 6: TERMS & PRIVACY */}
+                  {/* TAB 6: TÉRMINOS & PRIVACIDAD LOCAL */}
                   {settingsSubTab === "terms" && (
                     <div className="space-y-4">
                       <div className="pb-3 border-b border-border/80">
-                        <h3 className="text-base font-bold text-foreground">Terms of Service & Local Privacy</h3>
+                        <h3 className="text-base font-bold text-foreground">Términos del Servicio & Privacidad Local</h3>
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          SchemaCV is designed with strict Local-First privacy principles.
+                          SchemaCV está diseñado bajo principios estrictos de privacidad Local-First.
                         </p>
                       </div>
 
                       <div className="text-xs text-muted-foreground space-y-3 leading-relaxed">
                         <p>
-                          1. <strong>Local-First Architecture:</strong> All resume data, master profile information, and YAML specifications are stored directly in your web browser's LocalStorage. No personal data is sent to external databases.
+                          1. <strong>Arquitectura Local-First:</strong> Todos tus currículums, perfiles y datos de carrera se guardan directamente en el LocalStorage de tu navegador. Ningún dato sensible es almacenado en servidores externos sin tu consentimiento explícito.
                         </p>
                         <p>
-                          2. <strong>AI Document Extraction:</strong> When using the AI resume extractor, files are temporarily processed via encrypted serverless endpoints solely for structure extraction and immediately discarded.
+                          2. <strong>Extracción con IA:</strong> Al utilizar el importador de PDF con IA, los archivos se procesan temporalmente de forma cifrada mediante microservicios y se eliminan inmediatamente tras extraer la estructura.
                         </p>
                         <p>
-                          3. <strong>Open Standards:</strong> Your CV schema is 100% compatible with open-source YAML standards (RenderCV compatible), allowing you to version your career history in Git.
+                          3. <strong>Estándares Abiertos:</strong> Tu código de currículum es 100% compatible con esquemas abiertos YAML (especificación RenderCV), lo que te permite versionar tu carrera en Git de forma libre e independiente.
                         </p>
                       </div>
                     </div>
