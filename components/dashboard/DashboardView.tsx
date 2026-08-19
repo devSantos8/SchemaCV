@@ -26,20 +26,37 @@ import {
   Upload,
   CheckCircle2,
   Settings,
-  Cpu,
-  Zap,
   ArrowRight,
-  Code2,
   Check,
+  LayoutGrid,
+  Database,
+  FolderGit2,
+  Search,
+  SlidersHorizontal,
+  Eye,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Save,
+  Menu,
+  X,
+  Clock,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { TemplateId, ResumeProfile } from "@/types/resume";
-import { TEMPLATE_METADATA } from "@/components/templates/TemplateRenderer";
+import { TemplateId, ResumeProfile, ResumeData } from "@/types/resume";
+import { TEMPLATE_METADATA, TemplateRenderer } from "@/components/templates/TemplateRenderer";
 import { generateResumeDocx } from "@/lib/exporters/docxExporter";
 import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
+import { SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,9 +67,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreateResumeWizard } from "./CreateResumeWizard";
 import { AuthModal } from "@/components/auth/AuthModal";
-import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
-import { MasterProfileModal } from "./MasterProfileModal";
-import { LayoutGrid, Database, FolderGit2 } from "lucide-react";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
@@ -96,6 +110,8 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
   },
 };
 
+type DashboardSection = "resumes" | "master_profile" | "templates" | "ai_import" | "settings";
+
 interface DashboardViewProps {
   onOpenWorkspace: () => void;
   onOpenSettings?: () => void;
@@ -112,27 +128,49 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     duplicateProfile,
     deleteProfile,
     loadImportedResume,
-    setTemplateGalleryOpen,
     masterProfileData,
-    setMasterProfileModalOpen,
+    updateMasterProfileData,
     createProfileFromMaster,
+    setActiveTemplate,
+    activeTemplate,
+    paperSize,
   } = useResumeStore();
 
   const {
     user,
     isAuthenticated,
     logout,
-    setAuthModalOpen,
-    setSettingsModalOpen,
+    updateUserProfile,
   } = useAuthStore();
 
+  const [activeSection, setActiveSection] = useState<DashboardSection>("resumes");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Estados de exportación
   const [downloadingDocxId, setDownloadingDocxId] = useState<string | null>(null);
   const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
-  const [isUploadingAi, setIsUploadingAi] = useState(false);
 
-  const quickFileInputRef = useRef<HTMLInputElement | null>(null);
+  // Estados de Ingesta IA
+  const [isUploadingAi, setIsUploadingAi] = useState(false);
+  const [pastedCvText, setPastedCvText] = useState("");
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Estados del Perfil Base Maestro
+  const [masterFormData, setMasterFormData] = useState<ResumeData>(masterProfileData);
+  const [isMasterSaved, setIsMasterSaved] = useState(false);
+  const [masterTab, setMasterTab] = useState<"general" | "experience" | "skills" | "projects" | "education">("general");
+
+  // Estados de la Galería de Plantillas
+  const [templatePreviewSample, setTemplatePreviewSample] = useState(true);
+  const [inspectTemplateId, setInspectTemplateId] = useState<TemplateId | null>(null);
+
+  // Sincronizar formulario maestro si cambia el store
+  React.useEffect(() => {
+    setMasterFormData(JSON.parse(JSON.stringify(masterProfileData)));
+  }, [masterProfileData]);
 
   const toggleDarkMode = () => {
     const root = document.documentElement;
@@ -150,32 +188,42 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     onOpenWorkspace();
   };
 
-  // Subida rápida de CV desde el Bento Widget
-  const handleQuickUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      try {
-        setIsUploadingAi(true);
-        const formData = new FormData();
+  const handleSaveMasterProfile = () => {
+    updateMasterProfileData(masterFormData);
+    setIsMasterSaved(true);
+    setTimeout(() => setIsMasterSaved(false), 2500);
+  };
+
+  // Subida de CV con IA
+  const handleProcessAiUpload = async (file?: File, text?: string) => {
+    try {
+      setIsUploadingAi(true);
+      const formData = new FormData();
+      if (file) {
         formData.append("file", file);
-        const res = await fetch("/api/parse-cv", { method: "POST", body: formData });
-        const result = await res.json();
-        if (res.ok && result.success && result.data) {
-          loadImportedResume(result.data);
-          onOpenWorkspace();
-        } else {
-          alert(result.error || "No se pudo extraer el currículum.");
-        }
-      } catch (err) {
-        console.error("Error en subida rápida:", err);
-        alert("Hubo un problema al procesar el archivo.");
-      } finally {
-        setIsUploadingAi(false);
+      } else if (text) {
+        formData.append("text", text);
+      } else {
+        return;
       }
+
+      const res = await fetch("/api/parse-cv", { method: "POST", body: formData });
+      const result = await res.json();
+      if (res.ok && result.success && result.data) {
+        loadImportedResume(result.data);
+        onOpenWorkspace();
+      } else {
+        alert(result.error || "No se pudo procesar el currículum.");
+      }
+    } catch (err) {
+      console.error("Error en Ingesta IA:", err);
+      alert("Hubo un problema al procesar el archivo.");
+    } finally {
+      setIsUploadingAi(false);
     }
   };
 
-  // Descarga directa de Word (.docx)
+  // Exportar Word
   const handleDownloadDocx = async (profile: ResumeProfile) => {
     try {
       setDownloadingDocxId(profile.id);
@@ -200,7 +248,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
   };
 
-  // Descarga directa de PDF Vectorial (.pdf)
+  // Exportar PDF
   const handleDownloadPdf = async (profile: ResumeProfile) => {
     try {
       setDownloadingPdfId(profile.id);
@@ -238,7 +286,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     }
   };
 
-  // Descarga de YAML
+  // Exportar YAML
   const handleDownloadYaml = (profile: ResumeProfile) => {
     const yamlString = resumeDataToYaml(profile.data);
     const blob = new Blob([yamlString], { type: "text/yaml;charset=utf-8" });
@@ -253,7 +301,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Descarga de JSON
+  // Exportar JSON
   const handleDownloadJson = (profile: ResumeProfile) => {
     const jsonString = JSON.stringify(profile.data, null, 2);
     const blob = new Blob([jsonString], { type: "application/json;charset=utf-8" });
@@ -268,654 +316,827 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Totalizadores de Métricas Globales
-  const totalExperience = profiles.reduce((acc, p) => acc + (p.data.experience?.length || 0), 0);
-  const totalSkills = profiles.reduce(
-    (acc, p) => acc + (p.data.skills?.reduce((sAcc, cat) => sAcc + cat.skills.length, 0) || 0),
-    0
-  );
-  const totalProjects = profiles.reduce((acc, p) => acc + (p.data.projects?.length || 0), 0);
+  // Filtrado de perfiles
+  const filteredProfiles = profiles.filter((p) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      p.name.toLowerCase().includes(q) ||
+      (p.targetRole && p.targetRole.toLowerCase().includes(q))
+    );
+  });
+
+  const masterExpCount = masterProfileData.experience?.length || 0;
+  const masterSkillsCount = masterProfileData.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0;
+  const masterProjCount = masterProfileData.projects?.length || 0;
+
+  const templateKeys = Object.keys(TEMPLATE_METADATA) as TemplateId[];
 
   return (
-    <div className="min-h-screen bg-zinc-50/50 dark:bg-zinc-950 text-foreground flex flex-col transition-colors duration-300">
-      {/* 1. TOPBAR CON TIPOGRAFÍA PURA Y ELEGANTE */}
-      <header className="h-14 border-b border-border/60 bg-background/80 dark:bg-zinc-950/80 backdrop-blur-xl px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30 transition-all">
-        {/* LOGOTIPO TIPOGRÁFICO MINIMALISTA (SIN ICONO DE IA) */}
-        <div className="flex items-baseline gap-1 select-none">
-          <span className="text-xl font-extrabold tracking-tight text-foreground font-sans">
-            Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
-          </span>
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block" />
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Botón Crear Nuevo CV */}
-          <Button
-            size="sm"
-            onClick={() => setIsWizardOpen(true)}
-            className="h-8 px-3 text-xs gap-1.5 font-semibold bg-foreground text-background rounded-lg shadow-sm hover:opacity-90 transition-all"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Nuevo Currículum</span>
-          </Button>
-
-          {/* Menú de Usuario / Configuración */}
-          {isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900/80 transition-colors text-left"
-                >
-                  <div className="h-6 w-6 rounded-full bg-zinc-200 dark:bg-zinc-800 text-foreground flex items-center justify-center font-bold text-[10px]">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="max-w-[120px] truncate font-medium text-xs text-foreground hidden sm:block">
-                    {user.name}
-                  </span>
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-md border-border p-1.5">
-                <DropdownMenuLabel className="text-xs">
-                  <div className="font-semibold text-foreground">{user.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{user.email}</div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={onOpenSettings || (() => setSettingsModalOpen(true))}
-                  className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                >
-                  <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>Configuración de Perfil</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsWizardOpen(true)}
-                  className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Asistente de Nuevo CV</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={logout}
-                  className="text-xs cursor-pointer gap-2 p-2 rounded-md text-rose-500 hover:text-rose-600"
-                >
-                  <LogOut className="h-3.5 w-3.5" />
-                  <span>Cerrar Sesión</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAuthModalOpen(true, "login")}
-              className="h-8 text-xs gap-1.5"
-            >
-              <UserCircle className="h-3.5 w-3.5" />
-              <span>Iniciar Sesión</span>
-            </Button>
-          )}
-
-          <div className="h-4 w-[1px] bg-border/80 mx-0.5" />
-
-          {/* Modo Oscuro */}
-          <button
-            type="button"
-            onClick={toggleDarkMode}
-            className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
-            title="Alternar tema"
-          >
-            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-        </div>
-      </header>
-
-      {/* 2. CONTENIDO PRINCIPAL CON JERARQUÍA Y VALOR REAL */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 md:p-8 space-y-8">
-        {/* HERO COMMAND HUB: BIENVENIDA & ESTADO */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-border/40">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
-                Bienvenido, {user?.name ? user.name.split(" ")[0] : "Usuario"}
-              </h1>
-              <Badge variant="secondary" className="text-[10px] font-mono py-0.5 bg-zinc-100 dark:bg-zinc-800 border-border">
-                {profiles.length} Perfiles Activos
-              </Badge>
-            </div>
-            <p className="text-xs text-muted-foreground max-w-xl">
-              Panel de ingeniería de currículums ATS, sincronización bidireccional YAML y exportación multiformato.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2.5 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTemplateGalleryOpen(true)}
-              className="h-8 px-3 text-xs gap-1.5 rounded-xl border-border/80 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-emerald-600 dark:text-emerald-400 font-semibold"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              <span>Plantillas ATS</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenSettings}
-              className="h-8 px-3 text-xs gap-1.5 rounded-xl border-border/80 hover:bg-zinc-100 dark:hover:bg-zinc-900"
-            >
-              <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Configuración</span>
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={onOpenWorkspace}
-              className="h-8 px-3.5 text-xs gap-1.5 font-semibold bg-foreground text-background rounded-xl shadow-sm hover:opacity-90 transition-all"
-            >
-              <span>Abrir Editor Dual</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* TARJETA DESTACADA: REPOSITORIO BASE DE CARRERA (PERFIL MAESTRO) */}
-        <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/20 via-zinc-900/30 to-zinc-900/10 border border-emerald-500/30 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                <Database className="h-3.5 w-3.5" />
-              </div>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
-                Tu Base de Información Completa (Perfil Maestro)
+    <div className="flex h-screen w-screen overflow-hidden bg-background text-foreground select-none">
+      {/* 1. SIDEBAR LATERAL ESTRUCTURADO (Estilo Linear / Vercel / Google) */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-border bg-card/95 backdrop-blur-xl flex flex-col justify-between transition-transform duration-200 lg:static lg:translate-x-0 ${
+          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col gap-6 p-5">
+          {/* Logo & Marca */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline gap-1 select-none">
+              <span className="text-xl font-black tracking-tight text-foreground font-sans">
+                Schema<span className="font-semibold text-zinc-400 dark:text-zinc-500">CV</span>
               </span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mb-0.5 inline-block" />
             </div>
 
-            <div>
-              <h2 className="text-lg font-bold text-foreground">
-                {masterProfileData.name || "Tu Nombre Profesional"}
-              </h2>
-              <p className="text-xs text-muted-foreground max-w-2xl mt-0.5 leading-relaxed">
-                Este es tu repositorio maestro con todo tu historial laboral, proyectos y competencias. Puedes crear y adaptar versiones de CV personalizadas a partir de esta base.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-mono text-muted-foreground">
-              <span className="flex items-center gap-1 font-semibold text-foreground">
-                <Briefcase className="h-3.5 w-3.5 text-blue-500" />
-                {masterProfileData.experience?.length || 0} Empleos
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1 font-semibold text-foreground">
-                <Layers className="h-3.5 w-3.5 text-emerald-500" />
-                {masterProfileData.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0} Skills
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1 font-semibold text-foreground">
-                <FolderGit2 className="h-3.5 w-3.5 text-amber-500" />
-                {masterProfileData.projects?.length || 0} Proyectos
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setMasterProfileModalOpen(true)}
-              className="w-full sm:w-auto h-8 px-3.5 text-xs font-semibold rounded-xl border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 gap-1.5"
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="lg:hidden p-1 rounded-md text-muted-foreground hover:text-foreground"
             >
-              <Database className="h-3.5 w-3.5" />
-              <span>Gestionar Base Completa</span>
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={() => {
-                const count = profiles.length + 1;
-                createProfileFromMaster(`CV Versión ${count}`, masterProfileData.headline || "Nuevo Rol");
-                onOpenWorkspace();
-              }}
-              className="w-full sm:w-auto h-8 px-3.5 text-xs font-semibold rounded-xl bg-foreground text-background shadow-sm hover:opacity-90 gap-1.5"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Nuevo CV desde mi Base</span>
-            </Button>
-          </div>
-        </div>
-
-        {/* SECCIÓN BENTO ASIMÉTRICA DE ALTO VALOR */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-          {/* PANEL PRINCIPAL 1: ATS ENGINE & HEALTH METRICS (8 COLS) */}
-          <div className="lg:col-span-8 p-6 sm:p-7 rounded-3xl bg-card border border-border/80 shadow-sm flex flex-col justify-between space-y-5 relative overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  <ShieldCheck className="h-3 w-3" />
-                  <span>Calificación ATS Óptima</span>
-                </div>
-                <h2 className="text-base font-bold text-foreground pt-1">
-                  Compatibilidad y Rendimiento de Algoritmos
-                </h2>
-                <p className="text-xs text-muted-foreground max-w-md leading-relaxed">
-                  Tus perfiles están estructurados bajo estándares semánticos aprobados para filtros de selección en Workday, Taleo y Greenhouse.
-                </p>
-              </div>
-
-              {/* Indicador Numérico de Alto Impacto */}
-              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-border/60 text-center shrink-0 min-w-[130px]">
-                <div className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">
-                  98<span className="text-sm font-semibold text-muted-foreground">/100</span>
-                </div>
-                <div className="text-[10px] font-medium text-muted-foreground mt-0.5">
-                  ATS Score Estimado
-                </div>
-              </div>
-            </div>
-
-            {/* Checklist de Estándares Verificados */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-border/60">
-              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <Check className="h-3 w-3" />
-                </div>
-                <span>Estructura plana y limpia sin tablas complejas</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <Check className="h-3 w-3" />
-                </div>
-                <span>Viñetas optimizadas con métricas STAR/XYZ</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <Check className="h-3 w-3" />
-                </div>
-                <span>Sincronización en vivo Formulario ⟷ YAML</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                <div className="h-5 w-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                  <Check className="h-3 w-3" />
-                </div>
-                <span>Exportación vectorial dual (PDF & DOCX Word)</span>
-              </div>
-            </div>
-
-            {/* Ribbon de Métricas Globales Acumuladas */}
-            <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-zinc-50/80 dark:bg-zinc-900/60 border border-border/50 text-center text-xs">
-              <div>
-                <span className="font-extrabold text-foreground">{totalExperience}</span>
-                <span className="text-[10px] text-muted-foreground ml-1.5 font-medium">Experiencias</span>
-              </div>
-              <div className="border-x border-border/60">
-                <span className="font-extrabold text-foreground">{totalSkills}</span>
-                <span className="text-[10px] text-muted-foreground ml-1.5 font-medium">Skills Indexadas</span>
-              </div>
-              <div>
-                <span className="font-extrabold text-foreground">{totalProjects}</span>
-                <span className="text-[10px] text-muted-foreground ml-1.5 font-medium">Proyectos</span>
-              </div>
-            </div>
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
-          {/* PANEL PRINCIPAL 2: INGESTA INTELIGENTE & DROPZONE (4 COLS) */}
-          <div className="lg:col-span-4 p-6 sm:p-7 rounded-3xl bg-card border border-border/80 shadow-sm flex flex-col justify-between space-y-4">
+          {/* Menú de Navegación por Apartados Específicos */}
+          <div className="space-y-6">
             <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <Badge variant="outline" className="text-[9px] font-mono uppercase">
-                  Extractor IA
-                </Badge>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1.5 font-mono">
+                Espacio de Trabajo
               </div>
-              <h3 className="text-sm font-bold text-foreground pt-1">
-                Ingesta de Documentos
-              </h3>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Importa un CV existente en PDF o texto para autocompletar tus secciones en segundos.
-              </p>
-            </div>
-
-            {/* Dropzone interactivo */}
-            <div className="space-y-2.5">
-              <input
-                ref={quickFileInputRef}
-                type="file"
-                accept=".pdf,.txt"
-                onChange={handleQuickUpload}
-                className="hidden"
-              />
 
               <button
                 type="button"
-                onClick={() => quickFileInputRef.current?.click()}
-                disabled={isUploadingAi}
-                className="w-full p-4 rounded-2xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center gap-1.5 text-center transition-all group cursor-pointer"
+                onClick={() => {
+                  setActiveSection("resumes");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeSection === "resumes"
+                    ? "bg-foreground text-background shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                }`}
               >
-                {isUploadingAi ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin text-amber-500 my-1" />
-                    <span className="text-xs font-semibold text-foreground">Extrayendo datos con IA...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-5 w-5 text-muted-foreground group-hover:text-foreground group-hover:-translate-y-0.5 transition-all" />
-                    <span className="text-xs font-semibold text-foreground">Subir CV en PDF</span>
-                    <span className="text-[10px] text-muted-foreground">o haz clic para explorar</span>
-                  </>
-                )}
+                <div className="flex items-center gap-2.5">
+                  <FileText className="h-4 w-4" />
+                  <span>Mis Currículums</span>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-mono px-1.5 py-0 ${
+                    activeSection === "resumes" ? "border-background/30 text-background" : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {profiles.length}
+                </Badge>
               </button>
 
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("master_profile");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeSection === "master_profile"
+                    ? "bg-foreground text-background shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Database className="h-4 w-4 text-emerald-500" />
+                  <span>Perfil Base Maestro</span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                  Base
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("templates");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeSection === "templates"
+                    ? "bg-foreground text-background shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <LayoutGrid className="h-4 w-4 text-amber-500" />
+                  <span>Plantillas ATS</span>
+                </div>
+                <span className="text-[10px] font-mono opacity-80">6</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("ai_import");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeSection === "ai_import"
+                    ? "bg-foreground text-background shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="h-4 w-4 text-cyan-500" />
+                  <span>Ingesta con IA</span>
+                </div>
+                <Badge variant="outline" className="text-[9px] font-mono">
+                  PDF
+                </Badge>
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-2.5 mb-1.5 font-mono">
+                Ajustes
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("settings");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  activeSection === "settings"
+                    ? "bg-foreground text-background shadow-xs"
+                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Settings className="h-4 w-4" />
+                  <span>Configuración de Perfil</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer del Sidebar: Perfil de Usuario & Modo Oscuro */}
+        <div className="p-4 border-t border-border/80 bg-zinc-50/50 dark:bg-zinc-900/30 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-800 text-foreground flex items-center justify-center font-bold text-xs shrink-0">
+              {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-foreground truncate">
+                {user?.name || "Usuario"}
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate">
+                {user?.email || "Sin correo"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              title="Alternar tema"
+            >
+              {isDarkMode ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={logout}
+              className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors"
+              title="Cerrar Sesión"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Overlay Móvil */}
+      {isMobileSidebarOpen && (
+        <div
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className="fixed inset-0 z-30 bg-black/40 backdrop-blur-xs lg:hidden"
+        />
+      )}
+
+      {/* 2. ÁREA DE CONTENIDO PRINCIPAL DINÁMICA */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-zinc-50/40 dark:bg-zinc-950/40">
+        {/* TOPBAR MINIMALISTA */}
+        <header className="h-14 border-b border-border/80 bg-background/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsMobileSidebarOpen(true)}
+              className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <div>
+              <h1 className="text-sm font-bold text-foreground capitalize">
+                {activeSection === "resumes" && "Mis Currículums"}
+                {activeSection === "master_profile" && "Perfil Base de Carrera"}
+                {activeSection === "templates" && "Catálogo de Plantillas ATS"}
+                {activeSection === "ai_import" && "Ingesta Asistida por IA"}
+                {activeSection === "settings" && "Configuración de Perfil"}
+              </h1>
+            </div>
+          </div>
+
+          {/* Acción contextual según apartado */}
+          <div className="flex items-center gap-2.5">
+            {activeSection === "resumes" && (
               <Button
                 size="sm"
                 onClick={() => setIsWizardOpen(true)}
-                className="w-full h-8 text-xs font-semibold rounded-xl bg-foreground text-background"
+                className="h-8 px-3 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90"
               >
-                <span>Crear con Asistente Guiado</span>
-                <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                <Plus className="h-3.5 w-3.5" />
+                <span>Nuevo Currículum</span>
               </Button>
-            </div>
+            )}
+
+            {activeSection === "master_profile" && (
+              <Button
+                size="sm"
+                onClick={handleSaveMasterProfile}
+                className={`h-8 px-3.5 text-xs font-semibold rounded-xl gap-1.5 ${
+                  isMasterSaved ? "bg-emerald-600 text-white" : "bg-foreground text-background"
+                }`}
+              >
+                {isMasterSaved ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+                <span>{isMasterSaved ? "Guardado en Base" : "Guardar en Base"}</span>
+              </Button>
+            )}
           </div>
-        </div>
+        </header>
 
-        {/* SECCIÓN INFERIOR: TUS VERSIONES DE CURRÍCULUM */}
-        <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-bold text-foreground">
-                Tus Versiones de Currículum
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Cada versión cuenta con su propio enfoque de rol, plantilla ATS y exportación directa.
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsWizardOpen(true)}
-              className="h-8 text-xs gap-1.5 rounded-xl border-border/80"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Nuevo Perfil</span>
-            </Button>
-          </div>
+        {/* CONTENIDO SEGÚN APARTADO ACTIVO */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 scrollbar-thin">
+          {/* APARTADO 1: MIS CURRÍCULUMS */}
+          {activeSection === "resumes" && (
+            <div className="max-w-6xl mx-auto space-y-6">
+              {/* Barra de Filtro & Búsqueda */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="relative w-full sm:w-72">
+                  <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Buscar versión de CV por nombre o rol..."
+                    className="h-8 text-xs pl-8.5 rounded-xl border-border/80 bg-card"
+                  />
+                </div>
 
-          {/* Grid de Tarjetas de Perfil con Personalidad y Jerarquía */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {profiles.map((profile) => {
-              const isActive = profile.id === activeProfileId;
-              const templateMeta =
-                TEMPLATE_METADATA[profile.templateId] || TEMPLATE_METADATA.tech_minimalist;
-              const TemplateIcon = TEMPLATE_ICONS[profile.templateId] || Terminal;
-              const accent = TEMPLATE_ACCENTS[profile.templateId] || TEMPLATE_ACCENTS.tech_minimalist;
+                <div className="text-xs text-muted-foreground font-mono">
+                  {filteredProfiles.length} {filteredProfiles.length === 1 ? "versión disponible" : "versiones disponibles"}
+                </div>
+              </div>
 
-              const experienceCount = profile.data.experience?.length || 0;
-              const skillsCount =
-                profile.data.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0;
-              const projectsCount = profile.data.projects?.length || 0;
+              {/* Grid de Tarjetas de Currículum */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredProfiles.map((profile) => {
+                  const isActive = profile.id === activeProfileId;
+                  const meta = TEMPLATE_METADATA[profile.templateId] || TEMPLATE_METADATA.tech_minimalist;
+                  const Icon = TEMPLATE_ICONS[profile.templateId] || Terminal;
+                  const accent = TEMPLATE_ACCENTS[profile.templateId] || TEMPLATE_ACCENTS.tech_minimalist;
 
-              const isDownloadingPdf = downloadingPdfId === profile.id;
-              const isDownloadingDocx = downloadingDocxId === profile.id;
-
-              // Obtener primeras 3 skills para preview de tags
-              const topSkills = profile.data.skills?.[0]?.skills.slice(0, 3) || [];
-
-              return (
-                <div
-                  key={profile.id}
-                  className={`rounded-2xl border bg-card flex flex-col justify-between transition-all duration-200 overflow-hidden ${
-                    isActive
-                      ? "border-zinc-900 dark:border-zinc-100 ring-2 ring-zinc-900/15 dark:ring-zinc-100/15 shadow-md"
-                      : "border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md"
-                  }`}
-                >
-                  {/* Banner de plantilla sutil */}
-                  <div className={`px-4 py-2 flex items-center justify-between border-b ${accent.border} ${accent.bg}`}>
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold">
-                      <TemplateIcon className="h-3.5 w-3.5" />
-                      <span>{templateMeta.name}</span>
-                    </div>
-
-                    {isActive ? (
-                      <Badge className="text-[9px] py-0 px-2 font-mono bg-emerald-600 text-white font-bold">
-                        Activo en Editor
-                      </Badge>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground font-mono">
-                        {profile.paperSize?.toUpperCase() || "LETTER"}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="p-5 space-y-4">
-                    {/* Header de la Tarjeta */}
-                    <div className="flex items-start justify-between gap-2 min-w-0">
-                      <div className="space-y-1 flex-1 min-w-0">
-                        <h3
-                          className="text-sm font-extrabold text-foreground truncate"
-                          title={profile.name}
-                        >
-                          {profile.name}
-                        </h3>
-                        <p
-                          className="text-xs text-muted-foreground flex items-center gap-1 font-medium min-w-0"
-                          title={profile.targetRole}
-                        >
-                          <Briefcase className="h-3 w-3 text-muted-foreground shrink-0" />
-                          <span className="truncate">
-                            {profile.targetRole || "Rol no definido"}
-                          </span>
-                        </p>
+                  return (
+                    <div
+                      key={profile.id}
+                      className={`rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:shadow-md ${
+                        isActive
+                          ? "border-zinc-900 dark:border-zinc-100 ring-2 ring-zinc-900/10 dark:ring-zinc-100/10 shadow-sm"
+                          : "border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700"
+                      }`}
+                    >
+                      {/* Cabecera de la Tarjeta */}
+                      <div className={`px-4 py-2 flex items-center justify-between border-b ${accent.border} ${accent.bg}`}>
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold">
+                          <Icon className="h-3.5 w-3.5" />
+                          <span>{meta.name}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                          {profile.paperSize || "LETTER"}
+                        </span>
                       </div>
 
-                      {/* Menú de opciones */}
-                      <div className="shrink-0">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                      {/* Cuerpo de la Tarjeta */}
+                      <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                        <div className="space-y-1">
+                          <h3 className="font-bold text-sm text-foreground truncate">
+                            {profile.name}
+                          </h3>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {profile.targetRole || "Rol no definido"}
+                          </p>
+
+                          <div className="pt-2 flex flex-wrap gap-1">
+                            {profile.data.skills?.[0]?.skills.slice(0, 3).map((sk, i) => (
+                              <Badge key={i} variant="secondary" className="text-[9px] font-mono py-0 px-1.5">
+                                {sk}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Acciones de la Tarjeta */}
+                        <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleOpenResume(profile.id)}
+                            className="flex-1 h-8 text-xs font-semibold rounded-xl bg-foreground text-background hover:opacity-90 gap-1.5"
+                          >
+                            <span>Abrir en Editor</span>
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
+
+                          {/* Menú de Opciones */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 rounded-xl border-border/80 text-muted-foreground"
+                              >
+                                <MoreVertical className="h-3.5 w-3.5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 text-xs">
+                              <DropdownMenuItem
+                                onClick={() => handleDownloadPdf(profile)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <FileDown className="h-3.5 w-3.5 text-rose-500" />
+                                <span>Exportar PDF Vectorial</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDownloadDocx(profile)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <FileText className="h-3.5 w-3.5 text-blue-500" />
+                                <span>Exportar Word DOCX</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleDownloadYaml(profile)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <FileCode className="h-3.5 w-3.5 text-emerald-500" />
+                                <span>Exportar YAML</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => duplicateProfile(profile.id)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Copy className="h-3.5 w-3.5" />
+                                <span>Duplicar Versión</span>
+                              </DropdownMenuItem>
+                              {profiles.length > 1 && (
+                                <DropdownMenuItem
+                                  onClick={() => deleteProfile(profile.id)}
+                                  className="cursor-pointer gap-2 text-rose-500 hover:text-rose-600"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <span>Eliminar Versión</span>
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Tarjeta para Crear Nueva Versión */}
+                <div
+                  onClick={() => setIsWizardOpen(true)}
+                  className="rounded-2xl border-2 border-dashed border-border/80 hover:border-zinc-400 dark:hover:border-zinc-600 bg-card/30 p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-card min-h-[190px] group"
+                >
+                  <div className="h-10 w-10 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-foreground mb-2 group-hover:scale-110 transition-transform">
+                    <Plus className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-xs font-bold text-foreground">Crear Otra Versión</h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Personaliza tu experiencia para otra postulación.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* APARTADO 2: PERFIL BASE MAESTRO (INFORMACIÓN COMPLETA) */}
+          {activeSection === "master_profile" && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              <div className="p-5 rounded-2xl border border-border bg-card space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+                  <div className="space-y-0.5">
+                    <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                      <Database className="h-4 w-4 text-emerald-500" />
+                      <span>Base de Datos de Carrera Completa</span>
+                    </h2>
+                    <p className="text-xs text-muted-foreground">
+                      Tu repositorio maestro con todos tus empleos, proyectos y skills sin límite de páginas.
+                    </p>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const count = profiles.length + 1;
+                      createProfileFromMaster(`CV Versión ${count}`, masterFormData.headline || "Nuevo Rol");
+                      onOpenWorkspace();
+                    }}
+                    className="h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl gap-1.5"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Crear CV desde esta Base</span>
+                  </Button>
+                </div>
+
+                {/* Pestañas de Edición del Perfil Base */}
+                <Tabs value={masterTab} onValueChange={(v) => setMasterTab(v as any)} className="w-full">
+                  <TabsList className="grid grid-cols-5 w-full max-w-xl h-8 bg-zinc-100 dark:bg-zinc-800 text-xs mb-4">
+                    <TabsTrigger value="general" className="text-xs">General</TabsTrigger>
+                    <TabsTrigger value="experience" className="text-xs">Experiencia</TabsTrigger>
+                    <TabsTrigger value="skills" className="text-xs">Skills</TabsTrigger>
+                    <TabsTrigger value="projects" className="text-xs">Proyectos</TabsTrigger>
+                    <TabsTrigger value="education" className="text-xs">Educación</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="general" className="space-y-4 m-0">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Nombre Completo</Label>
+                        <Input
+                          value={masterFormData.name || ""}
+                          onChange={(e) => setMasterFormData({ ...masterFormData, name: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Titular Profesional</Label>
+                        <Input
+                          value={masterFormData.headline || ""}
+                          onChange={(e) => setMasterFormData({ ...masterFormData, headline: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Email</Label>
+                        <Input
+                          value={masterFormData.email || ""}
+                          onChange={(e) => setMasterFormData({ ...masterFormData, email: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold">Teléfono</Label>
+                        <Input
+                          value={masterFormData.phone || ""}
+                          onChange={(e) => setMasterFormData({ ...masterFormData, phone: e.target.value })}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5 pt-2">
+                      <Label className="text-xs font-semibold">Resumen Profesional Completo</Label>
+                      <Textarea
+                        value={masterFormData.summary || ""}
+                        onChange={(e) => setMasterFormData({ ...masterFormData, summary: e.target.value })}
+                        className="text-xs min-h-[90px] leading-relaxed"
+                      />
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="experience" className="space-y-3 m-0">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        {masterFormData.experience?.length || 0} Empleos registrados
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          const newEntry = {
+                            id: `exp-${Date.now()}`,
+                            company: "Nueva Empresa",
+                            position: "Cargo",
+                            start_date: "2024",
+                            end_date: "Presente",
+                            current: true,
+                            highlights: ["Responsabilidad o logro medible."],
+                          };
+                          setMasterFormData({
+                            ...masterFormData,
+                            experience: [newEntry, ...(masterFormData.experience || [])],
+                          });
+                        }}
+                        className="h-7 text-xs bg-foreground text-background"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        <span>Añadir Empleo</span>
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {masterFormData.experience?.map((exp, idx) => (
+                        <div key={exp.id} className="p-3 rounded-xl border border-border bg-card/60 space-y-2 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold">{exp.position} – {exp.company}</span>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground rounded-lg"
+                              onClick={() => {
+                                const updated = masterFormData.experience.filter((_, i) => i !== idx);
+                                setMasterFormData({ ...masterFormData, experience: updated });
+                              }}
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-rose-500"
                             >
-                              <MoreVertical className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-52 bg-card/95 backdrop-blur-md border-border p-1.5"
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Input
+                              value={exp.company}
+                              onChange={(e) => {
+                                const updated = [...masterFormData.experience];
+                                updated[idx].company = e.target.value;
+                                setMasterFormData({ ...masterFormData, experience: updated });
+                              }}
+                              placeholder="Empresa"
+                              className="h-7 text-xs"
+                            />
+                            <Input
+                              value={exp.position}
+                              onChange={(e) => {
+                                const updated = [...masterFormData.experience];
+                                updated[idx].position = e.target.value;
+                                setMasterFormData({ ...masterFormData, experience: updated });
+                              }}
+                              placeholder="Cargo"
+                              className="h-7 text-xs"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="skills" className="space-y-3 m-0">
+                    <div className="space-y-2.5">
+                      {masterFormData.skills?.map((cat, catIdx) => (
+                        <div key={cat.id} className="p-3 rounded-xl border border-border bg-card/60 space-y-1.5">
+                          <span className="font-bold text-xs font-mono">{cat.category}</span>
+                          <Input
+                            value={cat.skills.join(", ")}
+                            onChange={(e) => {
+                              const updated = [...masterFormData.skills];
+                              updated[catIdx].skills = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                              setMasterFormData({ ...masterFormData, skills: updated });
+                            }}
+                            className="h-7 text-xs font-mono"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="projects" className="space-y-3 m-0">
+                    <div className="space-y-2.5">
+                      {masterFormData.projects?.map((proj, idx) => (
+                        <div key={proj.id} className="p-3 rounded-xl border border-border bg-card/60 space-y-1 text-xs">
+                          <span className="font-bold text-foreground">{proj.name}</span>
+                          <Textarea
+                            value={proj.description || ""}
+                            onChange={(e) => {
+                              const updated = [...masterFormData.projects];
+                              updated[idx].description = e.target.value;
+                              setMasterFormData({ ...masterFormData, projects: updated });
+                            }}
+                            className="text-xs min-h-[50px]"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="education" className="space-y-2.5 m-0">
+                    {masterFormData.education?.map((edu) => (
+                      <div key={edu.id} className="p-3 rounded-xl border border-border bg-card/60 text-xs">
+                        <div className="font-bold text-foreground">{edu.degree}</div>
+                        <div className="text-muted-foreground">{edu.institution}</div>
+                      </div>
+                    ))}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
+          )}
+
+          {/* APARTADO 3: PLANTILLAS ATS */}
+          {activeSection === "templates" && (
+            <div className="max-w-6xl mx-auto space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Catálogo de 6 Plantillas ATS</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Diseños estructurados en 1 sola columna aprobados para superar filtros automatizados.
+                  </p>
+                </div>
+
+                <div className="flex items-center bg-zinc-200/70 dark:bg-zinc-800/70 p-1 rounded-xl text-xs font-medium">
+                  <button
+                    type="button"
+                    onClick={() => setTemplatePreviewSample(true)}
+                    className={`px-3 py-1 rounded-lg transition-all ${
+                      templatePreviewSample ? "bg-white dark:bg-zinc-950 font-bold shadow-xs text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    Datos de Muestra
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTemplatePreviewSample(false)}
+                    className={`px-3 py-1 rounded-lg transition-all ${
+                      !templatePreviewSample ? "bg-white dark:bg-zinc-950 font-bold shadow-xs text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    Mis Datos
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid de Plantillas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {templateKeys.map((tempId) => {
+                  const meta = TEMPLATE_METADATA[tempId];
+                  const Icon = TEMPLATE_ICONS[tempId] || Terminal;
+                  const isSelected = tempId === activeTemplate;
+                  const pData = templatePreviewSample ? SAMPLE_RESUME_FULLSTACK : masterProfileData;
+
+                  return (
+                    <div
+                      key={tempId}
+                      className={`group rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:shadow-lg ${
+                        isSelected ? "border-emerald-600 ring-2 ring-emerald-500/20" : "border-border/80"
+                      }`}
+                    >
+                      {/* Miniatura renderizada */}
+                      <div className="relative h-60 bg-zinc-100 dark:bg-zinc-900 border-b border-border/60 overflow-hidden flex justify-center items-start pt-2">
+                        <div className="w-[230px] h-[280px] overflow-hidden rounded-xs border border-zinc-200 shadow-sm relative bg-white shrink-0">
+                          <div
+                            className="w-[816px] min-h-[1056px] bg-white text-zinc-950 pointer-events-none select-none absolute top-0 left-0"
+                            style={{ transform: "scale(0.282)", transformOrigin: "top left" }}
                           >
-                            <DropdownMenuItem
-                              onClick={() => handleOpenResume(profile.id)}
-                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                            >
-                              <ExternalLink className="h-3.5 w-3.5" />
-                              <span>Abrir en Editor</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => duplicateProfile(profile.id)}
-                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                              <span>Duplicar Versión</span>
-                            </DropdownMenuItem>
+                            <TemplateRenderer templateId={tempId} data={pData} paperSize="letter" />
+                          </div>
+                        </div>
 
-                            <DropdownMenuSeparator />
-
-                            <DropdownMenuItem
-                              onClick={() => handleDownloadPdf(profile)}
-                              disabled={isDownloadingPdf}
-                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                            >
-                              <FileDown className="h-3.5 w-3.5 text-rose-500" />
-                              <span>Descargar PDF Vectorial</span>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem
-                              onClick={() => handleDownloadDocx(profile)}
-                              disabled={isDownloadingDocx}
-                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                            >
-                              <FileText className="h-3.5 w-3.5 text-blue-500" />
-                              <span>Descargar Word (.docx)</span>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem
-                              onClick={() => handleDownloadYaml(profile)}
-                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                            >
-                              <FileCode className="h-3.5 w-3.5 text-emerald-500" />
-                              <span>Descargar YAML (.yaml)</span>
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem
-                              onClick={() => handleDownloadJson(profile)}
-                              className="text-xs cursor-pointer gap-2 p-2 rounded-md"
-                            >
-                              <FileCode className="h-3.5 w-3.5 text-amber-500" />
-                              <span>Descargar JSON (.json)</span>
-                            </DropdownMenuItem>
-
-                            {profiles.length > 1 && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => deleteProfile(profile.id)}
-                                  className="text-xs cursor-pointer gap-2 p-2 rounded-md text-rose-500 hover:text-rose-600"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                  <span>Eliminar Perfil</span>
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
-
-                    {/* Chips de Skills destacadas */}
-                    {topSkills.length > 0 && (
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {topSkills.map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800/80 text-[10px] font-mono text-muted-foreground border border-border/50"
+                        {/* Overlay hover */}
+                        <div className="absolute inset-0 bg-zinc-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-2xs p-3">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setActiveTemplate(tempId);
+                              onOpenWorkspace();
+                            }}
+                            className="w-full max-w-[160px] h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
                           >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                            <Check className="h-3.5 w-3.5" />
+                            <span>Usar Plantilla</span>
+                          </Button>
+                        </div>
 
-                    {/* Resumen de contenido */}
-                    <div className="grid grid-cols-3 gap-2 py-2 border-y border-border/60 text-center">
-                      <div>
-                        <div className="text-xs font-bold text-foreground">
-                          {experienceCount}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">Trabajos</div>
+                        {isSelected && (
+                          <div className="absolute top-2.5 left-2.5 z-10">
+                            <Badge className="bg-emerald-600 text-white font-bold text-[9px]">En Uso</Badge>
+                          </div>
+                        )}
                       </div>
-                      <div>
-                        <div className="text-xs font-bold text-foreground">
-                          {skillsCount}
+
+                      {/* Info */}
+                      <div className="p-4 space-y-2.5 flex-1 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 font-bold text-xs text-foreground">
+                              <Icon className="h-3.5 w-3.5" />
+                              <span>{meta.name}</span>
+                            </div>
+                            <span className="text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                              ATS 100%
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+                            {meta.description}
+                          </p>
                         </div>
-                        <div className="text-[10px] text-muted-foreground">Skills</div>
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-foreground">
-                          {projectsCount}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground">Proyectos</div>
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setActiveTemplate(tempId);
+                            onOpenWorkspace();
+                          }}
+                          className="w-full h-7 text-xs font-semibold rounded-lg"
+                        >
+                          <span>Abrir en Editor</span>
+                        </Button>
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-                    {/* Acciones principales de la tarjeta */}
-                    <div className="pt-1 flex items-center gap-1.5">
-                      <Button
-                        size="sm"
-                        onClick={() => handleOpenResume(profile.id)}
-                        className="flex-1 h-8 text-xs font-semibold rounded-xl"
-                      >
-                        <span>Abrir en Editor</span>
-                        <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                      </Button>
+          {/* APARTADO 4: INGESTA CON IA */}
+          {activeSection === "ai_import" && (
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="p-6 rounded-3xl border border-border bg-card space-y-5 text-center">
+                <div className="space-y-1">
+                  <div className="h-10 w-10 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 mx-auto flex items-center justify-center mb-2">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <h2 className="text-base font-bold text-foreground">
+                    Extractor Inteligente de Currículums
+                  </h2>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                    Sube tu currículum en PDF existente para extraer automáticamente tu historial hacia SchemaCV.
+                  </p>
+                </div>
 
-                      {/* Botón Descarga Directa PDF */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isDownloadingPdf}
-                        onClick={() => handleDownloadPdf(profile)}
-                        className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-rose-500 hover:text-rose-600 dark:hover:text-rose-400"
-                        title="Descargar PDF Vectorial directo"
-                      >
-                        {isDownloadingPdf ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <FileDown className="h-3.5 w-3.5 text-rose-500" />
-                            <span className="text-[11px] font-medium">PDF</span>
-                          </>
-                        )}
-                      </Button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleProcessAiUpload(e.target.files[0]);
+                    }
+                  }}
+                  accept=".pdf"
+                  className="hidden"
+                />
 
-                      {/* Botón Descarga Directa Word */}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isDownloadingDocx}
-                        onClick={() => handleDownloadDocx(profile)}
-                        className="h-8 px-2.5 text-xs gap-1 rounded-xl hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400"
-                        title="Descargar Word DOCX directo"
-                      >
-                        {isDownloadingDocx ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <FileText className="h-3.5 w-3.5 text-blue-500" />
-                            <span className="text-[11px] font-medium">Word</span>
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-8 rounded-2xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group"
+                >
+                  {isUploadingAi ? (
+                    <>
+                      <Loader2 className="h-6 w-6 animate-spin text-cyan-500 my-2" />
+                      <span className="text-xs font-bold text-foreground">Extrayendo datos estructurados...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-6 w-6 text-muted-foreground group-hover:text-foreground group-hover:-translate-y-0.5 transition-transform" />
+                      <span className="text-xs font-bold text-foreground">Arrastra o haz clic para subir tu PDF</span>
+                      <span className="text-[10px] text-muted-foreground">Formato PDF hasta 10MB</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* APARTADO 5: CONFIGURACIÓN */}
+          {activeSection === "settings" && (
+            <div className="max-w-2xl mx-auto space-y-6">
+              <div className="p-6 rounded-3xl border border-border bg-card space-y-4">
+                <h2 className="text-base font-bold text-foreground">Configuración de Usuario</h2>
+                <div className="space-y-3 text-xs">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Nombre de Usuario</Label>
+                    <Input value={user?.name || ""} disabled className="h-8 text-xs bg-zinc-100 dark:bg-zinc-800" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Correo Electrónico</Label>
+                    <Input value={user?.email || ""} disabled className="h-8 text-xs bg-zinc-100 dark:bg-zinc-800" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Rol Profesional</Label>
+                    <Input value={user?.headline || ""} disabled className="h-8 text-xs bg-zinc-100 dark:bg-zinc-800" />
                   </div>
                 </div>
-              );
-            })}
-
-            {/* Tarjeta de Añadir Nuevo */}
-            <div
-              onClick={() => setIsWizardOpen(true)}
-              className="p-6 rounded-2xl border-2 border-dashed border-border hover:border-zinc-400 dark:hover:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-900/30 flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60 min-h-[220px] group"
-            >
-              <div className="h-10 w-10 rounded-2xl bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-foreground mb-2 group-hover:scale-105 transition-transform">
-                <Plus className="h-5 w-5" />
               </div>
-              <h3 className="text-xs font-bold text-foreground">
-                Crear Otra Versión de CV
-              </h3>
-              <p className="text-[11px] text-muted-foreground max-w-[200px] mt-1">
-                Adapta tu experiencia para postulaciones específicas.
-              </p>
             </div>
-          </div>
+          )}
         </div>
       </main>
 
-      {/* 3. Modales del Dashboard */}
+      {/* Asistente de Creación de CV */}
       <CreateResumeWizard
         open={isWizardOpen}
         onOpenChange={setIsWizardOpen}
         onComplete={onOpenWorkspace}
       />
-      <MasterProfileModal />
-      <TemplateGalleryModal />
       <AuthModal />
     </div>
   );
