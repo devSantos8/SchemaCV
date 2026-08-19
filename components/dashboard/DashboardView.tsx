@@ -50,12 +50,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreateResumeWizard } from "./CreateResumeWizard";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
+import { MasterProfileModal } from "./MasterProfileModal";
+import { LayoutGrid, Database, FolderGit2 } from "lucide-react";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
   tech_minimalist: Terminal,
   modern_executive: Briefcase,
   skills_first: Layers,
+  stanford_clean: Sparkles,
+  compact_swiss: LayoutGrid,
 };
 
 const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: string }> = {
@@ -79,6 +84,16 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
     text: "text-amber-700 dark:text-amber-300",
     border: "border-amber-300 dark:border-amber-700",
   },
+  stanford_clean: {
+    bg: "bg-cyan-500/10 dark:bg-cyan-400/10",
+    text: "text-cyan-700 dark:text-cyan-300",
+    border: "border-cyan-300 dark:border-cyan-700",
+  },
+  compact_swiss: {
+    bg: "bg-zinc-500/10 dark:bg-zinc-400/10",
+    text: "text-zinc-700 dark:text-zinc-300",
+    border: "border-zinc-300 dark:border-zinc-700",
+  },
 };
 
 interface DashboardViewProps {
@@ -97,6 +112,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     duplicateProfile,
     deleteProfile,
     loadImportedResume,
+    setTemplateGalleryOpen,
+    masterProfileData,
+    setMasterProfileModalOpen,
+    createProfileFromMaster,
   } = useResumeStore();
 
   const {
@@ -375,6 +394,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setTemplateGalleryOpen(true)}
+              className="h-8 px-3 text-xs gap-1.5 rounded-xl border-border/80 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-emerald-600 dark:text-emerald-400 font-semibold"
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              <span>Plantillas ATS</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onOpenSettings}
               className="h-8 px-3 text-xs gap-1.5 rounded-xl border-border/80 hover:bg-zinc-100 dark:hover:bg-zinc-900"
             >
@@ -389,6 +418,71 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             >
               <span>Abrir Editor Dual</span>
               <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* TARJETA DESTACADA: REPOSITORIO BASE DE CARRERA (PERFIL MAESTRO) */}
+        <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/20 via-zinc-900/30 to-zinc-900/10 border border-emerald-500/30 shadow-sm relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
+                <Database className="h-3.5 w-3.5" />
+              </div>
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">
+                Tu Base de Información Completa (Perfil Maestro)
+              </span>
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-foreground">
+                {masterProfileData.name || "Tu Nombre Profesional"}
+              </h2>
+              <p className="text-xs text-muted-foreground max-w-2xl mt-0.5 leading-relaxed">
+                Este es tu repositorio maestro con todo tu historial laboral, proyectos y competencias. Puedes crear y adaptar versiones de CV personalizadas a partir de esta base.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-mono text-muted-foreground">
+              <span className="flex items-center gap-1 font-semibold text-foreground">
+                <Briefcase className="h-3.5 w-3.5 text-blue-500" />
+                {masterProfileData.experience?.length || 0} Empleos
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1 font-semibold text-foreground">
+                <Layers className="h-3.5 w-3.5 text-emerald-500" />
+                {masterProfileData.skills?.reduce((acc, cat) => acc + cat.skills.length, 0) || 0} Skills
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1 font-semibold text-foreground">
+                <FolderGit2 className="h-3.5 w-3.5 text-amber-500" />
+                {masterProfileData.projects?.length || 0} Proyectos
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setMasterProfileModalOpen(true)}
+              className="w-full sm:w-auto h-8 px-3.5 text-xs font-semibold rounded-xl border-emerald-500/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/10 gap-1.5"
+            >
+              <Database className="h-3.5 w-3.5" />
+              <span>Gestionar Base Completa</span>
+            </Button>
+
+            <Button
+              size="sm"
+              onClick={() => {
+                const count = profiles.length + 1;
+                createProfileFromMaster(`CV Versión ${count}`, masterProfileData.headline || "Nuevo Rol");
+                onOpenWorkspace();
+              }}
+              className="w-full sm:w-auto h-8 px-3.5 text-xs font-semibold rounded-xl bg-foreground text-background shadow-sm hover:opacity-90 gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Nuevo CV desde mi Base</span>
             </Button>
           </div>
         </div>
@@ -820,6 +914,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onOpenChange={setIsWizardOpen}
         onComplete={onOpenWorkspace}
       />
+      <MasterProfileModal />
+      <TemplateGalleryModal />
       <AuthModal />
     </div>
   );

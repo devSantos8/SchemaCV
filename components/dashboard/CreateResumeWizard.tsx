@@ -35,6 +35,8 @@ import {
   Code2,
   Server,
   FileCode2,
+  LayoutGrid,
+  Database,
   X,
 } from "lucide-react";
 
@@ -44,9 +46,17 @@ interface CreateResumeWizardProps {
   onComplete: () => void;
 }
 
-type StartMethod = "ai_upload" | "ai_text" | "preset_fullstack" | "preset_backend" | "preset_lead" | "blank";
+type StartMethod = "master_base" | "ai_upload" | "ai_text" | "preset_fullstack" | "preset_backend" | "preset_lead" | "blank";
 
 const PRESET_ROLES = [
+  {
+    id: "master_base",
+    title: "Mi Perfil Base (Información Completa)",
+    description: "Carga toda tu trayectoria base para seleccionarla y condensarla en una sola hoja.",
+    roleName: "Perfil Personalizado desde Base",
+    template: "tech_minimalist" as TemplateId,
+    icon: Database,
+  },
   {
     id: "preset_fullstack",
     title: "Full Stack & Cloud Engineer",
@@ -86,6 +96,8 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   tech_minimalist: Terminal,
   modern_executive: Briefcase,
   skills_first: Layers,
+  stanford_clean: Sparkles,
+  compact_swiss: LayoutGrid,
 };
 
 const STEPS = [
@@ -111,19 +123,18 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
   onOpenChange,
   onComplete,
 }) => {
-  const { createProfile, loadImportedResume, setActiveTemplate } =
-    useResumeStore();
+  const { createProfile, loadImportedResume, setActiveTemplate, masterProfileData } = useResumeStore();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [startMethod, setStartMethod] = useState<StartMethod>("preset_fullstack");
+  const [startMethod, setStartMethod] = useState<StartMethod>("master_base");
 
   // Datos del Paso 2
-  const [profileName, setProfileName] = useState("Mi Currículum Profesional");
-  const [targetRole, setTargetRole] = useState("Desarrollador Full Stack & DevOps");
-  const [candidateName, setCandidateName] = useState("Joain Matias Monroy");
-  const [candidateEmail, setCandidateEmail] = useState("matiasmonroy483@gmail.com");
-  const [candidatePhone, setCandidatePhone] = useState("+56 9 4900 2793");
-  const [candidateLocation, setCandidateLocation] = useState("Santiago, Chile");
+  const [profileName, setProfileName] = useState("CV desde Perfil Base");
+  const [targetRole, setTargetRole] = useState(masterProfileData?.headline || "Desarrollador Full Stack & DevOps");
+  const [candidateName, setCandidateName] = useState(masterProfileData?.name || "Joain Matias Monroy");
+  const [candidateEmail, setCandidateEmail] = useState(masterProfileData?.email || "matiasmonroy483@gmail.com");
+  const [candidatePhone, setCandidatePhone] = useState(masterProfileData?.phone || "+56 9 4900 2793");
+  const [candidateLocation, setCandidateLocation] = useState(masterProfileData?.location || "Santiago, Chile");
 
   // Ingesta con IA
   const [file, setFile] = useState<File | null>(null);
@@ -277,6 +288,15 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
         certifications: [],
         custom_sections: [],
         section_order: ["summary", "skills", "experience", "projects", "education", "certifications"],
+      };
+    } else if (startMethod === "master_base") {
+      finalResumeData = {
+        ...masterProfileData,
+        name: candidateName,
+        headline: targetRole,
+        email: candidateEmail || masterProfileData.email,
+        phone: candidatePhone || masterProfileData.phone,
+        location: candidateLocation || masterProfileData.location,
       };
     } else {
       finalResumeData = {

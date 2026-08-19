@@ -6,6 +6,8 @@ import { DualModeEditor } from "@/components/editor/DualModeEditor";
 import { ResumePreview } from "@/components/preview/ResumePreview";
 import { ImportResumeModal } from "@/components/editor/ImportResumeModal";
 import { ProfileManagerModal } from "@/components/navigation/ProfileManagerModal";
+import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
+import { MasterProfileModal } from "@/components/dashboard/MasterProfileModal";
 import { DashboardView } from "@/components/dashboard/DashboardView";
 import { ProfileSettingsView } from "@/components/settings/ProfileSettingsView";
 import { AuthView } from "@/components/auth/AuthView";
@@ -88,9 +90,11 @@ export default function SchemaCVApp() {
         </section>
       </main>
 
-      {/* 3. Modales de Ingesta y Perfiles */}
+      {/* 3. Modales de Ingesta, Perfiles, Plantillas y Base Maestra */}
       <ImportResumeModal />
       <ProfileManagerModal />
+      <TemplateGalleryModal />
+      <MasterProfileModal />
     </div>
   );
 }

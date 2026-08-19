@@ -18,17 +18,21 @@ import { useResumeStore } from "@/store/useResumeStore";
 import {
   User,
   Mail,
+  Lock,
   Phone,
   MapPin,
   Briefcase,
   Globe,
   Sparkles,
   Save,
-  Palette,
   Check,
   ShieldCheck,
   Clock,
-  DollarSign,
+  Settings,
+  Eye,
+  KeyRound,
+  FileText,
+  Palette,
 } from "lucide-react";
 
 const GithubIcon: React.FC<{ className?: string }> = ({ className = "h-3.5 w-3.5" }) => (
@@ -73,10 +77,12 @@ export const BANNER_THEMES = [
 export const ProfileSettingsModal: React.FC = () => {
   const { user, isSettingsModalOpen, setSettingsModalOpen, updateUserProfile } =
     useAuthStore();
-  const { setResumeData } = useResumeStore();
+  const { profiles, setResumeData } = useResumeStore();
 
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [headline, setHeadline] = useState(user?.headline || "");
   const [bio, setBio] = useState(user?.bio || "");
   const [location, setLocation] = useState(user?.location || "");
@@ -106,6 +112,18 @@ export const ProfileSettingsModal: React.FC = () => {
       setBannerTheme(user.bannerTheme || "warm_amber");
     }
   }, [user, isSettingsModalOpen]);
+
+  const activeBanner =
+    BANNER_THEMES.find((t) => t.id === bannerTheme) || BANNER_THEMES[0];
+
+  const initials = name
+    ? name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .substring(0, 2)
+        .toUpperCase()
+    : "JM";
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,136 +166,252 @@ export const ProfileSettingsModal: React.FC = () => {
 
   return (
     <Dialog open={isSettingsModalOpen} onOpenChange={setSettingsModalOpen}>
-      <DialogContent className="w-[94vw] max-w-[700px] p-0 overflow-hidden bg-card border-border/80 shadow-2xl rounded-2xl outline-none max-h-[88vh] flex flex-col">
-        <DialogHeader className="p-6 pb-2 border-b border-border/60">
-          <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-lg bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold shadow-sm">
-              <User className="h-4 w-4" />
+      <DialogContent className="w-[95vw] max-w-4xl p-0 overflow-hidden bg-card border-border/80 shadow-2xl rounded-2xl outline-none max-h-[88vh] flex flex-col md:flex-row">
+        {/* COLUMNA IZQUIERDA: VISTA PREVIA EN VIVO DE LA TARJETA DE PERFIL */}
+        <div className="w-full md:w-80 bg-zinc-50/80 dark:bg-zinc-900/60 p-6 border-b md:border-b-0 md:border-r border-border/60 flex flex-col justify-between shrink-0">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
+              <Eye className="h-3.5 w-3.5" />
+              <span>Vista Previa de tu Tarjeta</span>
             </div>
-            <div>
-              <DialogTitle className="text-base font-bold text-foreground">
-                Configuración del Perfil Profesional
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground">
-                Personaliza tus datos globales, enlaces y apariencia de tu tarjeta de perfil.
-              </DialogDescription>
+
+            {/* Tarjeta de Perfil en Vivo */}
+            <div className="w-full rounded-2xl overflow-hidden bg-card border border-border/80 shadow-lg flex flex-col">
+              {/* Banner */}
+              <div className="relative h-24 w-full overflow-hidden bg-zinc-900">
+                <div
+                  className={`absolute inset-0 bg-gradient-to-tr ${activeBanner.preview} opacity-90 transition-all duration-300`}
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+              </div>
+
+              {/* Contenido Avatar + Datos */}
+              <div className="px-4 pb-4 pt-0 flex flex-col items-center text-center relative">
+                <div className="-mt-9 mb-2 relative">
+                  <div className="h-16 w-16 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 ring-4 ring-card flex items-center justify-center font-bold text-base shadow-md">
+                    {initials}
+                  </div>
+                  <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-card" />
+                </div>
+
+                <div className="space-y-0.5 mb-3">
+                  <h3 className="text-sm font-extrabold text-foreground tracking-tight line-clamp-1">
+                    {name || "Tu Nombre"}
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground font-medium line-clamp-1">
+                    {headline || "Tu Titular / Cargo"}
+                  </p>
+                </div>
+
+                {/* Enlaces Rápidos */}
+                <div className="flex items-center gap-1.5 mb-3">
+                  {githubUrl && (
+                    <div className="h-6 w-6 rounded bg-zinc-100 dark:bg-zinc-800 text-muted-foreground flex items-center justify-center">
+                      <GithubIcon className="h-3 w-3" />
+                    </div>
+                  )}
+                  {linkedinUrl && (
+                    <div className="h-6 w-6 rounded bg-zinc-100 dark:bg-zinc-800 text-muted-foreground flex items-center justify-center">
+                      <LinkedinIcon className="h-3 w-3" />
+                    </div>
+                  )}
+                  {websiteUrl && (
+                    <div className="h-6 w-6 rounded bg-zinc-100 dark:bg-zinc-800 text-muted-foreground flex items-center justify-center">
+                      <Globe className="h-3 w-3" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Métricas estilo cápsula */}
+                <div className="w-full bg-zinc-100/90 dark:bg-zinc-900/90 rounded-xl p-2 grid grid-cols-3 gap-1 text-center border border-border/50 text-[10px]">
+                  <div>
+                    <div className="font-bold text-emerald-600 dark:text-emerald-400">98%</div>
+                    <div className="text-[9px] text-muted-foreground">ATS Match</div>
+                  </div>
+                  <div className="border-x border-border/60">
+                    <div className="font-bold text-foreground">{experienceYears || "5+ Años"}</div>
+                    <div className="text-[9px] text-muted-foreground">Experiencia</div>
+                  </div>
+                  <div>
+                    <div className="font-bold text-foreground">{profiles.length} CVs</div>
+                    <div className="text-[9px] text-muted-foreground">Versiones</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </DialogHeader>
 
-        <form onSubmit={handleSave} className="flex-1 flex flex-col justify-between overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-6 space-y-5">
-            <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid grid-cols-3 w-full h-8 bg-zinc-100 dark:bg-zinc-800 mb-4">
-                <TabsTrigger value="general" className="text-xs">
-                  Datos Principales
-                </TabsTrigger>
-                <TabsTrigger value="social" className="text-xs">
-                  Redes & Enlaces
-                </TabsTrigger>
-                <TabsTrigger value="appearance" className="text-xs">
-                  Estilo & Banner
-                </TabsTrigger>
-              </TabsList>
+          <div className="pt-4 text-[10px] text-muted-foreground text-center">
+            Los cambios se reflejan en tiempo real.
+          </div>
+        </div>
 
-              {/* Pestaña 1: Datos Principales */}
-              <TabsContent value="general" className="space-y-3.5 m-0">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Nombre Completo *</Label>
-                    <div className="relative">
-                      <User className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        required
-                        className="h-8 text-xs pl-8"
-                      />
+        {/* COLUMNA DERECHA: FORMULARIOS DE CONFIGURACIÓN CON PESTAÑAS */}
+        <div className="flex-1 flex flex-col justify-between overflow-hidden bg-card">
+          <DialogHeader className="p-5 pb-2 border-b border-border/60">
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4 text-foreground" />
+              <DialogTitle className="text-base font-bold text-foreground">
+                Configuración de Perfil & Cuenta
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Administra tus credenciales, datos de contacto, enlaces y personalización de diseño.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSave} className="flex-1 flex flex-col justify-between overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              <Tabs defaultValue="identity" className="w-full">
+                <TabsList className="grid grid-cols-4 w-full h-8 bg-zinc-100 dark:bg-zinc-800 mb-4">
+                  <TabsTrigger value="identity" className="text-xs">
+                    Identidad
+                  </TabsTrigger>
+                  <TabsTrigger value="account" className="text-xs">
+                    Cuenta & Seguridad
+                  </TabsTrigger>
+                  <TabsTrigger value="links" className="text-xs">
+                    Redes
+                  </TabsTrigger>
+                  <TabsTrigger value="style" className="text-xs">
+                    Apariencia
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* 1. Pestaña: Identidad & Datos de Contacto */}
+                <TabsContent value="identity" className="space-y-3 m-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Nombre Completo *</Label>
+                      <div className="relative">
+                        <User className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          required
+                          className="h-8 text-xs pl-8"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Cargo / Titular Profesional *</Label>
+                      <div className="relative">
+                        <Briefcase className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          value={headline}
+                          onChange={(e) => setHeadline(e.target.value)}
+                          placeholder="ej. Senior Full Stack & Cloud Developer"
+                          className="h-8 text-xs pl-8 font-medium"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Teléfono de Contacto</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          placeholder="+56 9 1234 5678"
+                          className="h-8 text-xs pl-8"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label className="text-xs font-medium">Ubicación (Ciudad, País)</Label>
+                      <div className="relative">
+                        <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          value={location}
+                          onChange={(e) => setLocation(e.target.value)}
+                          placeholder="Santiago, Chile"
+                          className="h-8 text-xs pl-8"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 sm:col-span-2">
+                      <Label className="text-xs font-medium">Años de Experiencia / Nivel</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          value={experienceYears}
+                          onChange={(e) => setExperienceYears(e.target.value)}
+                          placeholder="ej. 5+ Años de Experiencia"
+                          className="h-8 text-xs pl-8"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium">Titular / Cargo Profesional *</Label>
-                    <div className="relative">
-                      <Briefcase className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        value={headline}
-                        onChange={(e) => setHeadline(e.target.value)}
-                        placeholder="ej. Senior Full Stack & Cloud Developer"
-                        className="h-8 text-xs pl-8 font-medium"
-                      />
-                    </div>
+                    <Label className="text-xs font-medium">Resumen Profesional (Bio)</Label>
+                    <Textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      placeholder="Breve resumen de tu trayectoria técnica..."
+                      className="text-xs min-h-[70px]"
+                    />
                   </div>
+                </TabsContent>
 
+                {/* 2. Pestaña: Cuenta & Seguridad (Gmail / Password) */}
+                <TabsContent value="account" className="space-y-3.5 m-0">
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium">Correo Electrónico</Label>
+                    <Label className="text-xs font-medium">Correo Electrónico (Gmail / Cuenta)</Label>
                     <div className="relative">
                       <Mail className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                       <Input
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        placeholder="tu.correo@gmail.com"
                         className="h-8 text-xs pl-8"
                       />
                     </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      Tu correo se utiliza para iniciar sesión y sincronizar tus perfiles.
+                    </p>
                   </div>
 
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Teléfono de Contacto</Label>
-                    <div className="relative">
-                      <Phone className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+56 9 1234 5678"
-                        className="h-8 text-xs pl-8"
-                      />
+                  <div className="pt-2 border-t border-border/60 space-y-3">
+                    <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span>Cambiar Contraseña</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Contraseña Actual</Label>
+                        <Input
+                          type="password"
+                          value={currentPassword}
+                          onChange={(e) => setCurrentPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs font-medium">Nueva Contraseña</Label>
+                        <Input
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="h-8 text-xs"
+                        />
+                      </div>
                     </div>
                   </div>
+                </TabsContent>
 
+                {/* 3. Pestaña: Redes & Portafolio */}
+                <TabsContent value="links" className="space-y-3 m-0">
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium">Ubicación (Ciudad, País)</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        value={location}
-                        onChange={(e) => setLocation(e.target.value)}
-                        placeholder="Santiago, Chile"
-                        className="h-8 text-xs pl-8"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Experiencia / Años</Label>
-                    <div className="relative">
-                      <Clock className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input
-                        value={experienceYears}
-                        onChange={(e) => setExperienceYears(e.target.value)}
-                        placeholder="ej. 5+ Años de Experiencia"
-                        className="h-8 text-xs pl-8"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1 pt-1">
-                  <Label className="text-xs font-medium">Resumen Profesional / Bio</Label>
-                  <Textarea
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    placeholder="Describe brevemente tu especialidad técnica y fortalezas..."
-                    className="text-xs min-h-[80px]"
-                  />
-                </div>
-              </TabsContent>
-
-              {/* Pestaña 2: Redes & Enlaces */}
-              <TabsContent value="social" className="space-y-3.5 m-0">
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Perfil de GitHub</Label>
+                    <Label className="text-xs font-medium">GitHub</Label>
                     <div className="relative">
                       <div className="absolute left-2.5 top-2.5 text-muted-foreground">
                         <GithubIcon className="h-3.5 w-3.5" />
@@ -292,7 +426,7 @@ export const ProfileSettingsModal: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium">Perfil de LinkedIn</Label>
+                    <Label className="text-xs font-medium">LinkedIn</Label>
                     <div className="relative">
                       <div className="absolute left-2.5 top-2.5 text-muted-foreground">
                         <LinkedinIcon className="h-3.5 w-3.5" />
@@ -307,113 +441,103 @@ export const ProfileSettingsModal: React.FC = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium">Portafolio Web / Blog Personal</Label>
+                    <Label className="text-xs font-medium">Portafolio Web / Blog</Label>
                     <div className="relative">
                       <Globe className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                       <Input
                         value={websiteUrl}
                         onChange={(e) => setWebsiteUrl(e.target.value)}
-                        placeholder="https://tudominio.dev"
+                        placeholder="https://tuportafolio.dev"
                         className="h-8 text-xs pl-8"
                       />
                     </div>
                   </div>
+                </TabsContent>
 
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Disponibilidad / Estado de Búsqueda</Label>
-                    <Input
-                      value={availability}
-                      onChange={(e) => setAvailability(e.target.value)}
-                      placeholder="ej. Abierto a ofertas remotas / Inmediato"
-                      className="h-8 text-xs"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              {/* Pestaña 3: Estilo & Banner */}
-              <TabsContent value="appearance" className="space-y-3.5 m-0">
-                <Label className="text-xs font-semibold text-foreground block">
-                  Tema y Paleta del Banner de Perfil:
-                </Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {BANNER_THEMES.map((theme) => {
-                    const isSelected = bannerTheme === theme.id;
-                    return (
-                      <div
-                        key={theme.id}
-                        onClick={() => setBannerTheme(theme.id)}
-                        className={`p-3 rounded-xl border cursor-pointer transition-all ${
-                          isSelected
-                            ? "border-foreground ring-1 ring-foreground bg-zinc-50 dark:bg-zinc-900"
-                            : "border-border hover:border-zinc-300 dark:hover:border-zinc-700 bg-card"
-                        }`}
-                      >
+                {/* 4. Pestaña: Apariencia & Banner */}
+                <TabsContent value="style" className="space-y-3 m-0">
+                  <Label className="text-xs font-semibold text-foreground block">
+                    Paleta del Banner de la Tarjeta:
+                  </Label>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {BANNER_THEMES.map((theme) => {
+                      const isSelected = bannerTheme === theme.id;
+                      return (
                         <div
-                          className={`h-12 w-full rounded-lg bg-gradient-to-r ${theme.preview} mb-2 shadow-xs`}
-                        />
-                        <div className="flex items-center justify-between text-xs font-bold text-foreground">
-                          <span>{theme.name}</span>
-                          {isSelected && <Check className="h-3.5 w-3.5 text-foreground" />}
+                          key={theme.id}
+                          onClick={() => setBannerTheme(theme.id)}
+                          className={`p-2.5 rounded-xl border cursor-pointer transition-all ${
+                            isSelected
+                              ? "border-foreground ring-1 ring-foreground bg-zinc-50 dark:bg-zinc-900"
+                              : "border-border hover:border-zinc-300 dark:hover:border-zinc-700 bg-card"
+                          }`}
+                        >
+                          <div
+                            className={`h-8 w-full rounded bg-gradient-to-r ${theme.preview} mb-1.5 shadow-xs`}
+                          />
+                          <div className="flex items-center justify-between text-xs font-bold text-foreground">
+                            <span>{theme.name}</span>
+                            {isSelected && <Check className="h-3.5 w-3.5 text-foreground" />}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </TabsContent>
-            </Tabs>
+                      );
+                    })}
+                  </div>
+                </TabsContent>
+              </Tabs>
 
-            {/* Sincronización Automática con el CV Activo */}
-            <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-border/60 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                  <span>Sincronizar cambios con el CV activo</span>
+              {/* Checkbox de sincronización con CV Activo */}
+              <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-border/60 flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-amber-500" />
+                    <span>Sincronizar cambios con el CV activo</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Actualiza tu nombre, correo, teléfono y resumen en el editor actual.
+                  </p>
                 </div>
-                <p className="text-[10px] text-muted-foreground">
-                  Actualiza tu nombre, correo, teléfono y resumen en la versión actual del currículum.
-                </p>
+                <input
+                  type="checkbox"
+                  checked={syncWithActiveCv}
+                  onChange={(e) => setSyncWithActiveCv(e.target.checked)}
+                  className="h-4 w-4 rounded accent-foreground cursor-pointer"
+                />
               </div>
-              <input
-                type="checkbox"
-                checked={syncWithActiveCv}
-                onChange={(e) => setSyncWithActiveCv(e.target.checked)}
-                className="h-4 w-4 rounded accent-foreground cursor-pointer"
-              />
             </div>
-          </div>
 
-          {/* Footer de Acciones */}
-          <div className="p-4 px-6 border-t border-border/60 flex items-center justify-between bg-card/60">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setSettingsModalOpen(false)}
-              className="h-8 text-xs"
-            >
-              Cancelar
-            </Button>
+            {/* Footer de Acciones */}
+            <div className="p-4 px-5 border-t border-border/60 flex items-center justify-between bg-card">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSettingsModalOpen(false)}
+                className="h-8 text-xs"
+              >
+                Cancelar
+              </Button>
 
-            <Button
-              type="submit"
-              size="sm"
-              className="h-8 px-4 text-xs gap-1.5 font-semibold bg-foreground text-background"
-            >
-              {isSaved ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>¡Cambios Guardados!</span>
-                </>
-              ) : (
-                <>
-                  <Save className="h-3.5 w-3.5" />
-                  <span>Guardar Configuración</span>
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
+              <Button
+                type="submit"
+                size="sm"
+                className="h-8 px-4 text-xs gap-1.5 font-semibold bg-foreground text-background"
+              >
+                {isSaved ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>¡Guardado!</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3.5 w-3.5" />
+                    <span>Guardar Cambios</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

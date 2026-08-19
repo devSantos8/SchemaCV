@@ -12,12 +12,21 @@ import {
   AlertTriangle,
   Undo2,
   Redo2,
+  Database,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const DualModeEditor: React.FC = () => {
-  const { activeTab, setActiveTab, yamlError, undo, redo, canUndo, canRedo } =
-    useResumeStore();
+  const {
+    activeTab,
+    setActiveTab,
+    yamlError,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    setMasterProfileModalOpen,
+  } = useResumeStore();
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-background border-r border-border">
@@ -45,7 +54,18 @@ export const DualModeEditor: React.FC = () => {
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Botón Acceso Perfil Base */}
+            <button
+              type="button"
+              onClick={() => setMasterProfileModalOpen(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition-colors"
+              title="Abrir tu Base de Información Completa de Carrera"
+            >
+              <Database className="h-3 w-3" />
+              <span className="hidden md:inline">Perfil Base</span>
+            </button>
+
             {/* Botones de Deshacer / Rehacer contextuales */}
             <div className="flex items-center bg-zinc-100 dark:bg-zinc-800/80 p-0.5 rounded-md border border-border">
               <Button
@@ -71,11 +91,11 @@ export const DualModeEditor: React.FC = () => {
             </div>
 
             {/* Indicador de estado de sincronización */}
-            <div className="hidden lg:flex items-center gap-1.5 text-[11px] font-medium">
+            <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-medium">
               {yamlError ? (
                 <span className="flex items-center gap-1 text-rose-500 font-mono">
                   <AlertTriangle className="h-3.5 w-3.5" />
-                  Error de sintaxis
+                  Error sintaxis
                 </span>
               ) : (
                 <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">

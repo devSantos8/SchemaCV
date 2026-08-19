@@ -43,11 +43,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { LayoutGrid, Database } from "lucide-react";
+
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
   tech_minimalist: Terminal,
   modern_executive: Briefcase,
   skills_first: Layers,
+  stanford_clean: Sparkles,
+  compact_swiss: LayoutGrid,
 };
 
 interface HeaderProps {
@@ -71,6 +75,8 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     setPaperSize,
     setImportModalOpen,
     setProfileModalOpen,
+    setTemplateGalleryOpen,
+    setMasterProfileModalOpen,
   } = useResumeStore();
 
   const { user, isAuthenticated, setSettingsModalOpen } = useAuthStore();
@@ -270,6 +276,13 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem
+              onClick={() => setMasterProfileModalOpen(true)}
+              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer gap-2"
+            >
+              <Database className="h-3.5 w-3.5" />
+              <span>Base de Información Completa...</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => setProfileModalOpen(true)}
               className="text-xs font-semibold text-foreground cursor-pointer gap-2"
             >
@@ -295,10 +308,20 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
                 <ChevronDown className="h-3 w-3 text-muted-foreground" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-72 bg-card/95 backdrop-blur-md border-border">
-              <DropdownMenuLabel className="text-xs text-muted-foreground">
-                Catálogo de 4 Plantillas ATS Nativas
-              </DropdownMenuLabel>
+            <DropdownMenuContent align="center" className="w-80 bg-card/95 backdrop-blur-md border-border max-h-[80vh] overflow-y-auto scrollbar-thin">
+              <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/60">
+                <span className="text-xs font-semibold text-muted-foreground">
+                  Catálogo de 6 Plantillas ATS
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setTemplateGalleryOpen(true)}
+                  className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                >
+                  <LayoutGrid className="h-3 w-3" />
+                  <span>Ver Galería</span>
+                </button>
+              </div>
               <DropdownMenuSeparator />
               {(Object.keys(TEMPLATE_METADATA) as TemplateId[]).map((tempId) => {
                 const meta = TEMPLATE_METADATA[tempId];
@@ -326,6 +349,14 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
                   </DropdownMenuItem>
                 );
               })}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setTemplateGalleryOpen(true)}
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer gap-2 p-2"
+              >
+                <LayoutGrid className="h-4 w-4" />
+                <span>Explorar Galería con Previews...</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -385,6 +416,17 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
 
       {/* 3. ZONA DERECHA: ACCIONES DE ALTO IMPACTO & EXPORTACIÓN */}
       <div className="flex items-center gap-2">
+        {/* Botón Explorar Plantillas */}
+        <button
+          type="button"
+          onClick={() => setTemplateGalleryOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all"
+          title="Ver galería visual de plantillas"
+        >
+          <LayoutGrid className="h-3.5 w-3.5 text-emerald-500" />
+          <span className="hidden sm:inline">Plantillas</span>
+        </button>
+
         {/* Ingesta con IA */}
         <button
           type="button"
