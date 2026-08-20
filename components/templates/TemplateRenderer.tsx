@@ -1,5 +1,6 @@
 import React from "react";
 import { ResumeData, TemplateId, PaperSize, getVisibleResumeData } from "@/types/resume";
+import { ChileProfesional } from "./ChileProfesional";
 import { HarvardClassic } from "./HarvardClassic";
 import { TechMinimalist } from "./TechMinimalist";
 import { ModernExecutive } from "./ModernExecutive";
@@ -30,6 +31,15 @@ export const TEMPLATE_METADATA: Record<
     atsScore: number;
   }
 > = {
+  chile_profesional: {
+    name: "Chile & LatAm Profesional",
+    description: "Diseño optimizado para el mercado chileno y latinoamericano (GetOnBoard, Buk, Trabajando.com y Workday Chile).",
+    bestFor: "Ingenieros Civiles, Desarrolladores, Profesionales y Titulados en Chile y Latinoamérica",
+    iconName: "MapPin",
+    fontFamily: "Geist Sans (Estándar Chile)",
+    density: "Alta",
+    atsScore: 100,
+  },
   harvard: {
     name: "Harvard Classic",
     description: "Monocromático formal estilo Harvard, tipografía serif limpia y divisores horizontales nítidos.",
@@ -139,6 +149,8 @@ export const TemplateRenderer: React.FC<TemplateRendererProps> = ({
   const visibleData = getVisibleResumeData(data);
 
   switch (templateId) {
+    case "chile_profesional":
+      return <ChileProfesional data={visibleData} paperSize={paperSize} />;
     case "harvard":
       return <HarvardClassic data={visibleData} paperSize={paperSize} />;
     case "tech_minimalist":

@@ -218,6 +218,7 @@ export function getVisibleResumeData(data: ResumeData): ResumeData {
 
 // Tipo de plantilla
 export type TemplateId =
+  | "chile_profesional"
   | "harvard"
   | "tech_minimalist"
   | "modern_executive"

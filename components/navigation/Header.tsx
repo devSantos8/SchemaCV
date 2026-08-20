@@ -46,10 +46,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { LayoutGrid, Database, BookOpen, Cpu, Minimize2, GitFork, Globe2 } from "lucide-react";
+import { LayoutGrid, Database, BookOpen, Cpu, Minimize2, GitFork, Globe2, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
+  chile_profesional: MapPin,
   harvard: GraduationCap,
   tech_minimalist: Terminal,
   modern_executive: Briefcase,
