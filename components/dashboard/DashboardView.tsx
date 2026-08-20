@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { JobTrackerView } from "@/components/jobs/JobTrackerView";
 import { AISettingsCard } from "@/components/settings/AISettingsCard";
 import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
+import { useAISettingsStore } from "@/store/useAISettingsStore";
+import { AI_PROVIDER_LABELS } from "@/types/jobs";
 import {
   Home,
   Plus,
@@ -322,6 +324,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     logout,
     updateUserProfile,
   } = useAuthStore();
+
+  const {
+    enabled: aiEnabled,
+    provider: aiProvider,
+    apiKey: aiApiKey,
+  } = useAISettingsStore();
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -959,6 +967,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <Settings className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Configuración</span>}
                 </div>
+              </button>
+
+              {/* Boton Acceso Rapido Motor IA */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("settings");
+                  setSettingsSubTab("account");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        aiEnabled && aiApiKey
+                          ? "bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        aiEnabled && aiApiKey
+                          ? "bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20 hover:bg-violet-500/15"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent"
+                      }`
+                }`}
+                title={
+                  aiEnabled && aiApiKey
+                    ? `Motor IA Conectado: ${AI_PROVIDER_LABELS[aiProvider]}`
+                    : "Configurar Motor IA (Google Gemini, OpenAI, Claude)"
+                }
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Cpu className="h-4 w-4 shrink-0 text-violet-500" />
+                  {!isSidebarCollapsed && <span>Motor IA</span>}
+                </div>
+                {!isSidebarCollapsed && (
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] font-mono px-1.5 py-0 ${
+                      aiEnabled && aiApiKey
+                        ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-bold"
+                        : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
+                    {aiEnabled && aiApiKey
+                      ? (aiProvider === "google" ? "Gemini" : aiProvider === "openai" ? "GPT-4o" : "Claude")
+                      : "Inactivo"}
+                  </Badge>
+                )}
               </button>
             </div>
           </nav>

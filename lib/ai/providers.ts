@@ -1,4 +1,5 @@
-﻿import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateObject, generateText } from "ai";
 import { z } from "zod";
@@ -19,10 +20,21 @@ export class AIProviderError extends Error {
 
 function mapError(err: unknown): AIProviderError {
   const msg = err instanceof Error ? err.message : String(err);
-  if (msg.includes("401") || msg.includes("invalid_api_key") || msg.includes("Unauthorized")) {
+  if (
+    msg.includes("401") ||
+    msg.includes("invalid_api_key") ||
+    msg.includes("API_KEY_INVALID") ||
+    msg.includes("API_KEY_NOT_FOUND") ||
+    msg.includes("Unauthorized")
+  ) {
     return new AIProviderError("API key invalida o sin permisos.", "invalid_key");
   }
-  if (msg.includes("429") || msg.includes("rate_limit") || msg.includes("Rate limit")) {
+  if (
+    msg.includes("429") ||
+    msg.includes("rate_limit") ||
+    msg.includes("Rate limit") ||
+    msg.includes("RESOURCE_EXHAUSTED")
+  ) {
     return new AIProviderError("Rate limit alcanzado. Espera un momento.", "rate_limit");
   }
   if (msg.includes("insufficient_quota") || msg.includes("402") || msg.includes("no credits")) {
@@ -44,6 +56,10 @@ const KeywordsOutputSchema = z.object({
 // ─── Factory de modelos ───────────────────────────────────────────────────────
 function getModel(provider: AIProvider, apiKey: string) {
   switch (provider) {
+    case "google": {
+      const google = createGoogleGenerativeAI({ apiKey });
+      return google("gemini-2.0-flash");
+    }
     case "openai": {
       const openai = createOpenAI({ apiKey });
       return openai("gpt-4o-mini");
@@ -165,6 +181,10 @@ export async function testAIConnection(
     prompt: "Responde solo: OK",
     maxOutputTokens: 5,
   });
-  const modelName = provider === "openai" ? "gpt-4o-mini" : "claude-3-5-haiku";
-  return { ok: text.trim().length > 0, model: modelName };
+  const modelMap: Record<AIProvider, string> = {
+    google: "gemini-2.0-flash",
+    openai: "gpt-4o-mini",
+    anthropic: "claude-3-5-haiku",
+  };
+  return { ok: text.trim().length > 0, model: modelMap[provider] };
 }

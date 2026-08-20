@@ -1,4 +1,5 @@
-﻿import { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
@@ -35,7 +36,10 @@ Resumen del candidato:
 ${resumeSummary}`;
 
   let model;
-  if (provider === "anthropic") {
+  if (provider === "google") {
+    const google = createGoogleGenerativeAI({ apiKey });
+    model = google("gemini-2.0-flash");
+  } else if (provider === "anthropic") {
     const anthropic = createAnthropic({ apiKey });
     model = anthropic("claude-3-5-haiku-20241022");
   } else {
