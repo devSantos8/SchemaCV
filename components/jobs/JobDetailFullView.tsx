@@ -377,18 +377,18 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
             </button>
           </div>
 
-          {/* Selector de Modo Compacto & Minimalista */}
-          <div className="inline-flex items-center p-0.5 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl border border-zinc-200/80 dark:border-zinc-700/60 self-start sm:self-auto shadow-2xs">
+          {/* Selector de Modo Segmentado Profesional & Limpio */}
+          <div className="flex items-center p-1 bg-zinc-100 dark:bg-zinc-800 rounded-2xl border border-zinc-200/80 dark:border-zinc-700/60 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode("job_info")}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === "job_info"
-                  ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-2xs"
+                  ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs border border-zinc-200/50 dark:border-zinc-700/50"
                   : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
-              <FileText className="h-3 w-3" />
+              <FileText className="h-3.5 w-3.5" />
               <span>Información</span>
             </button>
 
@@ -401,16 +401,20 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   setViewMode("ats_evaluation");
                 }
               }}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === "ats_evaluation"
-                  ? "bg-emerald-600 text-white shadow-2xs font-bold"
+                  ? "bg-emerald-600 text-white shadow-xs font-bold"
                   : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
-              <ShieldCheck className="h-3 w-3" />
+              <ShieldCheck className="h-3.5 w-3.5" />
               <span>Evaluación ATS</span>
               {report && (
-                <span className="text-[10px] font-mono px-1 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-bold">
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold ml-0.5 ${
+                  viewMode === "ats_evaluation" 
+                    ? "bg-emerald-700/60 text-white" 
+                    : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
+                }`}>
                   {matchScore}%
                 </span>
               )}
@@ -454,20 +458,6 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
               {/* Botones de Acción */}
               <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleToggleSave}
-                  className={`h-9 px-3.5 text-xs font-semibold rounded-xl gap-1.5 transition-all ${
-                    isSaved
-                      ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:border-red-900/50"
-                      : "text-zinc-700 dark:text-zinc-300"
-                  }`}
-                >
-                  <Heart className={`h-3.5 w-3.5 ${isSaved ? "fill-red-500 text-red-500" : ""}`} />
-                  <span>{isSaved ? "Guardado" : "Guardar"}</span>
-                </Button>
-
                 <Button
                   size="sm"
                   onClick={handleSendApplication}
