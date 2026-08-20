@@ -49,7 +49,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
 
   return (
     <div
-      className={`bg-white text-zinc-900 font-sans leading-normal w-full min-h-full selection:bg-zinc-100 ${
+      className={`bg-white text-zinc-900 font-sans leading-normal w-full h-auto selection:bg-zinc-100 ${
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{

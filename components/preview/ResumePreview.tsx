@@ -40,12 +40,18 @@ export const ResumePreview: React.FC = () => {
 
       // Dimensiones de 1 página a 96 DPI: Letter = 11in = 1056px | A4 = 297mm ≈ 1122.52px
       const singlePageHeightPx = isA4 ? (297 * 96) / 25.4 : 11 * 96;
-      const actualHeight = docRef.current.scrollHeight;
+      
+      // Medir la altura real del contenido del template hijo
+      const templateEl = docRef.current.firstElementChild as HTMLElement | null;
+      const actualHeight = templateEl
+        ? Math.max(templateEl.scrollHeight, templateEl.offsetHeight)
+        : docRef.current.scrollHeight;
 
+      // Tolerancia prudente de 16px para subpixel rendering y bordes
+      const isOver = actualHeight > singlePageHeightPx + 16;
       const percent = Math.round((actualHeight / singlePageHeightPx) * 100);
-      const isOver = actualHeight > singlePageHeightPx + 6; // Tolerancia de 6px
       const estimated = (actualHeight / singlePageHeightPx).toFixed(1);
-      const count = Math.max(1, Math.ceil(actualHeight / (singlePageHeightPx + 2)));
+      const count = isOver ? Math.max(2, Math.ceil((actualHeight - 16) / singlePageHeightPx)) : 1;
 
       setPageMetrics({
         occupancyPercent: percent,
@@ -64,12 +70,15 @@ export const ResumePreview: React.FC = () => {
 
     if (docRef.current) {
       observer.observe(docRef.current);
+      if (docRef.current.firstElementChild) {
+        observer.observe(docRef.current.firstElementChild);
+      }
     }
 
     return () => {
       observer.disconnect();
     };
-  }, [resumeData, activeTemplate, paperSize]);
+  }, [resumeData, activeTemplate, paperSize, isA4]);
 
   return (
     <div className="relative flex-1 h-full w-full overflow-hidden flex flex-col bg-zinc-100 dark:bg-zinc-950 print:bg-white print:overflow-visible print:h-auto print:block">

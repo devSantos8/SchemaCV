@@ -51,7 +51,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
 
   return (
     <div
-      className={`bg-white text-zinc-900 font-sans leading-normal w-full min-h-full selection:bg-blue-100 ${
+      className={`bg-white text-zinc-900 font-sans leading-normal w-full h-auto selection:bg-blue-100 ${
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
