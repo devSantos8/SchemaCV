@@ -14,16 +14,18 @@ export async function POST(req: NextRequest) {
       paperSize = "letter",
     } = body;
 
-    let documentHtml = html;
+    let documentHtml = "";
 
-    // Si se envían los datos del CV y la plantilla en vez del HTML crudo, lo compilamos con el exportador puro
-    if (!documentHtml && resumeData) {
+    // Compilamos con el exportador puro semántico de alta fidelidad ATS
+    if (resumeData) {
       documentHtml = generateTemplateHtml(resumeData, templateId, paperSize);
+    } else if (html) {
+      documentHtml = html;
     }
 
     if (!documentHtml) {
       return NextResponse.json(
-        { error: "Se requiere 'html' o 'resumeData' para compilar el PDF." },
+        { error: "Se requiere 'resumeData' o 'html' para compilar el PDF." },
         { status: 400 }
       );
     }

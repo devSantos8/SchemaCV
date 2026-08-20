@@ -158,15 +158,24 @@ export const SECTION_LABELS: Record<
   },
 };
 
+export const DEFAULT_SECTION_ORDER: string[] = [
+  "summary",
+  "skills",
+  "experience",
+  "projects",
+  "education",
+  "certifications",
+];
+
 // Estructura completa de CV compatible con RenderCV y optimizada para ATS
 export const ResumeSchema = z.object({
   name: z.string(),
   headline: z.string().optional(),
   summary: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z.string().email().optional().or(z.literal("")),
   phone: z.string().optional(),
   location: z.string().optional(),
-  website: z.string().url().optional(),
+  website: z.string().optional(),
   language: z.enum(["es", "en"]).default("es").optional(),
   social_networks: z.array(SocialNetworkSchema).default([]),
   
@@ -193,19 +202,118 @@ export const ResumeSchema = z.object({
 export type ResumeData = z.infer<typeof ResumeSchema>;
 
 /**
+ * Normaliza URLs de redes de contacto (LinkedIn, GitHub, Web personal).
+ * Corrige URLs de LinkedIn incompletas (agrega /in/) y asegura protocolo https://.
+ */
+export function normalizeSocialUrl(network: string, inputUrlOrUser: string): { url: string; username: string } {
+  let cleaned = (inputUrlOrUser || "").trim();
+  if (!cleaned) return { url: "", username: "" };
+
+  const netLower = (network || "").toLowerCase();
+
+  // LinkedIn
+  if (netLower.includes("linkedin")) {
+    cleaned = cleaned.replace(/^https?:\/\/(www\.)?linkedin\.com\/?/i, "");
+    cleaned = cleaned.replace(/^\/+|\/+$/g, "");
+    
+    // Si viene como "jmonroys17" o "in/jmonroys17"
+    let userPath = cleaned;
+    if (!userPath.startsWith("in/")) {
+      userPath = `in/${userPath}`;
+    }
+    const finalUrl = `https://linkedin.com/${userPath}`;
+    const displayUser = userPath.replace(/^in\//, "");
+    return { url: finalUrl, username: displayUser };
+  }
+
+  // GitHub
+  if (netLower.includes("github")) {
+    cleaned = cleaned.replace(/^https?:\/\/(www\.)?github\.com\/?/i, "");
+    cleaned = cleaned.replace(/^\/+|\/+$/g, "");
+    const finalUrl = `https://github.com/${cleaned}`;
+    return { url: finalUrl, username: cleaned };
+  }
+
+  // General web / portfolio
+  let finalUrl = cleaned;
+  if (!/^https?:\/\//i.test(finalUrl)) {
+    finalUrl = `https://${finalUrl}`;
+  }
+  const displayUser = finalUrl.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+  return { url: finalUrl, username: displayUser };
+}
+
+/**
+ * Formatea una red social para su renderizado visual limpio (ej. "linkedin.com/in/usuario", "github.com/usuario", "portfolio.dev")
+ */
+export function formatSocialDisplay(sn: SocialNetwork): { label: string; url?: string } {
+  const netLower = (sn.network || "").toLowerCase();
+  const rawUrl = sn.url || sn.username || "";
+  const { url, username } = normalizeSocialUrl(sn.network, rawUrl);
+
+  if (netLower.includes("linkedin")) {
+    const user = username || url.replace(/^https?:\/\/(www\.)?linkedin\.com\/in\/?/i, "");
+    return {
+      label: user ? `linkedin.com/in/${user}` : "linkedin.com",
+      url: url || `https://linkedin.com/in/${user}`,
+    };
+  }
+
+  if (netLower.includes("github")) {
+    const user = username || url.replace(/^https?:\/\/(www\.)?github\.com\/?/i, "");
+    return {
+      label: user ? `github.com/${user}` : "github.com",
+      url: url || `https://github.com/${user}`,
+    };
+  }
+
+  const cleanWeb = (url || rawUrl).replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+  return {
+    label: cleanWeb || sn.network,
+    url: url || (rawUrl.startsWith("http") ? rawUrl : `https://${rawUrl}`),
+  };
+}
+
+/**
  * Filtra los datos del CV excluyendo secciones ocultas y elementos individuales marcados como hidden: true.
  * Esto permite que el renderizado de plantillas y exportadores reflow automáticamente el contenido visible.
  */
 export function getVisibleResumeData(data: ResumeData): ResumeData {
   const hiddenSections = new Set(data.hidden_sections || []);
+  const baseOrder =
+    data.section_order && data.section_order.length > 0
+      ? data.section_order
+      : DEFAULT_SECTION_ORDER;
 
   return {
     ...data,
-    section_order: (data.section_order || []).filter((s) => !hiddenSections.has(s)),
+    social_networks: (data.social_networks || []).map((sn) => {
+      const { url, username } = normalizeSocialUrl(sn.network, sn.url || sn.username || "");
+      return {
+        ...sn,
+        url: url || sn.url,
+        username: username || sn.username,
+      };
+    }),
+    section_order: baseOrder.filter((s) => !hiddenSections.has(s)),
     skills: (data.skills || []).filter((item) => !item.hidden),
-    experience: (data.experience || []).filter((item) => !item.hidden),
+    experience: (data.experience || []).filter((item) => !item.hidden).map((exp) => {
+      const isCurrent = Boolean(exp.current) || /^(presente|present|actual|actualidad)$/i.test((exp.end_date || "").trim());
+      return {
+        ...exp,
+        current: isCurrent,
+        end_date: isCurrent ? "Presente" : exp.end_date,
+      };
+    }),
     projects: (data.projects || []).filter((item) => !item.hidden),
-    education: (data.education || []).filter((item) => !item.hidden),
+    education: (data.education || []).filter((item) => !item.hidden).map((edu) => {
+      const isCurrent = Boolean(edu.current) || /^(presente|present|actual|cursando|actualidad)$/i.test((edu.end_date || "").trim());
+      return {
+        ...edu,
+        current: isCurrent,
+        end_date: isCurrent ? "Presente" : edu.end_date,
+      };
+    }),
     certifications: (data.certifications || []).filter((item) => !item.hidden),
     custom_sections: (data.custom_sections || [])
       .filter((sec) => !sec.hidden)

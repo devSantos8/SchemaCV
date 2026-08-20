@@ -94,7 +94,112 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 4. Consistencia y Legibilidad de Fechas ─────────────────────────────────
+  // ─── 4. Fusión de Tokens Semánticos (Anti-Fused Tokens) ────────────────────
+  const fusedTokensDetected: string[] = [];
+
+  // Check 4.1: Nombre + Headline fusionados (ej: "SANTOSAI Engineer")
+  if (resumeData?.name && resumeData?.headline) {
+    const lastNamePart = resumeData.name.trim().split(/\s+/).pop() || '';
+    const firstHeadlinePart = resumeData.headline.trim().split(/\s+/)[0] || '';
+    if (lastNamePart && firstHeadlinePart) {
+      const fusedPair = `${lastNamePart}${firstHeadlinePart}`;
+      if (rawText.includes(fusedPair)) {
+        fusedTokensDetected.push(`Nombre y Titular pegados ("${fusedPair}")`);
+      }
+    }
+  }
+
+  // Check 4.2: Emisor + Año en certificaciones (ej: "Google2026", "Graduate2024")
+  const fusedYearRegex = /\b([a-zA-Z]{3,})(19\d\d|20\d\d)\b/g;
+  let matchYear: RegExpExecArray | null;
+  while ((matchYear = fusedYearRegex.exec(rawText)) !== null) {
+    // Excluir siglas legítimas como CSS3, HTML5, MP3, etc.
+    const token = matchYear[0];
+    if (!/^(?:W3C|UTF8|SHA256|ISO9001|ECMA2026|ES2022)$/i.test(token)) {
+      fusedTokensDetected.push(`Texto y año pegados ("${token}")`);
+    }
+  }
+
+  // Check 4.3: Habilidad con dos puntos sin espacio (ej: "Backend:Python")
+  const fusedColonRegex = /\b([a-zA-Z]{2,}):([a-zA-Z]{2,})\b/g;
+  let matchColon: RegExpExecArray | null;
+  while ((matchColon = fusedColonRegex.exec(rawText)) !== null) {
+    const fullMatch = matchColon[0];
+    if (!/^https?:/i.test(fullMatch)) {
+      fusedTokensDetected.push(`Etiqueta sin espacio tras ':' ("${fullMatch}")`);
+    }
+  }
+
+  // Check 4.4: Delimitadores pegados sin espacio (ej: "Ingeniero I+DevOps", "Position|Company")
+  const fusedDelimiterRegex = /\b([a-zA-Z]{2,})([+|/|—])([a-zA-Z]{2,})\b/g;
+  let matchDelim: RegExpExecArray | null;
+  while ((matchDelim = fusedDelimiterRegex.exec(rawText)) !== null) {
+    const fullMatch = matchDelim[0];
+    // Excluir C++, TCP/IP, CI/CD, I/O
+    if (!/^(?:C\+\+|TCP\/IP|CI\/CD|I\/O|PL\/SQL)$/i.test(fullMatch)) {
+      fusedTokensDetected.push(`Delimitador sin espacios ("${fullMatch}")`);
+    }
+  }
+
+  const hasFusedTokens = fusedTokensDetected.length > 0;
+  rules.push({
+    id: 'no_fused_tokens',
+    name: 'Separación de Tokens Semánticos (Anti-Fused Tokens)',
+    category: 'layout',
+    status: isBlankOrEmpty ? 'pass' : hasFusedTokens ? 'fail' : 'pass',
+    severity: 'critical',
+    scoreWeight: 10,
+    scoreEarned: isBlankOrEmpty ? 10 : hasFusedTokens ? 0 : 10,
+    message: hasFusedTokens
+      ? `Se detectaron tokens fusionados sin espacio: ${fusedTokensDetected.slice(0, 3).join(', ')}.`
+      : 'Todos los tokens de texto (nombre, emisor, años, categorías) extraídos con separación limpia.',
+    detail: hasFusedTokens ? fusedTokensDetected.join(' | ') : undefined,
+    fixGuide: {
+      whyItMatters: 'Si un token se fusiona como "Google2026" o "SANTOSAI", el ATS no puede identificar el nombre de la empresa ni del candidato.',
+      howToFix: 'Inserta separadores textuales explícitos (" — ", " | ") y espacio tras los dos puntos.',
+      example: 'Google — (2026) / Backend: Python, Node.js',
+    },
+  });
+
+  // ─── 5. Formato Canónico de URLs de Contacto ────────────────────────────────
+  const invalidUrls: string[] = [];
+  const socialList = resumeData?.social_networks || [];
+  for (const sn of socialList) {
+    const netLower = sn.network.toLowerCase();
+    const urlVal = sn.url || '';
+    if (netLower.includes('linkedin')) {
+      if (urlVal && !urlVal.includes('linkedin.com/in/')) {
+        invalidUrls.push(`LinkedIn debe incluir "/in/": "${urlVal}"`);
+      }
+    }
+    if (netLower.includes('github')) {
+      if (urlVal && !urlVal.includes('github.com/')) {
+        invalidUrls.push(`GitHub debe ser "github.com/usuario": "${urlVal}"`);
+      }
+    }
+  }
+
+  const hasInvalidUrls = invalidUrls.length > 0;
+  rules.push({
+    id: 'canonical_social_urls',
+    name: 'Formato Canónico de URLs (LinkedIn y GitHub)',
+    category: 'contact',
+    status: hasInvalidUrls ? 'warning' : 'pass',
+    severity: 'warning',
+    scoreWeight: 5,
+    scoreEarned: hasInvalidUrls ? 2 : 5,
+    message: hasInvalidUrls
+      ? `URLs con formato no canónico: ${invalidUrls.join(', ')}.`
+      : 'Enlaces profesionales (LinkedIn /in/, GitHub) con formato canónico correcto.',
+    detail: hasInvalidUrls ? invalidUrls.join(' | ') : undefined,
+    fixGuide: {
+      whyItMatters: 'Los reclutadores y parsers ATS usan el enlace directo al perfil "linkedin.com/in/usuario" para enriquecer el candidato.',
+      howToFix: 'Asegúrate de incluir "/in/" en tus enlaces de LinkedIn.',
+      example: 'https://linkedin.com/in/tu-usuario',
+    },
+  });
+
+  // ─── 6. Consistencia y Legibilidad de Fechas ─────────────────────────────────
   const dateWithMonthRegex = /(?:Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{1,2}\/|\d{4}-\d{2})[\w\s.-]*\d{4}/gi;
   const yearOnlyRegex = /\b(19\d\d|20\d\d)\s*[-—–]\s*(19\d\d|20\d\d|Presente|Present)\b/gi;
   
@@ -138,7 +243,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 5. Viñetas Estándar (Bullets Sin Glifos Rotos) ───────────────────────────
+  // ─── 7. Viñetas Estándar (Bullets Sin Glifos Rotos) ───────────────────────────
   const weirdBulletRegex = /[➔➜➤►▶→⇒✔✓✗✘★☆◆◇■□]/g;
   const hasWeirdBullets = weirdBulletRegex.test(rawText);
 
@@ -148,8 +253,8 @@ export function auditATSFormat(input: {
     category: 'bullets',
     status: isBlankOrEmpty ? 'warning' : hasWeirdBullets ? 'fail' : 'pass',
     severity: 'warning',
-    scoreWeight: 10,
-    scoreEarned: isBlankOrEmpty ? 3 : hasWeirdBullets ? 2 : 10,
+    scoreWeight: 5,
+    scoreEarned: isBlankOrEmpty ? 2 : hasWeirdBullets ? 1 : 5,
     message: isBlankOrEmpty
       ? 'No hay viñetas ni logros laborales redactados aún.'
       : hasWeirdBullets
@@ -163,7 +268,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 6. Codificación UTF-8 Limpia (Sin Mojibake) ─────────────────────────────
+  // ─── 8. Codificación UTF-8 Limpia (Sin Mojibake) ─────────────────────────────
   const hasEncodingIssue = simulation.encodingIssues.hasMojibake;
   rules.push({
     id: 'clean_encoding',
@@ -185,7 +290,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 7. Densidad de Texto y Seleccionabilidad (Copy-Paste Test) ──────────────
+  // ─── 9. Densidad de Texto y Seleccionabilidad (Copy-Paste Test) ──────────────
   const isSelectable = simulation.ocrConfidence >= 80;
   const hasGoodWordCount = wordCount >= 180;
   const isModerateWordCount = wordCount >= 70;
@@ -220,7 +325,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 8. Sin Elementos Gráficos ni Fotos Innecesarias ────────────────────────
+  // ─── 10. Sin Elementos Gráficos ni Fotos Innecesarias ────────────────────────
   const hasPhotoRisk = sourceType === 'uploaded_pdf' && rawText.length < 250;
   rules.push({
     id: 'no_graphics_photos',
@@ -242,7 +347,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 9. Tipografía Web-Safe y Legible ────────────────────────────────────────
+  // ─── 11. Tipografía Web-Safe y Legible ────────────────────────────────────────
   rules.push({
     id: 'web_safe_typography',
     name: 'Tipografía Estándar y Alto Contraste',
@@ -261,7 +366,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 10. Completitud Esencial de Secciones ──────────────────────────────────
+  // ─── 12. Completitud Esencial de Secciones ──────────────────────────────────
   const canonicalNames = new Set(simulation.detectedSections.map((s) => s.canonicalName));
   const hasExperience = (resumeData?.experience?.filter((e) => !e.hidden)?.length ?? 0) > 0 || canonicalNames.has('experience');
   const hasSkills = (resumeData?.skills?.filter((s) => !s.hidden)?.length ?? 0) > 0 || canonicalNames.has('skills');

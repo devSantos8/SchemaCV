@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -41,10 +41,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
   if (website) contactItems.push({ label: website.replace(/^https?:\/\//, ""), url: website });
 
   social_networks.forEach((sn) => {
-    contactItems.push({
-      label: sn.username ? `${sn.network}/${sn.username}` : sn.network,
-      url: sn.url,
-    });
+    contactItems.push(formatSocialDisplay(sn));
   });
 
   return (
@@ -120,7 +117,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                   {skills.map((cat) => (
                     <div key={cat.id || cat.category} className="leading-snug">
                       <span className="font-semibold text-zinc-900 mr-1.5">
-                        {cat.category}:
+                        {cat.category}:{" "}
                       </span>
                       <span className="text-zinc-700">
                         {cat.skills.join(", ")}
@@ -145,16 +142,14 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                         <span className="font-bold text-[9.5pt] text-zinc-900">
                           {exp.position}{" "}
                           <span className="font-normal text-zinc-600">@ {exp.company}</span>
+                          {exp.location && <span className="font-normal text-[8.5pt] text-zinc-500"> ({exp.location})</span>}
                         </span>
                         <span className="font-mono text-[8pt] text-zinc-500 font-medium">
-                          {[exp.start_date, exp.end_date || (exp.current ? labels.present : "")]
+                          {[exp.start_date, exp.current ? labels.present : (exp.end_date || labels.present)]
                             .filter(Boolean)
                             .join(" → ")}
                         </span>
                       </div>
-                      {exp.location && (
-                        <div className="text-[8pt] text-zinc-500 mb-1">{exp.location}</div>
-                      )}
                       {exp.highlights && exp.highlights.length > 0 && (
                         <ul className="list-disc ml-4 space-y-0.5 text-[8.5pt] text-zinc-700 leading-snug mt-0.5">
                           {exp.highlights.map((hl, i) => (
@@ -247,7 +242,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                           {edu.area && <span className="font-normal text-zinc-700">, {edu.area}</span>}
                         </span>
                         <span className="font-mono text-[8pt] text-zinc-500">
-                          {[edu.start_date, edu.end_date || (edu.current ? labels.present : "")]
+                          {[edu.start_date, edu.current ? labels.present : (edu.end_date || labels.present)]
                             .filter(Boolean)
                             .join(" → ")}
                         </span>
@@ -281,10 +276,10 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                     <div key={cert.id} className="flex justify-between items-baseline">
                       <span>
                         <strong className="text-zinc-900">{cert.name}</strong>
-                        <span className="text-zinc-600"> — {cert.issuer}</span>
+                        <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
                       </span>
                       {cert.date && (
-                        <span className="font-mono text-[8pt] text-zinc-500">{cert.date}</span>
+                        <span className="font-mono text-[8pt] text-zinc-500">({cert.date})</span>
                       )}
                     </div>
                   ))}

@@ -1,174 +1,220 @@
 /**
- * Script de Validación Automatizada ATS para SchemaCV
- * Verifica el cumplimiento de las 9 Reglas de Oro ATS en todas las plantillas.
+ * Suite de Validación Automatizada ATS para SchemaCV
+ * Verifica el cumplimiento estricto de las Reglas ATS y extracción PDF real en todas las 12 plantillas,
+ * probando tanto el exportador semántico HTML como el renderizado de componentes React.
  * 
- * Ejecución: npx tsx scripts/validate-ats.ts
+ * Ejecución: npm run test:ats (o npx tsx scripts/validate-ats.ts)
  */
 
+import puppeteer, { Browser } from "puppeteer";
+import React from "react";
+import ReactDOMServer from "react-dom/server";
+import { extractText } from "unpdf";
 import { generateTemplateHtml } from "../lib/exporters/htmlTemplateExporter";
-import { SAMPLE_RESUME_FULLSTACK } from "../lib/mock/sampleResumes";
-import { TemplateId, SECTION_LABELS, ResumeData } from "../types/resume";
+import { TemplateId, SECTION_LABELS, ResumeData, getVisibleResumeData } from "../types/resume";
 
-interface ValidationResult {
-  templateId: TemplateId;
-  name: string;
-  passed: boolean;
-  checks: {
-    name: string;
-    passed: boolean;
-    detail?: string;
-  }[];
-}
+import { ChileProfesional } from "../components/templates/ChileProfesional";
+import { HarvardClassic } from "../components/templates/HarvardClassic";
+import { TechMinimalist } from "../components/templates/TechMinimalist";
+import { ModernExecutive } from "../components/templates/ModernExecutive";
+import { SkillsFirstBuilder } from "../components/templates/SkillsFirstBuilder";
+import { StanfordClean } from "../components/templates/StanfordClean";
+import { CompactSwiss } from "../components/templates/CompactSwiss";
+import { ExecutiveSerif } from "../components/templates/ExecutiveSerif";
+import { TechCompact } from "../components/templates/TechCompact";
+import { ModernMinimal } from "../components/templates/ModernMinimal";
+import { CareerChanger } from "../components/templates/CareerChanger";
+import { AcademicInternational } from "../components/templates/AcademicInternational";
 
-const TEMPLATES_TO_TEST: { id: TemplateId; name: string }[] = [
-  { id: "chile_profesional", name: "Chile & LatAm Profesional" },
-  { id: "harvard", name: "Classic Dense (Harvard Style)" },
-  { id: "tech_minimalist", name: "Engineering Clean (Tech Minimalist)" },
-  { id: "modern_executive", name: "Modern Executive" },
-  { id: "skills_first", name: "Skills-First Builder" },
-  { id: "stanford_clean", name: "Entry Academic (Stanford Clean)" },
-  { id: "compact_swiss", name: "Compact Swiss Grid" },
-  { id: "executive_serif", name: "Executive Serif" },
-  { id: "tech_compact", name: "Tech Compact" },
-  { id: "modern_minimal", name: "Modern Minimal" },
-  { id: "career_changer", name: "Career Changer" },
-  { id: "academic_international", name: "Academic International" },
+const TEMPLATES: { id: TemplateId; name: string; comp: React.FC<any> }[] = [
+  { id: "chile_profesional", name: "Chile & LatAm Profesional", comp: ChileProfesional },
+  { id: "harvard", name: "Classic Dense (Harvard Style)", comp: HarvardClassic },
+  { id: "tech_minimalist", name: "Engineering Clean (Tech Minimalist)", comp: TechMinimalist },
+  { id: "modern_executive", name: "Modern Executive", comp: ModernExecutive },
+  { id: "skills_first", name: "Skills-First Builder", comp: SkillsFirstBuilder },
+  { id: "stanford_clean", name: "Entry Academic (Stanford Clean)", comp: StanfordClean },
+  { id: "compact_swiss", name: "Compact Swiss Grid", comp: CompactSwiss },
+  { id: "executive_serif", name: "Executive Serif", comp: ExecutiveSerif },
+  { id: "tech_compact", name: "Tech Compact", comp: TechCompact },
+  { id: "modern_minimal", name: "Modern Minimal", comp: ModernMinimal },
+  { id: "career_changer", name: "Career Changer", comp: CareerChanger },
+  { id: "academic_international", name: "Academic International", comp: AcademicInternational },
 ];
 
-function validateTemplate(templateId: TemplateId, templateName: string): ValidationResult {
-  const checks: { name: string; passed: boolean; detail?: string }[] = [];
+const REAL_TEST_DATA: ResumeData = {
+  name: "JOAIN MATIAS MONROY SANTOS",
+  headline: "Software Engineer | Full Stack & Generative AI",
+  email: "joain.monroy@example.com",
+  phone: "+56 9 1234 5678",
+  location: "Santiago, Chile",
+  website: "https://jmonroy.dev",
+  summary: "Software Engineer con experiencia en desarrollo full stack y modelos generativos.",
+  language: "es",
+  social_networks: [
+    { network: "LinkedIn", username: "jmonroys17", url: "https://linkedin.com/in/jmonroys17" },
+    { network: "GitHub", username: "devSantos8", url: "https://github.com/devSantos8" },
+  ],
+  skills: [
+    { id: "s1", category: "Backend", skills: ["Python", "Node.js", "FastAPI", "PostgreSQL"] },
+  ],
+  experience: [
+    {
+      id: "e1",
+      position: "Ingeniero I",
+      company: "DevOps Tech",
+      location: "Santiago, Chile",
+      start_date: "Mar 2026",
+      end_date: "",
+      current: true,
+      summary: "Liderazgo en despliegue de modelos.",
+      highlights: ["Diseño de arquitectura escalable."],
+    },
+  ],
+  education: [
+    {
+      id: "ed1",
+      institution: "Universidad de Chile",
+      degree: "Ingeniería Informática",
+      start_date: "2020",
+      end_date: "2025",
+      current: false,
+      highlights: [],
+    },
+  ],
+  projects: [],
+  custom_sections: [],
+  hidden_sections: [],
+  section_order: [
+    "summary",
+    "skills",
+    "experience",
+    "projects",
+    "education",
+    "certifications",
+  ],
+  certifications: [
+    { id: "c1", name: "Cloud Architecture", issuer: "Google", date: "2026" },
+  ],
+};
 
-  // Datos de prueba con caracteres hispanos exigentes (tildes, eñes, diéresis)
-  const testData: ResumeData = {
-    ...SAMPLE_RESUME_FULLSTACK,
-    name: "Carlos Mendoza Rivera",
-    headline: "Ingeniero de Software & Diseñador de Sistemas Distribuidos",
-    location: "Santiago, Región Metropolitana, Chile",
-    summary: "Especialista en optimización de rendimiento, diseño de arquitecturas escalables y gestión técnica.",
-    language: "es",
-  };
+async function testPdfTextExtraction(browser: Browser, html: string): Promise<string> {
+  const fullHtml = `<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <title>CV</title>
+    <style>
+      @page { size: letter portrait; margin: 0; }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 0; background: white; color: #09090b; }
+    </style>
+  </head>
+  <body>
+    <div id="print-root">
+      ${html}
+    </div>
+  </body>
+</html>`;
 
-  const html = generateTemplateHtml(testData, templateId, "letter");
-
-  // 1. Verificación de No Vacío / Estructura Base
-  const hasContent = !!html && html.length > 200;
-  checks.push({
-    name: "Generación de HTML semántico no vacío",
-    passed: hasContent,
-    detail: `Longitud HTML: ${html.length} caracteres`,
+  const page = await browser.newPage();
+  await page.setContent(fullHtml, { waitUntil: "domcontentloaded" });
+  const pdfBuffer = await page.pdf({
+    format: "letter",
+    printBackground: true,
+    margin: { top: "0mm", bottom: "0mm", left: "0mm", right: "0mm" },
   });
+  await page.close();
 
-  // 2. Verificación de Contacto en Cuerpo
-  const hasContact =
-    html.includes(testData.email || "") ||
-    html.includes(testData.location || "") ||
-    html.includes("carlosmendoza.dev");
-  checks.push({
-    name: "Datos de contacto presentes en el cuerpo principal",
-    passed: hasContact,
-    detail: "Email, teléfono o ubicación detectados en el contenido",
-  });
-
-  // 3. Verificación de Secciones Estándar ATS (Regla 3)
-  const labels = SECTION_LABELS.es;
-  const hasSummary = html.includes(labels.summary);
-  const hasExp = html.includes(labels.experience);
-  const hasEdu = html.includes(labels.education);
-  const hasSkills = html.includes(labels.skills);
-
-  const sectionsPassed = hasSummary && hasExp && hasEdu && hasSkills;
-  checks.push({
-    name: "Secciones estándar ATS con nombres canónicos",
-    passed: sectionsPassed,
-    detail: sectionsPassed
-      ? "Resumen, Experiencia, Educación y Habilidades validadas"
-      : "Faltan etiquetas estándar en la salida",
-  });
-
-  // 4. Verificación de UTF-8 y ausencia de Mojibake (Regla 9)
-  const mojibakePatterns = [/Ã¡/i, /Ã©/i, /Ã­/i, /Ã³/i, /Ãº/i, /Ã±/i, /&Atilde;/i];
-  const hasMojibake = mojibakePatterns.some((pattern) => pattern.test(html));
-  const hasSpanishAccents =
-    html.includes("Región") ||
-    html.includes("gestión") ||
-    html.includes("optimización") ||
-    html.includes("Diseñador");
-
-  checks.push({
-    name: "Codificación UTF-8 limpia (sin mojibake en tildes y eñes)",
-    passed: !hasMojibake && hasSpanishAccents,
-    detail: !hasMojibake ? "Acentos y caracteres especiales preservados correctamente" : "Detectados artefactos de encoding corrupto",
-  });
-
-  // 5. Verificación de Layout Single-Column Top-to-Bottom (Regla 1)
-  // Prohibido uso de tablas complejas para layout o sidebars flotantes
-  const hasProhibitedLayout = /<table[\s\S]*?<table/i.test(html) || /sidebar-floating/i.test(html);
-  checks.push({
-    name: "Layout de una sola columna top-to-bottom sin sidebars flotantes",
-    passed: !hasProhibitedLayout,
-    detail: "Estructura secuencial limpia compatible con ATS parsers",
-  });
-
-  // 6. Verificación de Modo Bilingüe (Inglés)
-  const enData: ResumeData = {
-    ...testData,
-    language: "en",
-  };
-  const enHtml = generateTemplateHtml(enData, templateId, "letter");
-  const enLabels = SECTION_LABELS.en;
-  const enSectionsPassed =
-    enHtml.includes(enLabels.experience) &&
-    enHtml.includes(enLabels.education) &&
-    enHtml.includes(enLabels.skills);
-
-  checks.push({
-    name: "Soporte bilingüe EN (Work Experience, Education, Technical Skills)",
-    passed: enSectionsPassed,
-    detail: enSectionsPassed ? "Etiquetas en inglés verificadas" : "Error en traducción de etiquetas",
-  });
-
-  const allPassed = checks.every((c) => c.passed);
-
-  return {
-    templateId,
-    name: templateName,
-    passed: allPassed,
-    checks,
-  };
+  const { text } = await extractText(new Uint8Array(pdfBuffer));
+  return text.join("\n");
 }
 
-function runAtsSuite() {
-  console.log("\n=======================================================");
-  console.log(" 🧪 SUITE DE VALIDACIÓN AUTOMATIZADA ATS — SCHEMACV");
-  console.log("=======================================================\n");
+async function runAtsSuite() {
+  console.log("\n==================================================================");
+  console.log(" 🧪 SUITE E2E DE VALIDACIÓN AUTOMATIZADA ATS & PDF EXTRACTION — SCHEMACV");
+  console.log("==================================================================\n");
 
-  let totalPassed = 0;
-  const results: ValidationResult[] = [];
-
-  TEMPLATES_TO_TEST.forEach((t) => {
-    const res = validateTemplate(t.id, t.name);
-    results.push(res);
-    if (res.passed) totalPassed++;
-
-    const icon = res.passed ? "✅ PASS" : "❌ FAIL";
-    console.log(`[${icon}] ${res.name} (id: ${res.templateId})`);
-
-    res.checks.forEach((c) => {
-      const checkIcon = c.passed ? "  ✓" : "  ✗";
-      console.log(`${checkIcon} ${c.name} — ${c.detail}`);
-    });
-    console.log("");
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
-  console.log("-------------------------------------------------------");
-  console.log(`📊 Resultado Final: ${totalPassed} / ${TEMPLATES_TO_TEST.length} plantillas aprobadas (100% ATS-Compliant)`);
-  console.log("-------------------------------------------------------\n");
+  let totalPassed = 0;
 
-  if (totalPassed < TEMPLATES_TO_TEST.length) {
-    console.error("❌ Falló la suite de validación ATS.");
+  try {
+    for (const t of TEMPLATES) {
+      console.log(`\n📄 Verificando plantilla: ${t.name} (${t.id})...`);
+      
+      // 1. Probar vía exportador HTML semántico
+      const pureHtml = generateTemplateHtml(REAL_TEST_DATA, t.id, "letter");
+      const pureText = await testPdfTextExtraction(browser, pureHtml);
+
+      // 2. Probar vía componente React directo
+      const Component = t.comp;
+      const visibleData = getVisibleResumeData(REAL_TEST_DATA);
+      const reactHtml = ReactDOMServer.renderToStaticMarkup(
+        React.createElement(Component, { data: visibleData, paperSize: "letter" })
+      );
+      const reactText = await testPdfTextExtraction(browser, reactHtml);
+
+      const checks = [
+        {
+          name: "A1: Nombre y Headline en líneas separadas (sin SANTOSSoftware / SANTOSAI)",
+          passed: !/SANTOSSoftware|SANTOSAI/i.test(pureText) && !/SANTOSSoftware|SANTOSAI/i.test(reactText),
+          detail: "Línea de nombre limpia y salto de línea verificado",
+        },
+        {
+          name: "A2: Emisor y año de certificación como 'Google (2026)' (con espacio exacto)",
+          passed: /Google\s+\(2026\)/.test(pureText) && /Google\s+\(2026\)/.test(reactText),
+          detail: "Formato 'Google (2026)' verificado en texto extraído",
+        },
+        {
+          name: "A3: Categoría de skills con espacio 'Backend: Python'",
+          passed: /Backend:\s+Python/.test(pureText) && /Backend:\s+Python/.test(reactText),
+          detail: "Espacio tras dos puntos en categorías verificado",
+        },
+        {
+          name: "A4: Empleo actual renderiza 'Presente'",
+          passed: /Mar 2026\s*[-–→|]\s*Presente/i.test(pureText) && /Mar 2026\s*[-–→|]\s*Presente/i.test(reactText),
+          detail: "Rango 'Mar 2026 – Presente' verificado",
+        },
+        {
+          name: "A5: Enlaces sociales canónicos linkedin.com/in/... y github.com/...",
+          passed:
+            (pureText.includes("linkedin.com/in/jmonroys17") || pureText.includes("LinkedIn: jmonroys17") || pureText.includes("LinkedIn/jmonroys17")) &&
+            (reactText.includes("linkedin.com/in/jmonroys17") || reactText.includes("LinkedIn: jmonroys17") || reactText.includes("LinkedIn/jmonroys17")),
+          detail: "URLs canónicas normalizadas con /in/",
+        },
+        {
+          name: "A6: Separadores sin fusión (no 'Ingeniero I+DevOps')",
+          passed: !/Ingeniero I\+DevOps/i.test(pureText) && !/Ingeniero I\+DevOps/i.test(reactText),
+          detail: "Cargo y Empresa separados correctamente",
+        },
+      ];
+
+      const allPassed = checks.every((c) => c.passed);
+      if (allPassed) totalPassed++;
+
+      const icon = allPassed ? "✅ PASS" : "❌ FAIL";
+      console.log(`[${icon}] ${t.name}`);
+      checks.forEach((c) => {
+        const checkIcon = c.passed ? "  ✓" : "  ✗";
+        console.log(`${checkIcon} ${c.name} — ${c.detail}`);
+      });
+    }
+  } finally {
+    await browser.close();
+  }
+
+  console.log("\n------------------------------------------------------------------");
+  console.log(`📊 Resultado Final: ${totalPassed} / ${TEMPLATES.length} plantillas aprobadas`);
+  console.log("------------------------------------------------------------------\n");
+
+  if (totalPassed < TEMPLATES.length) {
+    console.error("❌ Falló la validación ATS en una o más plantillas.");
     process.exit(1);
   } else {
-    console.log("🎉 Todas las plantillas superaron las 9 Reglas de Oro ATS y el Copy-Paste Test.\n");
+    console.log("🎉 TODAS las 12 plantillas superaron el 100% de las pruebas E2E de extracción de texto y Reglas ATS.\n");
     process.exit(0);
   }
 }

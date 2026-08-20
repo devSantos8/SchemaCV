@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -41,10 +41,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
   if (website) contactItems.push({ label: website.replace(/^https?:\/\//, ""), url: website });
 
   social_networks.forEach((sn) => {
-    contactItems.push({
-      label: sn.username ? `${sn.network}/${sn.username}` : sn.network,
-      url: sn.url,
-    });
+    contactItems.push(formatSocialDisplay(sn));
   });
 
   return (
@@ -108,7 +105,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
                     {skills.map((cat) => (
                       <div key={cat.id || cat.category} className="leading-snug">
                         <span className="font-bold text-zinc-950 font-mono text-[8pt] mr-1.5">
-                          {cat.category}:
+                          {cat.category}:{" "}
                         </span>
                         <span className="text-zinc-800">{cat.skills.join(", ")}</span>
                       </div>
@@ -132,14 +129,18 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
                             <span className="font-bold text-[9pt] text-zinc-950">
                               {exp.position}
                             </span>
-                            <span className="text-zinc-500 font-normal">@</span>
+                            <span className="text-zinc-500 font-normal"> @ </span>
                             <span className="font-semibold text-[9pt] text-zinc-800">
                               {exp.company}
                             </span>
+                            {exp.location && (
+                              <span className="font-normal text-[8pt] text-zinc-500">
+                                ({exp.location})
+                              </span>
+                            )}
                           </div>
                           <div className="text-[8pt] font-mono text-zinc-500 shrink-0">
-                            {exp.location ? `${exp.location} | ` : ""}
-                            {exp.start_date} – {exp.current ? labels.present : exp.end_date}
+                            {exp.start_date} – {exp.current ? labels.present : (exp.end_date || labels.present)}
                           </div>
                         </div>
 
@@ -224,14 +225,14 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
                           <span className="font-bold text-[8.5pt] text-zinc-950">
                             {edu.degree} {edu.area ? `en ${edu.area}` : ""}
                           </span>
-                          <span className="text-zinc-400">·</span>
+                          <span className="text-zinc-400"> · </span>
                           <span className="font-medium text-[8.5pt] text-zinc-700">
                             {edu.institution}
                           </span>
                         </div>
                         <div className="text-[7.5pt] font-mono text-zinc-500 shrink-0">
                           {edu.start_date ? `${edu.start_date} – ` : ""}
-                          {edu.current ? labels.present : edu.end_date || ""}
+                          {edu.current ? labels.present : (edu.end_date || labels.present)}
                         </div>
                       </div>
                     ))}
@@ -262,10 +263,12 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 pl-0.5 text-[8pt]">
                     {certifications.map((cert) => (
                       <div key={cert.id} className="flex justify-between items-baseline">
-                        <span className="font-semibold text-zinc-900">{cert.name}</span>
+                        <span className="font-semibold text-zinc-900">
+                          {cert.name}{cert.issuer ? ` — ${cert.issuer}` : ""}{" "}
+                        </span>
                         {cert.date && (
                           <span className="text-zinc-500 font-mono text-[7.5pt] ml-1">
-                            {cert.date}
+                            ({cert.date})
                           </span>
                         )}
                       </div>

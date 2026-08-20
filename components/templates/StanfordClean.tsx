@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -41,10 +41,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
   if (website) contactItems.push({ label: website.replace(/^https?:\/\//, ""), url: website });
 
   social_networks.forEach((sn) => {
-    contactItems.push({
-      label: sn.username ? `${sn.network}/${sn.username}` : sn.network,
-      url: sn.url,
-    });
+    contactItems.push(formatSocialDisplay(sn));
   });
 
   return (
@@ -130,15 +127,19 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                             <span className="font-extrabold text-[9.5pt] text-zinc-950">
                               {exp.position}
                             </span>
-                            <span className="text-zinc-400 font-normal">|</span>
+                            <span className="text-zinc-400 font-normal"> | </span>
                             <span className="font-semibold text-[9.5pt] text-zinc-800">
                               {exp.company}
                             </span>
+                            {exp.location && (
+                              <span className="font-normal text-[8.5pt] text-zinc-600">
+                                ({exp.location})
+                              </span>
+                            )}
                           </div>
 
                           <div className="text-[8.5pt] text-zinc-600 font-mono shrink-0">
-                            {exp.location ? `${exp.location} • ` : ""}
-                            {exp.start_date} – {exp.current ? labels.present : exp.end_date}
+                            {exp.start_date} – {exp.current ? labels.present : (exp.end_date || labels.present)}
                           </div>
                         </div>
 
@@ -173,7 +174,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                     {skills.map((cat) => (
                       <div key={cat.id} className="flex flex-col sm:flex-row sm:items-baseline gap-1">
                         <span className="font-bold text-zinc-900 sm:w-44 shrink-0">
-                          {cat.category}:
+                          {cat.category}:{" "}
                         </span>
                         <span className="text-zinc-800 flex-1">
                           {cat.skills.join(", ")}
@@ -270,7 +271,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                             <span className="font-bold text-[9.5pt] text-zinc-950">
                               {edu.degree} {edu.area ? `en ${edu.area}` : ""}
                             </span>
-                            <span className="text-zinc-400 font-normal">|</span>
+                            <span className="text-zinc-400 font-normal"> | </span>
                             <span className="font-semibold text-[9pt] text-zinc-800">
                               {edu.institution}
                             </span>
@@ -278,7 +279,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
 
                           <div className="text-[8.5pt] text-zinc-600 font-mono shrink-0">
                             {edu.location ? `${edu.location} • ` : ""}
-                            {edu.start_date} – {edu.current ? labels.present : edu.end_date}
+                            {edu.start_date} – {edu.current ? labels.present : (edu.end_date || labels.present)}
                           </div>
                         </div>
 
@@ -308,11 +309,11 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <div>
                           <span className="font-semibold text-zinc-900">{cert.name}</span>
-                          <span className="text-zinc-600 text-[8.5pt]"> ({cert.issuer})</span>
+                          <span className="text-zinc-600 text-[8.5pt]"> — {cert.issuer}{" "}</span>
                         </div>
                         {cert.date && (
                           <span className="text-[8pt] text-zinc-500 font-mono ml-2 shrink-0">
-                            {cert.date}
+                            ({cert.date})
                           </span>
                         )}
                       </div>

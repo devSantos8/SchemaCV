@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -41,10 +41,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
   if (website) contactItems.push({ label: website.replace(/^https?:\/\//, ""), url: website });
 
   social_networks.forEach((sn) => {
-    contactItems.push({
-      label: `${sn.network}: ${sn.username || sn.url.replace(/^https?:\/\//, "")}`,
-      url: sn.url,
-    });
+    contactItems.push(formatSocialDisplay(sn));
   });
 
   return (
@@ -126,16 +123,19 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                             {" "}
                             — {exp.company}
                           </span>
+                          {exp.location && (
+                            <span className="font-normal text-zinc-500 text-[8.5pt]">
+                              {" "}
+                              ({exp.location})
+                            </span>
+                          )}
                         </div>
                         <span className="text-[8.5pt] font-semibold text-zinc-600">
-                          {[exp.start_date, exp.end_date || (exp.current ? labels.present : "")]
+                          {[exp.start_date, exp.current ? labels.present : (exp.end_date || labels.present)]
                             .filter(Boolean)
                             .join(" – ")}
                         </span>
                       </div>
-                      {exp.location && (
-                        <div className="text-[8pt] text-zinc-500 mb-1">{exp.location}</div>
-                      )}
                       {exp.highlights && exp.highlights.length > 0 && (
                         <ul className="list-disc ml-4 space-y-0.5 text-[8.5pt] text-zinc-700 leading-snug">
                           {exp.highlights.map((hl, i) => (
@@ -246,7 +246,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                           {edu.area && <span className="font-normal">, {edu.area}</span>}
                         </span>
                         <span className="text-[8pt] text-zinc-600 font-semibold">
-                          {[edu.start_date, edu.end_date || (edu.current ? labels.present : "")]
+                          {[edu.start_date, edu.current ? labels.present : (edu.end_date || labels.present)]
                             .filter(Boolean)
                             .join(" – ")}
                         </span>
@@ -280,9 +280,9 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                     <div key={cert.id} className="flex justify-between items-baseline">
                       <span>
                         <strong className="text-zinc-900">{cert.name}</strong>
-                        <span className="text-zinc-600"> — {cert.issuer}</span>
+                        <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
                       </span>
-                      {cert.date && <span className="text-[8pt] text-zinc-500">{cert.date}</span>}
+                      {cert.date && <span className="text-[8pt] text-zinc-500">({cert.date})</span>}
                     </div>
                   ))}
                 </div>

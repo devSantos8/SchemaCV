@@ -25,6 +25,7 @@ import {
   ProjectEntry,
   CertificationEntry,
   SocialNetwork,
+  normalizeSocialUrl,
 } from "@/types/resume";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -63,7 +64,7 @@ export const FormEditor: React.FC = () => {
 
   const handleAddSocial = () => {
     const newSocial: SocialNetwork = {
-      network: "GitHub",
+      network: "LinkedIn",
       username: "",
       url: "",
     };
@@ -74,7 +75,19 @@ export const FormEditor: React.FC = () => {
 
   const handleUpdateSocial = (index: number, field: keyof SocialNetwork, value: string) => {
     const updated = [...(resumeData.social_networks || [])];
-    updated[index] = { ...updated[index], [field]: value };
+    const current = { ...updated[index], [field]: value };
+    updated[index] = current;
+    setResumeData({ social_networks: updated });
+  };
+
+  const handleNormalizeSocial = (index: number) => {
+    const updated = [...(resumeData.social_networks || [])];
+    const current = updated[index];
+    if (!current) return;
+    const { url, username } = normalizeSocialUrl(current.network, current.url || current.username || "");
+    if (url) current.url = url;
+    if (username) current.username = username;
+    updated[index] = current;
     setResumeData({ social_networks: updated });
   };
 
@@ -528,33 +541,43 @@ export const FormEditor: React.FC = () => {
 
               <div className="space-y-2">
                 {(resumeData.social_networks || []).map((sn, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <Input
-                      value={sn.network}
-                      onChange={(e) => handleUpdateSocial(idx, "network", e.target.value)}
-                      placeholder="Plataforma (ej. LinkedIn)"
-                      className="h-7 text-xs w-1/4"
-                    />
-                    <Input
-                      value={sn.username || ""}
-                      onChange={(e) => handleUpdateSocial(idx, "username", e.target.value)}
-                      placeholder="Usuario (ej. jmonroys)"
-                      className="h-7 text-xs w-1/4"
-                    />
-                    <Input
-                      value={sn.url}
-                      onChange={(e) => handleUpdateSocial(idx, "url", e.target.value)}
-                      placeholder="https://..."
-                      className="h-7 text-xs flex-1"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveSocial(idx)}
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                  <div key={idx} className="space-y-1">
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        value={sn.network}
+                        onChange={(e) => handleUpdateSocial(idx, "network", e.target.value)}
+                        onBlur={() => handleNormalizeSocial(idx)}
+                        placeholder="Plataforma (ej. LinkedIn)"
+                        className="h-7 text-xs w-1/4"
+                      />
+                      <Input
+                        value={sn.username || ""}
+                        onChange={(e) => handleUpdateSocial(idx, "username", e.target.value)}
+                        onBlur={() => handleNormalizeSocial(idx)}
+                        placeholder="Usuario (ej. jmonroys17)"
+                        className="h-7 text-xs w-1/4"
+                      />
+                      <Input
+                        value={sn.url}
+                        onChange={(e) => handleUpdateSocial(idx, "url", e.target.value)}
+                        onBlur={() => handleNormalizeSocial(idx)}
+                        placeholder="https://linkedin.com/in/..."
+                        className="h-7 text-xs flex-1 font-mono text-[11px]"
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveSocial(idx)}
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    {sn.network.toLowerCase().includes("linkedin") && sn.url && !sn.url.includes("/in/") && (
+                      <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                        ⚠ Formato recomendado: linkedin.com/in/{sn.username || "usuario"}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1391,7 +1414,21 @@ export const FormEditor: React.FC = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <Label className="text-[11px]">Fechas (Inicio – Fin)</Label>
+                          <div className="flex justify-between items-center">
+                            <Label className="text-[11px]">Fechas (Inicio – Fin)</Label>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] text-muted-foreground">Cursando</span>
+                              <Switch
+                                checked={edu.current}
+                                onCheckedChange={(checked) =>
+                                  handleUpdateEducation(edu.id, {
+                                    current: checked,
+                                    end_date: checked ? "Presente" : "",
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
                           <div className="flex gap-2">
                             <Input
                               placeholder="2021"
@@ -1401,6 +1438,7 @@ export const FormEditor: React.FC = () => {
                             />
                             <Input
                               placeholder="2025"
+                              disabled={edu.current}
                               value={edu.end_date || ""}
                               onChange={(e) => handleUpdateEducation(edu.id, { end_date: e.target.value })}
                               className="h-7 text-xs w-1/2"
@@ -1576,56 +1614,65 @@ export const FormEditor: React.FC = () => {
               <div className="space-y-2">
                 {(resumeData.certifications || []).map((cert) => {
                   const isCertHidden = !!cert.hidden;
+                  const previewText = `${cert.name || "Certificación"}${cert.issuer ? ` — ${cert.issuer}` : ""}${cert.date ? ` (${cert.date})` : ""}`;
 
                   return (
                     <div
                       key={cert.id}
-                      className={`flex gap-2 items-center p-2.5 rounded-lg border transition-all ${isCertHidden
+                      className={`p-2.5 rounded-lg border space-y-1.5 transition-all ${isCertHidden
                         ? "bg-zinc-50/50 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800 opacity-60"
                         : "border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700"
                         }`}
                     >
-                      <Input
-                        value={cert.name}
-                        onChange={(e) => handleUpdateCertification(cert.id, { name: e.target.value })}
-                        placeholder="Nombre (ej. AWS Solutions Architect)"
-                        className="h-7 text-xs w-2/5"
-                      />
-                      <Input
-                        value={cert.issuer}
-                        onChange={(e) => handleUpdateCertification(cert.id, { issuer: e.target.value })}
-                        placeholder="Emisor (ej. Amazon Web Services)"
-                        className="h-7 text-xs w-2/5"
-                      />
-                      <Input
-                        value={cert.date || ""}
-                        onChange={(e) => handleUpdateCertification(cert.id, { date: e.target.value })}
-                        placeholder="Año"
-                        className="h-7 text-xs w-1/5"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleCertificationVisibility(cert.id)}
-                        className={`h-7 px-1.5 gap-1 text-[11px] ${isCertHidden ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        title={isCertHidden ? "Mostrar certificación en el CV" : "Ocultar certificación del CV"}
-                      >
-                        {isCertHidden ? (
-                          <EyeOff className="h-3.5 w-3.5" />
-                        ) : (
-                          <Eye className="h-3.5 w-3.5 text-emerald-600" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveCertification(cert.id)}
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
-                        title="Eliminar certificación"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex gap-2 items-center">
+                        <Input
+                          value={cert.name}
+                          onChange={(e) => handleUpdateCertification(cert.id, { name: e.target.value })}
+                          placeholder="Nombre (ej. AWS Solutions Architect)"
+                          className="h-7 text-xs w-2/5"
+                        />
+                        <Input
+                          value={cert.issuer}
+                          onChange={(e) => handleUpdateCertification(cert.id, { issuer: e.target.value })}
+                          placeholder="Emisor (ej. Amazon Web Services)"
+                          className="h-7 text-xs w-2/5"
+                        />
+                        <Input
+                          value={cert.date || ""}
+                          onChange={(e) => handleUpdateCertification(cert.id, { date: e.target.value })}
+                          placeholder="Año (ej. 2024)"
+                          className="h-7 text-xs w-1/5 font-mono"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleToggleCertificationVisibility(cert.id)}
+                          className={`h-7 px-1.5 gap-1 text-[11px] ${isCertHidden ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          title={isCertHidden ? "Mostrar certificación en el CV" : "Ocultar certificación del CV"}
+                        >
+                          {isCertHidden ? (
+                            <EyeOff className="h-3.5 w-3.5" />
+                          ) : (
+                            <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveCertification(cert.id)}
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                          title="Eliminar certificación"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+
+                      {/* Live Preview de Extracción ATS */}
+                      <div className="text-[10.5px] text-zinc-500 dark:text-zinc-400 font-mono bg-zinc-100/70 dark:bg-zinc-900/70 px-2 py-0.5 rounded flex items-center gap-1.5">
+                        <span className="text-[9px] uppercase font-bold text-zinc-400">ATS Preview:</span>
+                        <span className="truncate text-zinc-800 dark:text-zinc-200">{previewText}</span>
+                      </div>
                     </div>
                   );
                 })}
