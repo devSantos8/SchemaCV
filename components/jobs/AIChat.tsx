@@ -172,25 +172,29 @@ export function AIChat({ jobTitle, company, jobDescription, resumeSummary, onClo
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
-        // Parsear data stream de Vercel AI SDK (formato: "0:"texto"\n")
-        const lines = chunk.split("\n");
-        for (const line of lines) {
-          if (line.startsWith("0:")) {
-            try {
-              const content = JSON.parse(line.slice(2));
-              accumulated += content;
-              setStreamingContent(accumulated);
-            } catch {
-              // Linea parcial, continuar
+        if (chunk.includes('0:"')) {
+          const lines = chunk.split("\n");
+          for (const line of lines) {
+            if (line.startsWith("0:")) {
+              try {
+                const content = JSON.parse(line.slice(2));
+                accumulated += content;
+                setStreamingContent(accumulated);
+              } catch {
+                // Linea parcial, continuar
+              }
             }
           }
+        } else {
+          accumulated += chunk;
+          setStreamingContent(accumulated);
         }
       }
 
       const assistantMsg: ChatMessage = {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: accumulated,
+        content: accumulated || "Sin respuesta del modelo.",
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, assistantMsg]);
