@@ -13,7 +13,6 @@ import {
   DragStartEvent,
   DragEndEvent,
 } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import { Plus, RefreshCw, Loader2, Search, Filter, Wifi, BarChart3, Briefcase } from "lucide-react";
 import { useJobsStore } from "@/store/useJobsStore";
 import { useAISettingsStore } from "@/store/useAISettingsStore";
@@ -50,7 +49,7 @@ function DraggableJobCard({
   onDelete: () => void;
   onDuplicate: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: application.id,
     data: {
       application,
@@ -58,36 +57,25 @@ function DraggableJobCard({
     },
   });
 
-  const style: React.CSSProperties | undefined = transform
-    ? {
-        transform: CSS.Translate.toString(transform),
-        opacity: isDragging ? 0 : 1,
-        visibility: isDragging ? "hidden" : "visible",
-        zIndex: isDragging ? 40 : undefined,
-      }
-    : isDragging
-    ? {
-        opacity: 0,
-        visibility: "hidden",
-      }
-    : undefined;
-
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
-      className={`touch-none select-none ${isDragging ? "invisible pointer-events-none" : ""}`}
+      className={`touch-none select-none transition-all duration-150 ${
+        isDragging ? "opacity-0 h-0 overflow-hidden m-0 p-0 pointer-events-none" : ""
+      }`}
     >
-      <JobApplicationCard
-        application={application}
-        isStale={isStale}
-        isSelected={isSelected}
-        onClick={onClick}
-        onDelete={onDelete}
-        onDuplicate={onDuplicate}
-      />
+      {!isDragging && (
+        <JobApplicationCard
+          application={application}
+          isStale={isStale}
+          isSelected={isSelected}
+          onClick={onClick}
+          onDelete={onDelete}
+          onDuplicate={onDuplicate}
+        />
+      )}
     </div>
   );
 }
@@ -417,10 +405,20 @@ export function JobTrackerView() {
           </AnimatePresence>
         </div>
 
-        {/* Overlay flotante durante el arrastre */}
-        <DragOverlay dropAnimation={null}>
+        {/* Overlay flotante durante el arrastre con animación de elevación e inclinación */}
+        <DragOverlay
+          dropAnimation={{
+            duration: 160,
+            easing: "cubic-bezier(0.2, 0, 0, 1)",
+          }}
+        >
           {activeDraggingApp ? (
-            <div className="w-[260px] cursor-grabbing shadow-2xl opacity-95 pointer-events-none">
+            <motion.div
+              initial={{ scale: 1, rotate: 0 }}
+              animate={{ scale: 1.05, rotate: 2.5 }}
+              transition={{ duration: 0.12, ease: "easeOut" }}
+              className="w-[260px] cursor-grabbing shadow-2xl ring-2 ring-zinc-900/10 dark:ring-white/20 rounded-2xl pointer-events-none"
+            >
               <JobApplicationCard
                 application={activeDraggingApp}
                 isStale={staleIds.has(activeDraggingApp.id)}
@@ -429,7 +427,7 @@ export function JobTrackerView() {
                 onDelete={() => {}}
                 onDuplicate={() => {}}
               />
-            </div>
+            </motion.div>
           ) : null}
         </DragOverlay>
 
