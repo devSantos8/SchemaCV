@@ -227,44 +227,44 @@ export function AISettingsCard() {
             className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
           >
             {isTesting ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Probando...</span>
+              </>
             ) : (
-              <Zap className="w-3.5 h-3.5" />
+              <>
+                <Zap className="w-3.5 h-3.5" />
+                <span>Probar conexion</span>
+              </>
             )}
-            Probar conexion
           </button>
 
           <AnimatePresence mode="wait">
-            <motion.div
-              key={connectionStatus}
-              initial={{ opacity: 0, x: -4 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              className={`flex items-center gap-1.5 text-xs font-medium ${statusConf.color}`}
-            >
-              {StatusIcon && (
-                <StatusIcon
-                  className={`w-3.5 h-3.5 ${
-                    connectionStatus === "testing" ? "animate-spin" : ""
-                  }`}
-                />
-              )}
-              <span>
-                {testedModel ? `${statusConf.label} · ${testedModel}` : statusConf.label}
-              </span>
-            </motion.div>
+            {!isTesting && connectionStatus === "ok" && (
+              <motion.div
+                key="status-ok"
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Conectado{testedModel ? ` · ${testedModel}` : ""}</span>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
 
-        {lastError && (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-xs text-red-500 dark:text-red-400 flex items-center gap-1"
+        {/* Mensaje de error único */}
+        {!isTesting && lastError && (
+          <motion.div
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-600 dark:text-red-400 flex items-start gap-2"
           >
-            <XCircle className="w-3.5 h-3.5 shrink-0" />
-            <span>{lastError}</span>
-          </motion.p>
+            <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="leading-snug">{lastError}</div>
+          </motion.div>
         )}
 
         {/* Nota de privacidad y seguridad */}
