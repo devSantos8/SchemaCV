@@ -8,6 +8,7 @@ import {
   ProjectEntry,
   CertificationEntry,
   SocialNetwork,
+  normalizeSocialUrl,
 } from "@/types/resume";
 
 export { ResumeSchema };
@@ -22,9 +23,22 @@ export function validateAndNormalizeResume(raw: unknown): {
 } {
   const result = ResumeSchema.safeParse(raw);
   if (result.success) {
+    // Normalizar redes sociales
+    const normalizedSocial = (result.data.social_networks || []).map((sn) => {
+      const { url, username } = normalizeSocialUrl(sn.network, sn.url || sn.username || "");
+      return {
+        ...sn,
+        url: url || sn.url,
+        username: username || sn.username,
+      };
+    });
+
     return {
       success: true,
-      data: result.data,
+      data: {
+        ...result.data,
+        social_networks: normalizedSocial,
+      },
       errors: [],
     };
   }
@@ -50,10 +64,13 @@ export function mapRenderCvToSchemaCv(renderCvData: any): Partial<ResumeData> {
   const social_networks: SocialNetwork[] = [];
   if (Array.isArray(cv.social_networks)) {
     cv.social_networks.forEach((sn: any) => {
+      const net = sn.network || "Link";
+      const rawVal = sn.url || sn.username || "";
+      const { url, username } = normalizeSocialUrl(net, rawVal);
       social_networks.push({
-        network: sn.network || "Link",
-        username: sn.username || "",
-        url: sn.url || (sn.username ? `https://${sn.network.toLowerCase()}.com/${sn.username}` : ""),
+        network: net,
+        username: username || sn.username || "",
+        url: url || (sn.username ? `https://${net.toLowerCase()}.com/${sn.username}` : ""),
         icon: sn.network?.toLowerCase(),
       });
     });
