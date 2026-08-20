@@ -55,26 +55,26 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
-        padding: "0.5in 0.6in",
-        fontSize: "9.5pt",
+        padding: "0.42in 0.52in",
+        fontSize: "9.2pt",
         fontFamily: "var(--font-geist-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
       {/* ─── ENCABEZADO FORMATO CHILE / LATAM TECH & CORPORATIVO ─── */}
-      <header className="border-b-2 border-zinc-900 pb-3 mb-3">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-[21pt] font-black tracking-tight text-zinc-950 uppercase leading-none">
+      <header className="border-b-2 border-zinc-900 pb-2 mb-2">
+        <div className="flex flex-col gap-0.5">
+          <h1 className="text-[20pt] font-black tracking-tight text-zinc-950 uppercase leading-none">
             {name || "Tu Nombre Completo"}
           </h1>
           {headline && (
-            <p className="text-[11pt] font-bold text-blue-800 dark:text-blue-600 tracking-normal mt-0.5">
+            <p className="text-[10.5pt] font-bold text-blue-800 dark:text-blue-600 tracking-normal mt-0.5">
               {headline}
             </p>
           )}
 
           {/* Fila de Contacto Canónica Accesible */}
           {contactItems.length > 0 && (
-            <div className="text-[8.5pt] text-zinc-700 flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1 font-medium">
+            <div className="text-[8.5pt] text-zinc-700 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 mt-0.5 font-medium">
               {contactItems.map((item, idx) => (
                 <React.Fragment key={idx}>
                   {item.url ? (
@@ -98,17 +98,17 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
       </header>
 
       {/* ─── RENDERIZADO SECUENCIAL ATS ─── */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         {section_order.map((sectionKey) => {
           switch (sectionKey) {
             case "summary":
               if (!summary) return null;
               return (
-                <section key="summary" className="space-y-1">
-                  <h2 className="text-[10pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
+                <section key="summary" className="space-y-0.5">
+                  <h2 className="text-[9.5pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
                     {labels.summary}
                   </h2>
-                  <p className="text-[9pt] text-zinc-800 leading-relaxed text-justify">
+                  <p className="text-[8.8pt] text-zinc-800 leading-normal text-justify">
                     {summary}
                   </p>
                 </section>
@@ -117,14 +117,14 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
             case "skills":
               if (skills.length === 0) return null;
               return (
-                <section key="skills" className="space-y-1.5">
-                  <h2 className="text-[10pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
+                <section key="skills" className="space-y-1">
+                  <h2 className="text-[9.5pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
                     {labels.skills}
                   </h2>
-                  <div className="space-y-1 text-[9pt]">
+                  <div className="space-y-0.5 text-[8.8pt]">
                     {skills.map((cat) => (
                       <div key={cat.id} className="flex flex-col sm:flex-row sm:items-baseline gap-1">
-                        <span className="font-bold text-zinc-950 min-w-[140px] shrink-0">
+                        <span className="font-bold text-zinc-950 min-w-[130px] shrink-0">
                           {cat.category}:
                         </span>
                         <span className="text-zinc-800 font-normal">
@@ -139,11 +139,11 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
             case "experience":
               if (experience.length === 0) return null;
               return (
-                <section key="experience" className="space-y-2">
-                  <h2 className="text-[10pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
+                <section key="experience" className="space-y-1.5">
+                  <h2 className="text-[9.5pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
                     {labels.experience}
                   </h2>
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {experience.map((exp) => (
                       <article key={exp.id} className="space-y-1">
                         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-2">
