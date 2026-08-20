@@ -18,6 +18,7 @@ import { useJobsStore } from "@/store/useJobsStore";
 import { useAISettingsStore } from "@/store/useAISettingsStore";
 import { JobApplicationCard } from "./JobApplicationCard";
 import { JobDetailPanel } from "./JobDetailPanel";
+import { JobDetailFullView } from "./JobDetailFullView";
 import { AddJobModal } from "./AddJobModal";
 import type { ApplicationStatus, JobApplication } from "@/types/jobs";
 import { STATUS_LABELS } from "@/types/jobs";
@@ -241,6 +242,16 @@ export function JobTrackerView() {
       ? Math.round(applications.filter((a) => a.matchAnalysis).reduce((sum, a) => sum + (a.matchAnalysis?.score ?? 0), 0) / applications.filter((a) => a.matchAnalysis).length)
       : null,
   };
+
+  // Si hay una postulación seleccionada, cambiar toda la vista al detalle completo interactivo
+  if (selectedId) {
+    return (
+      <JobDetailFullView
+        applicationId={selectedId}
+        onBack={() => setSelectedId(null)}
+      />
+    );
+  }
 
   return (
     <DndContext
