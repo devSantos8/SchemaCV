@@ -9,6 +9,8 @@ import {
   fetchUserResumes,
   fetchUserJobs,
   getSupabaseProfile,
+  upsertMasterResumeToSupabase,
+  upsertResumeToSupabase,
 } from "@/lib/supabase/db";
 import { EMPTY_RESUME_DATA, INITIAL_PROFILES, SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
 import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
@@ -91,12 +93,30 @@ export function SupabaseSyncProvider({ children }: { children: React.ReactNode }
       try {
         // A. Cargar currículums de Supabase
         const cloudResumes = await fetchUserResumes(userId);
+        const currentStore = useResumeStore.getState();
+        const localMaster = currentStore.masterProfileData;
+        const localProfiles = currentStore.profiles;
+
+        // Verificar si el Perfil Maestro local tiene datos reales del usuario
+        const hasLocalMasterData = Boolean(
+          localMaster &&
+          (localMaster.name ||
+            localMaster.headline ||
+            (localMaster.experience && localMaster.experience.length > 0) ||
+            (localMaster.skills && localMaster.skills.length > 0) ||
+            (localMaster.projects && localMaster.projects.length > 0) ||
+            (localMaster.education && localMaster.education.length > 0))
+        );
+
         if (cloudResumes && cloudResumes.length > 0) {
           const master = cloudResumes.find((r: any) => r.is_master);
           const standard = cloudResumes.filter((r: any) => !r.is_master);
 
           if (master && master.data) {
             useResumeStore.setState({ masterProfileData: master.data });
+          } else if (hasLocalMasterData) {
+            // Respaldar perfil maestro local existente a Supabase
+            upsertMasterResumeToSupabase(userId, localMaster).catch(console.error);
           } else {
             useResumeStore.setState({
               masterProfileData: { ...EMPTY_RESUME_DATA, name: user?.name || "", email: user?.email || "" },
@@ -115,15 +135,57 @@ export function SupabaseSyncProvider({ children }: { children: React.ReactNode }
               data: r.data,
             }));
 
+            // Si el perfil activo actual existe en los cargados, conservarlo; sino, el primero
+            const activeId = mappedProfiles.some((p) => p.id === currentStore.activeProfileId)
+              ? currentStore.activeProfileId
+              : mappedProfiles[0].id;
+            const activeProfile = mappedProfiles.find((p) => p.id === activeId) || mappedProfiles[0];
+
             useResumeStore.setState({
               profiles: mappedProfiles,
-              activeProfileId: mappedProfiles[0].id,
-              resumeData: mappedProfiles[0].data,
-              yamlContent: resumeDataToYaml(mappedProfiles[0].data),
-              activeTemplate: mappedProfiles[0].templateId,
+              activeProfileId: activeProfile.id,
+              resumeData: activeProfile.data,
+              yamlContent: resumeDataToYaml(activeProfile.data),
+              activeTemplate: activeProfile.templateId,
             });
+          } else if (localProfiles.length > 0) {
+            // Si en la nube no hay CVs pero localmente sí, sincronizar a Supabase en vez de borrarlos
+            for (const lp of localProfiles) {
+              upsertResumeToSupabase(userId, {
+                id: lp.id,
+                name: lp.name,
+                targetRole: lp.targetRole,
+                templateId: lp.templateId,
+                isMaster: false,
+                data: lp.data,
+              }).catch(console.error);
+            }
+          }
+        } else {
+          // Si Supabase devuelve 0 currículums:
+          if (hasLocalMasterData) {
+            // Sincronizar el perfil maestro existente a Supabase
+            upsertMasterResumeToSupabase(userId, localMaster).catch(console.error);
           } else {
-            // Usuario con cuenta pero sin CVs creados todavía
+            const cleanData = { ...EMPTY_RESUME_DATA, name: user?.name || "", email: user?.email || "" };
+            useResumeStore.setState({
+              masterProfileData: cleanData,
+            });
+          }
+
+          if (localProfiles.length > 0) {
+            // Subir los perfiles locales existentes a Supabase
+            for (const lp of localProfiles) {
+              upsertResumeToSupabase(userId, {
+                id: lp.id,
+                name: lp.name,
+                targetRole: lp.targetRole,
+                templateId: lp.templateId,
+                isMaster: false,
+                data: lp.data,
+              }).catch(console.error);
+            }
+          } else {
             const cleanData = { ...EMPTY_RESUME_DATA, name: user?.name || "", email: user?.email || "" };
             useResumeStore.setState({
               profiles: [],
@@ -132,16 +194,6 @@ export function SupabaseSyncProvider({ children }: { children: React.ReactNode }
               yamlContent: "",
             });
           }
-        } else {
-          // Cuenta 100% nueva: iniciar en blanco (0 CVs, 0 datos mock)
-          const cleanData = { ...EMPTY_RESUME_DATA, name: user?.name || "", email: user?.email || "" };
-          useResumeStore.setState({
-            profiles: [],
-            activeProfileId: "",
-            resumeData: cleanData,
-            yamlContent: "",
-            masterProfileData: cleanData,
-          });
         }
 
         // B. Cargar postulaciones del Job Tracker

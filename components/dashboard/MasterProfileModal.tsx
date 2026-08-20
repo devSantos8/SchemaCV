@@ -9,6 +9,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useResumeStore } from "@/store/useResumeStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { upsertMasterResumeToSupabase } from "@/lib/supabase/db";
 import { ResumeData } from "@/types/resume";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +50,7 @@ export const MasterProfileModal: React.FC = () => {
     createProfileFromMaster,
     profiles,
   } = useResumeStore();
+  const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<"general" | "experience" | "skills" | "projects" | "education">("general");
   const [formData, setFormData] = useState<ResumeData>(masterProfileData);
@@ -64,11 +67,14 @@ export const MasterProfileModal: React.FC = () => {
     }
   }, [isMasterProfileModalOpen, masterProfileData]);
 
-  const handleSaveMaster = () => {
+  const handleSaveMaster = async () => {
     updateMasterProfileData(formData);
+    if (user?.id) {
+      await upsertMasterResumeToSupabase(user.id, formData);
+    }
     setIsSaved(true);
     toast.success("Perfil Base Maestro guardado", {
-      description: "Datos centrales actualizados y listos para generar CVs.",
+      description: "Datos centrales actualizados y sincronizados en la nube.",
     });
     setTimeout(() => setIsSaved(false), 2500);
   };

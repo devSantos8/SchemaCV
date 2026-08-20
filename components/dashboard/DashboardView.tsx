@@ -83,6 +83,7 @@ import { TEMPLATE_METADATA, TemplateRenderer } from "@/components/templates/Temp
 import { generateResumeDocx } from "@/lib/exporters/docxExporter";
 import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
 import { SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
+import { upsertMasterResumeToSupabase } from "@/lib/supabase/db";
 import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -433,11 +434,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return copy;
   };
 
-  const handleSaveMasterProfile = () => {
+  const handleSaveMasterProfile = async () => {
     updateMasterProfileData(masterFormData);
+    if (user?.id) {
+      await upsertMasterResumeToSupabase(user.id, masterFormData);
+    }
     setIsMasterSaved(true);
     toast.success("Perfil Base Maestro guardado", {
-      description: "Tus datos y proyectos se sincronizaron con éxito.",
+      description: "Tus datos y proyectos se sincronizaron con éxito en la nube.",
     });
     setTimeout(() => setIsMasterSaved(false), 2500);
   };

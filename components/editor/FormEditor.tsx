@@ -478,7 +478,7 @@ export const FormEditor: React.FC = () => {
                   <Layers className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("skills") ? "line-through text-muted-foreground" : ""}>
-                  Competencias Técnicas
+                  Habilidades Técnicas
                 </span>
                 {hiddenSections.has("skills") && (
                   <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
@@ -541,7 +541,7 @@ export const FormEditor: React.FC = () => {
                   <Briefcase className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("experience") ? "line-through text-muted-foreground" : ""}>
-                  Experiencia Laboral
+                  Experiencia Profesional
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.experience?.length || 0})
@@ -796,7 +796,7 @@ export const FormEditor: React.FC = () => {
                   <FolderGit2 className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("projects") ? "line-through text-muted-foreground" : ""}>
-                  Proyectos & Ingeniería
+                  Proyectos
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.projects?.length || 0})
@@ -1004,7 +1004,7 @@ export const FormEditor: React.FC = () => {
                   <GraduationCap className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("education") ? "line-through text-muted-foreground" : ""}>
-                  Educación & Formación
+                  Educación
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.education?.length || 0})

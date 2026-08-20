@@ -116,6 +116,45 @@ export async function upsertResumeToSupabase(
   return data;
 }
 
+export async function upsertMasterResumeToSupabase(userId: string, data: ResumeData) {
+  if (!isSupabaseConfigured() || !userId) return null;
+  const supabase = createClient();
+
+  // Buscar si ya existe un registro de perfil maestro para este usuario
+  const { data: existing } = await supabase
+    .from("resumes")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("is_master", true)
+    .maybeSingle();
+
+  const payload: any = {
+    user_id: userId,
+    name: "Perfil Base Maestro",
+    target_role: data?.headline || "Perfil Base",
+    template_id: "harvard",
+    is_master: true,
+    data: data || {},
+    updated_at: new Date().toISOString(),
+  };
+
+  if (existing?.id) {
+    payload.id = existing.id;
+  }
+
+  const query = payload.id
+    ? supabase.from("resumes").upsert(payload, { onConflict: "id" })
+    : supabase.from("resumes").insert(payload);
+
+  const { data: result, error } = await query.select().maybeSingle();
+
+  if (error) {
+    console.error("Error al guardar perfil maestro en Supabase:", error.message || error);
+    return null;
+  }
+  return result;
+}
+
 export async function deleteResumeFromSupabase(resumeId: string) {
   if (!isSupabaseConfigured()) return;
   const supabase = createClient();
