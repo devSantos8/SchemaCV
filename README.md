@@ -18,7 +18,7 @@ Plataforma de creación y edición de currículums de alto rendimiento diseñada
 [Filosofía de 1 Hoja](#filosofía-de-1-sola-hoja) •
 [Catálogo de Plantillas](#catálogo-de-plantillas-ats) •
 [Instalación](#instalación-y-desarrollo) •
-[Esquema YAML](#esquema-yaml-rendercv-compatible) •
+[Esquema YAML](#esquema-yaml) •
 [Exportación](#motor-de-exportación-multiformato)
 
 </div>
@@ -143,7 +143,7 @@ SchemaCV monitorea la altura de renderizado y proporciona guías de referencia:
 
 - **PDF Vectorial:** Renderizado nativo de alta resolución compatible con impresión de navegador y servicio headless Puppeteer con fuentes embebidas.
 - **Word (.docx):** Documentos generados con la librería `docx`, utilizando estilos de encabezado semánticos estándar para lectura automatizada por ATS.
-- **Esquema YAML:** Archivo estructurado `.yaml` compatible con la especificación de RenderCV.
+- **Esquema YAML:** Archivo estructurado `.yaml` completamente editable.
 - **JSON Estructurado:** Exportación de datos crudos validados mediante esquemas Zod.
 
 ---
@@ -184,7 +184,7 @@ npm run start
 
 ---
 
-## Esquema YAML (RenderCV Compatible)
+## Esquema YAML
 
 Ejemplo del formato estructurado compatible con control de versiones en Git:
 
