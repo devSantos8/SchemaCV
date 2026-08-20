@@ -69,8 +69,8 @@ export function generateTemplateHtml(
             .map(
               (cat) => `
               <div class="skill-row">
-                <span class="skill-cat font-semibold">${cat.category}: </span>
-                <span class="skill-items">${cat.skills.join(", ")}</span>
+                <span class="skill-cat font-bold">${cat.category}: </span>
+                <span class="skill-items">${templateId === "chile_profesional" ? cat.skills.join(" • ") : cat.skills.join(", ")}</span>
               </div>
             `
             )
@@ -225,18 +225,19 @@ export function generateTemplateHtml(
         }
         .header-title {
           font-size: 22px;
-          font-weight: 800;
+          font-weight: 900;
           text-align: center;
           margin: 0 0 4px 0;
           letter-spacing: -0.02em;
           display: block;
+          text-transform: ${templateId === "chile_profesional" ? "uppercase" : "none"};
         }
         .header-headline {
           font-size: 13px;
           text-align: center;
-          color: #3f3f46;
+          color: #1e40af;
           margin: 0 0 6px 0;
-          font-weight: 500;
+          font-weight: 700;
           display: block;
         }
         .header-contact {
@@ -245,16 +246,17 @@ export function generateTemplateHtml(
           color: #52525b;
           margin: 0 0 16px 0;
           display: block;
+          font-weight: 500;
         }
         .section-block {
           margin-bottom: 14px;
         }
         .section-title {
           font-size: 12px;
-          font-weight: 700;
+          font-weight: 900;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          border-bottom: 1px solid #18181b;
+          border-bottom: ${templateId === "chile_profesional" ? "2px solid #18181b" : "1px solid #18181b"};
           padding-bottom: 2px;
           margin: 0 0 6px 0;
           color: #09090b;

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { TemplateRenderer } from "@/components/templates/TemplateRenderer";
+import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
 import type { ResumeData, TemplateId, PaperSize } from "@/types/resume";
 
 export async function POST(req: NextRequest) {
@@ -19,17 +17,11 @@ export async function POST(req: NextRequest) {
 
     let documentHtml = "";
 
-    // Priorizar el HTML renderizado exacto del cliente o compilar con React Template Renderer
+    // Priorizar el HTML renderizado del cliente para fidelidad 1:1 o compilar con el exportador semántico
     if (html && typeof html === "string" && html.trim().length > 50) {
       documentHtml = html;
     } else if (resumeData) {
-      documentHtml = renderToStaticMarkup(
-        React.createElement(TemplateRenderer, {
-          templateId: templateId as TemplateId,
-          data: resumeData as ResumeData,
-          paperSize: paperSize as PaperSize,
-        })
-      );
+      documentHtml = generateTemplateHtml(resumeData as ResumeData, templateId as TemplateId, paperSize as PaperSize);
     }
 
     if (!documentHtml) {
@@ -110,7 +102,6 @@ export async function POST(req: NextRequest) {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
       }
-      /* Prevenir saltos de línea no deseados en impresión */
       @media print {
         body {
           -webkit-print-color-adjust: exact;
@@ -131,7 +122,6 @@ export async function POST(req: NextRequest) {
       timeout: 30000,
     });
 
-    // Esperar a que las fuentes se carguen completamente
     await page.evaluateHandle("document.fonts.ready");
 
     const pdfBuffer = await page.pdf({
