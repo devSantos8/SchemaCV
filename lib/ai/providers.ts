@@ -188,28 +188,56 @@ export async function testAIConnection(
   const cleanKey = (apiKey || "").trim();
 
   if (provider === "google") {
-    const google = createGoogleGenerativeAI({ apiKey: cleanKey });
     try {
+      // 1. Validar clave y obtener modelos disponibles para esta cuenta
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`);
+      const data = (await res.json()) as {
+        error?: { message?: string; status?: string };
+        models?: { name: string; supportedGenerationMethods?: string[] }[];
+      };
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error?.message || "API key no valida en Google AI Studio.");
+      }
+
+      const validModels = (data.models || [])
+        .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
+        .map((m) => m.name.replace(/^models\//, ""));
+
+      const preferenceOrder = [
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-flash-latest",
+        "gemini-1.5-flash-002",
+        "gemini-1.5-flash-001",
+        "gemini-2.5-flash-lite",
+        "gemini-1.5-pro",
+        "gemini-1.5-pro-latest",
+        "gemini-pro",
+      ];
+
+      let selectedModel = "gemini-1.5-flash";
+      for (const pref of preferenceOrder) {
+        if (validModels.includes(pref)) {
+          selectedModel = pref;
+          break;
+        }
+      }
+      if (!validModels.includes(selectedModel) && validModels.length > 0) {
+        selectedModel = validModels[0];
+      }
+
+      // 2. Realizar prueba rápida de generación con el modelo disponible
+      const google = createGoogleGenerativeAI({ apiKey: cleanKey });
       const { text } = await generateText({
-        model: google("gemini-1.5-flash"),
+        model: google(selectedModel),
         prompt: "Responde: OK",
         maxOutputTokens: 5,
       });
-      return { ok: text.trim().length > 0, model: "gemini-1.5-flash" };
-    } catch (err: unknown) {
-      const errStr = String(err);
-      if (errStr.includes("404") || errStr.includes("not found") || errStr.includes("no longer available")) {
-        try {
-          const { text } = await generateText({
-            model: google("gemini-1.5-pro"),
-            prompt: "Responde: OK",
-            maxOutputTokens: 5,
-          });
-          return { ok: text.trim().length > 0, model: "gemini-1.5-pro" };
-        } catch (innerErr) {
-          throw mapError(innerErr);
-        }
-      }
+
+      return { ok: text.trim().length > 0, model: selectedModel };
+    } catch (err) {
       throw mapError(err);
     }
   }
