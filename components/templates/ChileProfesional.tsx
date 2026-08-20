@@ -189,7 +189,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                             {`${edu.degree}${edu.area ? ` en ${edu.area}` : ""} — ${edu.institution}`}
                           </h3>
                           <div className="text-[8.5pt] font-semibold text-zinc-600 shrink-0 font-mono">
-                            {edu.start_date ? `${edu.start_date} → ` : ""}
+                            {edu.start_date ? `${edu.start_date} – ` : ""}
                             {edu.current ? labels.present : (edu.end_date || labels.present)}
                           </div>
                         </div>

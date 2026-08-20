@@ -147,7 +147,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                         <span className="font-mono text-[8pt] text-zinc-500 font-medium">
                           {[exp.start_date, exp.current ? labels.present : (exp.end_date || labels.present)]
                             .filter(Boolean)
-                            .join(" → ")}
+                            .join(" – ")}
                         </span>
                       </div>
                       {exp.highlights && exp.highlights.length > 0 && (
@@ -206,7 +206,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                         </div>
                         {(proj.start_date || proj.end_date) && (
                           <span className="font-mono text-[8pt] text-zinc-500">
-                            {[proj.start_date, proj.end_date].filter(Boolean).join(" → ")}
+                            {[proj.start_date, proj.end_date].filter(Boolean).join(" – ")}
                           </span>
                         )}
                       </div>
@@ -244,7 +244,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                         <span className="font-mono text-[8pt] text-zinc-500">
                           {[edu.start_date, edu.current ? labels.present : (edu.end_date || labels.present)]
                             .filter(Boolean)
-                            .join(" → ")}
+                            .join(" – ")}
                         </span>
                       </div>
                       <div className="flex justify-between text-[8.5pt] text-zinc-600">
