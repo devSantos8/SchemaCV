@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, EB_Garamond } from "next/font/google";
 import "./globals.css";
+import { SupabaseSyncProvider } from "@/components/providers/SupabaseSyncProvider";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
 const ebGaramond = EB_Garamond({
-  variable: "--font-eb-garamond",
+  variable: "--font-serif",
   subsets: ["latin"],
 });
 
@@ -24,7 +25,6 @@ export const metadata: Metadata = {
   keywords: [
     "ATS Resume",
     "Currículum ATS",
-    "RenderCV",
     "YAML Resume",
     "DevOps CV",
     "Full Stack CV",
@@ -45,7 +45,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${ebGaramond.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
-        {children}
+        <SupabaseSyncProvider>{children}</SupabaseSyncProvider>
       </body>
     </html>
   );

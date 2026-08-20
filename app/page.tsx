@@ -17,7 +17,12 @@ import { useAuthStore } from "@/store/useAuthStore";
 export default function SchemaCVApp() {
   const [currentView, setCurrentView] = useState<"dashboard" | "workspace" | "settings">("dashboard");
   const { undo, redo, canUndo, canRedo, activeTab } = useResumeStore();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, initSession } = useAuthStore();
+
+  // Inicializar sesión Supabase al montar la aplicación
+  useEffect(() => {
+    initSession();
+  }, [initSession]);
 
   // Atajos de teclado globales para Deshacer (Ctrl+Z) y Rehacer (Ctrl+Y / Ctrl+Shift+Z)
   useEffect(() => {

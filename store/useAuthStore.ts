@@ -1,5 +1,13 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  signInWithEmail,
+  signUpWithEmail,
+  signInWithOAuth,
+  signOutUser,
+} from "@/lib/supabase/auth";
+import { getSupabaseProfile, updateSupabaseProfile } from "@/lib/supabase/db";
 
 export interface UserProfile {
   id: string;
@@ -26,16 +34,19 @@ interface AuthState {
   isAuthModalOpen: boolean;
   isSettingsModalOpen: boolean;
   authMode: "login" | "register";
+  isLoading: boolean;
+  error: string | null;
 
   // Acciones
-  login: (email: string, name?: string) => void;
-  register: (name: string, email: string) => void;
-  loginWithProvider: (provider: "google" | "linkedin" | "github") => void;
+  login: (email: string, password?: string) => Promise<boolean>;
+  register: (name: string, email: string, password?: string) => Promise<boolean>;
+  loginWithProvider: (provider: "google" | "linkedin" | "github") => Promise<void>;
   loginAsGuest: () => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
   setSettingsModalOpen: (open: boolean) => void;
-  updateUserProfile: (updates: Partial<UserProfile>) => void;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  initSession: () => Promise<void>;
 }
 
 const DEFAULT_DEMO_USER: UserProfile = {
@@ -64,38 +75,135 @@ export const useAuthStore = create<AuthState>()(
       isAuthModalOpen: false,
       isSettingsModalOpen: false,
       authMode: "login",
+      isLoading: false,
+      error: null,
 
-      login: (email: string, name?: string) => {
-        const user: UserProfile = {
-          ...DEFAULT_DEMO_USER,
-          id: `user-${Date.now()}`,
-          name: name || email.split("@")[0],
-          email,
-          joinedDate: new Date().toLocaleDateString("es-ES", {
-            month: "long",
-            year: "numeric",
-          }),
-          isDemoUser: false,
-        };
-        set({ user, isAuthenticated: true, isAuthModalOpen: false });
+      initSession: async () => {
+        if (!isSupabaseConfigured()) return;
+        try {
+          const supabase = createClient();
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const profile = await getSupabaseProfile(session.user.id);
+            const user: UserProfile = {
+              id: session.user.id,
+              name: profile?.name || session.user.user_metadata?.full_name || session.user.email?.split("@")[0] || "Usuario",
+              email: session.user.email || "",
+              avatarUrl: profile?.avatar_url || session.user.user_metadata?.avatar_url,
+              bannerTheme: profile?.banner_theme || "default",
+              joinedDate: new Date(session.user.created_at).toLocaleDateString("es-ES", {
+                month: "long",
+                year: "numeric",
+              }),
+              isDemoUser: false,
+            };
+            set({ user, isAuthenticated: true });
+          }
+        } catch (err) {
+          console.error("Error al inicializar sesión de Supabase:", err);
+        }
       },
 
-      register: (name: string, email: string) => {
-        const user: UserProfile = {
-          ...DEFAULT_DEMO_USER,
-          id: `user-${Date.now()}`,
-          name,
-          email,
-          joinedDate: new Date().toLocaleDateString("es-ES", {
-            month: "long",
-            year: "numeric",
-          }),
-          isDemoUser: false,
-        };
-        set({ user, isAuthenticated: true, isAuthModalOpen: false });
+      login: async (email: string, password?: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          if (isSupabaseConfigured() && password) {
+            const { data, error } = await signInWithEmail(email, password);
+            if (error) {
+              set({ error: error.message, isLoading: false });
+              return false;
+            }
+            if (data.user) {
+              const profile = await getSupabaseProfile(data.user.id);
+              const user: UserProfile = {
+                id: data.user.id,
+                name: profile?.name || (data.user as any).user_metadata?.full_name || email.split("@")[0],
+                email,
+                avatarUrl: profile?.avatar_url,
+                bannerTheme: profile?.banner_theme || "default",
+                joinedDate: new Date().toLocaleDateString("es-ES", {
+                  month: "long",
+                  year: "numeric",
+                }),
+                isDemoUser: false,
+              };
+              set({ user, isAuthenticated: true, isAuthModalOpen: false, isLoading: false });
+              return true;
+            }
+          }
+
+          // Fallback Local / Demo
+          const user: UserProfile = {
+            ...DEFAULT_DEMO_USER,
+            id: `user-${Date.now()}`,
+            name: email.split("@")[0],
+            email,
+            joinedDate: new Date().toLocaleDateString("es-ES", {
+              month: "long",
+              year: "numeric",
+            }),
+            isDemoUser: false,
+          };
+          set({ user, isAuthenticated: true, isAuthModalOpen: false, isLoading: false });
+          return true;
+        } catch (err: any) {
+          set({ error: err.message || "Error al iniciar sesión", isLoading: false });
+          return false;
+        }
       },
 
-      loginWithProvider: (provider: "google" | "linkedin" | "github") => {
+      register: async (name: string, email: string, password?: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          if (isSupabaseConfigured() && password) {
+            const { data, error } = await signUpWithEmail(email, password, name);
+            if (error) {
+              set({ error: error.message, isLoading: false });
+              return false;
+            }
+            if (data.user) {
+              const user: UserProfile = {
+                id: data.user.id,
+                name,
+                email,
+                joinedDate: new Date().toLocaleDateString("es-ES", {
+                  month: "long",
+                  year: "numeric",
+                }),
+                isDemoUser: false,
+              };
+              set({ user, isAuthenticated: true, isAuthModalOpen: false, isLoading: false });
+              return true;
+            }
+          }
+
+          // Fallback Local
+          const user: UserProfile = {
+            ...DEFAULT_DEMO_USER,
+            id: `user-${Date.now()}`,
+            name,
+            email,
+            joinedDate: new Date().toLocaleDateString("es-ES", {
+              month: "long",
+              year: "numeric",
+            }),
+            isDemoUser: false,
+          };
+          set({ user, isAuthenticated: true, isAuthModalOpen: false, isLoading: false });
+          return true;
+        } catch (err: any) {
+          set({ error: err.message || "Error al registrarse", isLoading: false });
+          return false;
+        }
+      },
+
+      loginWithProvider: async (provider: "google" | "linkedin" | "github") => {
+        if (isSupabaseConfigured()) {
+          await signInWithOAuth(provider);
+          return;
+        }
+
+        // Simulación local si no está configurado Supabase
         let name = "Joain Matías Monroy";
         let email = "matiasmonroy483@gmail.com";
         let githubUrl = "https://github.com/devSantos8";
@@ -138,7 +246,10 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      logout: () => {
+      logout: async () => {
+        if (isSupabaseConfigured()) {
+          await signOutUser();
+        }
         set({
           user: null,
           isAuthenticated: false,
@@ -148,17 +259,32 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setAuthModalOpen: (open: boolean, mode = "login") => {
-        set({ isAuthModalOpen: open, authMode: mode });
+        set({ isAuthModalOpen: open, authMode: mode, error: null });
       },
 
       setSettingsModalOpen: (open: boolean) => {
         set({ isSettingsModalOpen: open });
       },
 
-      updateUserProfile: (updates) => {
+      updateUserProfile: async (updates) => {
+        const currentUser = get().user;
+        if (!currentUser) return;
+
         set((state) => ({
           user: state.user ? { ...state.user, ...updates } : null,
         }));
+
+        if (isSupabaseConfigured() && !currentUser.isDemoUser) {
+          try {
+            await updateSupabaseProfile(currentUser.id, {
+              name: updates.name ?? currentUser.name,
+              avatar_url: updates.avatarUrl ?? currentUser.avatarUrl,
+              banner_theme: updates.bannerTheme ?? currentUser.bannerTheme,
+            });
+          } catch (err) {
+            console.error("Error al actualizar perfil en Supabase:", err);
+          }
+        }
       },
     }),
     {

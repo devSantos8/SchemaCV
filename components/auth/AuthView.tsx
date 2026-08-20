@@ -10,6 +10,8 @@ import {
   Sparkles,
   Moon,
   Sun,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
@@ -50,7 +52,7 @@ export const GithubIcon: React.FC<{ className?: string }> = ({ className = "h-4 
 );
 
 export const AuthView: React.FC = () => {
-  const { login, register, loginWithProvider, loginAsGuest } = useAuthStore();
+  const { login, register, loginWithProvider, loginAsGuest, isLoading, error } = useAuthStore();
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -69,16 +71,16 @@ export const AuthView: React.FC = () => {
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    login(email);
+    await login(email, password);
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email) return;
-    register(name, email);
+    await register(name, email, password);
   };
 
   return (
@@ -118,6 +120,14 @@ export const AuthView: React.FC = () => {
               {mode === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
             </h1>
           </div>
+
+          {/* Mensaje de Error si ocurre */}
+          {error && (
+            <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
           {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
           <div className="space-y-2">
@@ -239,10 +249,12 @@ export const AuthView: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
+                  disabled={isLoading}
+                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer disabled:opacity-50"
                 >
+                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>Ingresar a mi Cuenta</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  {!isLoading && <ArrowRight className="h-3.5 w-3.5" />}
                 </Button>
               </form>
             ) : (
@@ -303,10 +315,12 @@ export const AuthView: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
+                  disabled={isLoading}
+                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer disabled:opacity-50"
                 >
+                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>Crear Cuenta Gratuita</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  {!isLoading && <ArrowRight className="h-3.5 w-3.5" />}
                 </Button>
               </form>
             )}
