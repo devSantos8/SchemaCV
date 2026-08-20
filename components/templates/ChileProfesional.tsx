@@ -228,7 +228,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                     {projects.map((proj) => (
                       <article key={proj.id} className="space-y-0.5">
                         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-2">
-                          <h3 className="text-[9.5pt] font-bold text-zinc-950 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <h3 className="text-[9.5pt] font-bold text-zinc-950 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
                             <span>{proj.name}</span>
                             {proj.github_url && (
                               <a
