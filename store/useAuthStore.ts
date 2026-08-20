@@ -46,6 +46,7 @@ interface AuthState {
   setAuthModalOpen: (open: boolean, mode?: "login" | "register") => void;
   setSettingsModalOpen: (open: boolean) => void;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   initSession: () => Promise<void>;
 }
 
@@ -298,6 +299,37 @@ export const useAuthStore = create<AuthState>()(
             console.error("Error al actualizar perfil en Supabase:", err);
           }
         }
+      },
+
+      deleteAccount: async () => {
+        const currentUser = get().user;
+        if (currentUser && isSupabaseConfigured() && !currentUser.isDemoUser) {
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(currentUser.id);
+          if (isUuid) {
+            try {
+              const { deleteSupabaseUserAccount } = await import("@/lib/supabase/db");
+              await deleteSupabaseUserAccount(currentUser.id);
+            } catch (err) {
+              console.error("Error al eliminar cuenta en Supabase:", err);
+            }
+          }
+        }
+
+        // Limpiar storage local y stores
+        try {
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("schemacv-auth-v1");
+            localStorage.removeItem("schemacv-storage-v1");
+            localStorage.removeItem("schemacv-jobs-storage");
+          }
+        } catch {}
+
+        set({
+          user: null,
+          isAuthenticated: false,
+          isAuthModalOpen: true,
+          authMode: "login",
+        });
       },
     }),
     {

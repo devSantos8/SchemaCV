@@ -98,6 +98,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreateResumeWizard } from "./CreateResumeWizard";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
@@ -271,6 +272,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordSaved, setIsPasswordSaved] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Notificaciones & Toggles de Configuración
   const [notif1PageWarning, setNotif1PageWarning] = useState(true);
@@ -3694,6 +3696,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <span>Descargar Respaldo</span>
                         </Button>
                       </div>
+
+                      {/* Zona de Peligro: Eliminar Cuenta */}
+                      <div className="p-5 rounded-2xl border border-red-200/80 dark:border-red-950/80 bg-red-50/30 dark:bg-red-950/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                            <Trash2 className="h-4 w-4" />
+                            <span>Zona de Peligro — Eliminar Cuenta</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground max-w-md">
+                            Elimina permanentemente tu cuenta, tus currículums guardados, perfil base y postulaciones. Esta acción no se puede deshacer.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsDeleteModalOpen(true)}
+                          className="h-8 text-xs font-semibold rounded-xl text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-100/50 dark:hover:bg-red-950/40 shrink-0 cursor-pointer"
+                        >
+                          Eliminar Cuenta...
+                        </Button>
+                      </div>
                     </div>
                   )}
 
@@ -3951,6 +3974,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onComplete={onOpenWorkspace}
       />
       <AuthModal />
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+      />
     </div>
   );
 };

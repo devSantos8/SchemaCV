@@ -37,6 +37,20 @@ export async function updateSupabaseProfile(userId: string, updates: Record<stri
   return data;
 }
 
+export async function deleteSupabaseUserAccount(userId: string) {
+  if (!isSupabaseConfigured()) return;
+  const supabase = createClient();
+
+  // 1. Eliminar datos asociados del usuario en la base de datos
+  await supabase.from("resumes").delete().eq("user_id", userId);
+  await supabase.from("job_applications").delete().eq("user_id", userId);
+  await supabase.from("ats_evaluations").delete().eq("user_id", userId);
+  await supabase.from("profiles").delete().eq("id", userId);
+
+  // 2. Cerrar sesión en el cliente
+  await supabase.auth.signOut();
+}
+
 // ─── 2. CURRÍCULUMS & PERFIL BASE ─────────────────────────────────────────────
 export async function fetchUserResumes(userId: string) {
   if (!isSupabaseConfigured()) return [];

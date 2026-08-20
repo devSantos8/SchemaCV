@@ -92,6 +92,10 @@ CREATE POLICY "Los usuarios pueden insertar su propio perfil"
   ON public.profiles FOR INSERT
   WITH CHECK (auth.uid() = id);
 
+CREATE POLICY "Los usuarios pueden eliminar su propio perfil"
+  ON public.profiles FOR DELETE
+  USING (auth.uid() = id);
+
 -- Políticas para resumes
 CREATE POLICY "Los usuarios pueden ver sus propios currículums"
   ON public.resumes FOR SELECT
