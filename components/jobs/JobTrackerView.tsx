@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
@@ -58,16 +58,28 @@ function DraggableJobCard({
     },
   });
 
-  const style = transform
+  const style: React.CSSProperties | undefined = transform
     ? {
         transform: CSS.Translate.toString(transform),
-        opacity: isDragging ? 0.35 : 1,
+        opacity: isDragging ? 0 : 1,
+        visibility: isDragging ? "hidden" : "visible",
         zIndex: isDragging ? 40 : undefined,
+      }
+    : isDragging
+    ? {
+        opacity: 0,
+        visibility: "hidden",
       }
     : undefined;
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none select-none">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`touch-none select-none ${isDragging ? "invisible pointer-events-none" : ""}`}
+    >
       <JobApplicationCard
         application={application}
         isStale={isStale}
@@ -406,9 +418,9 @@ export function JobTrackerView() {
         </div>
 
         {/* Overlay flotante durante el arrastre */}
-        <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)" }}>
+        <DragOverlay dropAnimation={null}>
           {activeDraggingApp ? (
-            <div className="w-[260px] rotate-2 cursor-grabbing shadow-2xl opacity-95 pointer-events-none">
+            <div className="w-[260px] cursor-grabbing shadow-2xl opacity-95 pointer-events-none">
               <JobApplicationCard
                 application={activeDraggingApp}
                 isStale={staleIds.has(activeDraggingApp.id)}
