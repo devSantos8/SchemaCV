@@ -226,19 +226,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isMasterSaved, setIsMasterSaved] = useState(false);
   const [masterSubSection, setMasterSubSection] = useState<"general" | "social" | "experience" | "skills" | "projects" | "education" | "certifications">("general");
 
+  // Sincronizar masterFormData cuando masterProfileData cambia
+  useEffect(() => {
+    setMasterFormData(masterProfileData);
+  }, [masterProfileData]);
+
   // Estados de Configuración Estilo Propel
   const [settingsSubTab, setSettingsSubTab] = useState<SettingsSubTab>("account");
-  const [firstName, setFirstName] = useState(user?.name ? user.name.split(" ")[0] : "Joain");
-  const [lastName, setLastName] = useState(user?.name ? user.name.split(" ").slice(1).join(" ") : "Monroy Santos");
-  const [settingsEmail, setSettingsEmail] = useState(user?.email || "matiasmonroy483@gmail.com");
-  const [settingsHeadline, setSettingsHeadline] = useState(user?.headline || "Senior Full Stack & Cloud Developer");
-  const [settingsPhone, setSettingsPhone] = useState(user?.phone || "+56 9 4900 2793");
-  const [settingsLocation, setSettingsLocation] = useState(user?.location || "Santiago, Chile");
-  const [settingsBio, setSettingsBio] = useState(user?.bio || "Ingeniero de Software enfocado en arquitecturas escalables, sistemas cloud y diseño de experiencias web de alto impacto.");
-  const [settingsGithub, setSettingsGithub] = useState(user?.githubUrl || "https://github.com/devSantos8");
-  const [settingsLinkedin, setSettingsLinkedin] = useState(user?.linkedinUrl || "https://linkedin.com/in/jmonroys17");
-  const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "https://jmonroys.dev");
+  const [firstName, setFirstName] = useState(user?.name ? user.name.split(" ")[0] : "");
+  const [lastName, setLastName] = useState(user?.name ? user.name.split(" ").slice(1).join(" ") : "");
+  const [settingsEmail, setSettingsEmail] = useState(user?.email || "");
+  const [settingsHeadline, setSettingsHeadline] = useState(user?.headline || "");
+  const [settingsPhone, setSettingsPhone] = useState(user?.phone || "");
+  const [settingsLocation, setSettingsLocation] = useState(user?.location || "");
+  const [settingsBio, setSettingsBio] = useState(user?.bio || "");
+  const [settingsGithub, setSettingsGithub] = useState(user?.githubUrl || "");
+  const [settingsLinkedin, setSettingsLinkedin] = useState(user?.linkedinUrl || "");
+  const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "");
   const [isSettingsSaved, setIsSettingsSaved] = useState(false);
+
+  // Sincronizar formulario de settings cuando el usuario cambia
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.name ? user.name.split(" ")[0] : "");
+      setLastName(user.name ? user.name.split(" ").slice(1).join(" ") : "");
+      setSettingsEmail(user.email || "");
+      setSettingsHeadline(user.headline || "");
+      setSettingsPhone(user.phone || "");
+      setSettingsLocation(user.location || "");
+      setSettingsBio(user.bio || "");
+      setSettingsGithub(user.githubUrl || "");
+      setSettingsLinkedin(user.linkedinUrl || "");
+      setSettingsWebsite(user.websiteUrl || "");
+    }
+  }, [user]);
 
   // Estados de Auditoría ATS
   const [auditResumeData, setAuditResumeData] = useState<ResumeData | null>(null);
