@@ -61,50 +61,95 @@ interface JobDetailFullViewProps {
 }
 
 // Parser inteligente de descripciones de empleo
-function parseJobDescription(text: string) {
-  if (!text || !text.trim()) {
+interface ParsedJobDetails {
+  companyDescription?: string;
+  aboutTheJob: string;
+  responsibilities: string[];
+  minimumQualifications: string[];
+  preferredQualifications: string[];
+  benefits: string[];
+}
+
+function parseJobDescription(rawText: string): ParsedJobDetails {
+  if (!rawText || !rawText.trim()) {
     return {
+      aboutTheJob: "",
+      responsibilities: [],
       minimumQualifications: [],
       preferredQualifications: [],
-      aboutTheJob: "",
-      hasStructure: false,
+      benefits: [],
     };
   }
 
-  const minQualRegex = /(?:minimum qualifications|requisitos m[ií]nimos|requirements|requisitos obligatorios|lo que buscamos|perfil requerido)[\s:]*([\s\S]*?)(?=(?:preferred qualifications|requisitos deseados|requisitos valorados|deseables|nice to have|plus|about the job|acerca del empleo|responsabilidades|responsibilities|funciones|$))/i;
-  const prefQualRegex = /(?:preferred qualifications|requisitos deseados|requisitos valorados|deseables|nice to have|plus|valoramos)[\s:]*([\s\S]*?)(?=(?:about the job|acerca del empleo|acerca de la empresa|responsabilidades|responsibilities|funciones|$))/i;
-  const aboutRegex = /(?:about the job|acerca del empleo|descripci[oó]n del puesto|acerca de la empresa|overview|resumen del rol)[\s:]*([\s\S]*?)(?=(?:minimum qualifications|preferred qualifications|requisitos|$))/i;
+  let text = rawText.replace(/\r\n/g, "\n").trim();
 
-  const minMatch = text.match(minQualRegex);
-  const prefMatch = text.match(prefQualRegex);
-  const aboutMatch = text.match(aboutRegex);
+  // Insertar marcadores de sección unívocos
+  text = text.replace(/(?:Company Description|Descripción de la empresa|Sobre la empresa|Sobre nosotros|About the company)[\s:]+/gi, "\n__SECTION_COMPANY__\n");
+  text = text.replace(/(?:Job Description|Descripción del empleo|Descripción del puesto|Acerca del empleo|About the job|Resumen del puesto)[\s:]+/gi, "\n__SECTION_ABOUT__\n");
+  text = text.replace(/(?:¿Qué harás\??|What you will do|What you'll do|Responsabilidades|Responsibilities|Funciones|Tus funciones|Tus responsabilidades|Tus desafíos|Principales tareas|Lo que harás)[\s:]+/gi, "\n__SECTION_RESP__\n");
+  text = text.replace(/(?:Requisitos mínimos|Minimum qualifications|Requirements|Requisitos obligatorios|Requisitos|Perfil requerido|Lo que buscamos|Requerimientos)[\s:]+/gi, "\n__SECTION_MIN_REQ__\n");
+  text = text.replace(/(?:Requisitos deseados|Requisitos valorados|Preferred qualifications|Deseables|Nice to have|Plus|Valoramos|Deseable)[\s:]+/gi, "\n__SECTION_PREF_REQ__\n");
+  text = text.replace(/(?:Beneficios|Benefits|Lo que ofrecemos|What we offer|Te ofrecemos)[\s:]+/gi, "\n__SECTION_BENEFITS__\n");
 
-  const cleanBullets = (raw: string) => {
-    return raw
+  const extractBullets = (block: string): string[] => {
+    if (!block || !block.trim()) return [];
+    
+    let lines = block
       .split(/\n+/)
-      .map((line) => line.trim().replace(/^[-•*]\s*/, ""))
-      .filter((line) => line.length > 5);
+      .map((l) => l.trim().replace(/^[-•*–—]\s*/, "").replace(/^\d+[\.\)]\s*/, ""))
+      .filter((l) => l.length > 3);
+
+    // Si todo vino en una sola línea corrida sin saltos de línea, dividir por verbos de acción y palabras clave
+    if (lines.length <= 1 && block.length > 40) {
+      const verbSplitter = /(?=(?:Desarrollar|Programar|Participar|Colaborar|Aprender|Diseñar|Construir|Gestionar|Liderar|Crear|Optimizar|Investigar|Mantener|Implementar|Definir|Analizar|Asegurar|Coordinar|Soportar|Evaluar|Estudiante|Conocimientos|Inglés|Experiencia|Manejo|Dominio|Interés|Capacidad|Habilidad|Título|Carrera|Formación)\b)/g;
+      const splitItems = block.split(verbSplitter).map((s) => s.trim().replace(/^[-•*–—]\s*/, "")).filter((s) => s.length > 5);
+      if (splitItems.length > 1) {
+        lines = splitItems;
+      }
+    }
+
+    return lines;
   };
 
-  const hasStructure = Boolean(minMatch || prefMatch);
+  let companyDescription = "";
+  let aboutTheJob = "";
+  let responsibilities: string[] = [];
+  let minimumQualifications: string[] = [];
+  let preferredQualifications: string[] = [];
+  let benefits: string[] = [];
 
-  const fallbackBullets = text
-    .split(/\n+/)
-    .map((l) => l.trim())
-    .filter((l) => /^[-•*]\s*/.test(l) || (l.length > 20 && l.length < 160))
-    .map((l) => l.replace(/^[-•*]\s*/, ""));
+  const sections = text.split(/(?=__SECTION_[A-Z_]+__)/);
+
+  for (const sec of sections) {
+    const trimmed = sec.trim();
+    if (trimmed.startsWith("__SECTION_COMPANY__")) {
+      companyDescription = trimmed.replace("__SECTION_COMPANY__", "").trim();
+    } else if (trimmed.startsWith("__SECTION_ABOUT__")) {
+      aboutTheJob = trimmed.replace("__SECTION_ABOUT__", "").trim();
+    } else if (trimmed.startsWith("__SECTION_RESP__")) {
+      responsibilities = extractBullets(trimmed.replace("__SECTION_RESP__", "").trim());
+    } else if (trimmed.startsWith("__SECTION_MIN_REQ__")) {
+      minimumQualifications = extractBullets(trimmed.replace("__SECTION_MIN_REQ__", "").trim());
+    } else if (trimmed.startsWith("__SECTION_PREF_REQ__")) {
+      preferredQualifications = extractBullets(trimmed.replace("__SECTION_PREF_REQ__", "").trim());
+    } else if (trimmed.startsWith("__SECTION_BENEFITS__")) {
+      benefits = extractBullets(trimmed.replace("__SECTION_BENEFITS__", "").trim());
+    } else if (!aboutTheJob && trimmed) {
+      aboutTheJob = trimmed;
+    }
+  }
+
+  if (responsibilities.length === 0 && minimumQualifications.length === 0 && !aboutTheJob) {
+    aboutTheJob = rawText.trim();
+  }
 
   return {
-    minimumQualifications: minMatch
-      ? cleanBullets(minMatch[1])
-      : fallbackBullets.slice(0, 4),
-    preferredQualifications: prefMatch
-      ? cleanBullets(prefMatch[1])
-      : fallbackBullets.slice(4, 8),
-    aboutTheJob: aboutMatch
-      ? aboutMatch[1].trim()
-      : text.trim(),
-    hasStructure,
+    companyDescription,
+    aboutTheJob,
+    responsibilities,
+    minimumQualifications,
+    preferredQualifications,
+    benefits,
   };
 }
 
@@ -601,17 +646,53 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     </div>
                   ) : (
                     <div className="space-y-6 pt-2 text-zinc-800 dark:text-zinc-200 leading-relaxed text-sm">
-                      {/* Requisitos Mínimos */}
+                      {/* Acerca del empleo / Empresa */}
+                      {(parsedJob.aboutTheJob || parsedJob.companyDescription) && (
+                        <div className="space-y-2.5">
+                          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                            Acerca del empleo:
+                          </h3>
+                          <div className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 space-y-2 leading-relaxed whitespace-pre-line">
+                            {parsedJob.companyDescription && (
+                              <p className="font-medium text-zinc-800 dark:text-zinc-200">
+                                {parsedJob.companyDescription}
+                              </p>
+                            )}
+                            {parsedJob.aboutTheJob && (
+                              <p>{parsedJob.aboutTheJob}</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ¿Qué harás? / Responsabilidades */}
+                      {parsedJob.responsibilities.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                            ¿Qué harás en este rol?
+                          </h3>
+                          <ul className="space-y-2 pl-1">
+                            {parsedJob.responsibilities.map((item, idx) => (
+                              <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
+                                <span className="text-emerald-600 dark:text-emerald-400 mt-1 font-bold">•</span>
+                                <span className="leading-snug">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Requisitos Mínimos / Perfil */}
                       {parsedJob.minimumQualifications.length > 0 && (
                         <div className="space-y-2.5">
                           <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                            Requisitos mínimos:
+                            Requisitos del puesto:
                           </h3>
                           <ul className="space-y-2 pl-1">
                             {parsedJob.minimumQualifications.map((item, idx) => (
                               <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
-                                <span className="text-zinc-400 mt-0.5">•</span>
-                                <span>{item}</span>
+                                <span className="text-blue-600 dark:text-blue-400 mt-1 font-bold">•</span>
+                                <span className="leading-snug">{item}</span>
                               </li>
                             ))}
                           </ul>
@@ -622,28 +703,35 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       {parsedJob.preferredQualifications.length > 0 && (
                         <div className="space-y-2.5">
                           <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                            Requisitos valorados:
+                            Requisitos valorados (deseables):
                           </h3>
                           <ul className="space-y-2 pl-1">
                             {parsedJob.preferredQualifications.map((item, idx) => (
                               <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
-                                <span className="text-zinc-400 mt-0.5">•</span>
-                                <span>{item}</span>
+                                <span className="text-amber-500 mt-1 font-bold">•</span>
+                                <span className="leading-snug">{item}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
                       )}
 
-                      {/* Acerca del Empleo */}
-                      <div className="space-y-2.5">
-                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                          Acerca del empleo:
-                        </h3>
-                        <div className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 space-y-3 leading-relaxed whitespace-pre-line">
-                          {parsedJob.aboutTheJob || "No se ha proporcionado una descripción detallada aún. Haz clic en 'Editar texto' para pegarla."}
+                      {/* Beneficios */}
+                      {parsedJob.benefits.length > 0 && (
+                        <div className="space-y-2.5">
+                          <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                            Beneficios y lo que ofrecemos:
+                          </h3>
+                          <ul className="space-y-2 pl-1">
+                            {parsedJob.benefits.map((item, idx) => (
+                              <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
+                                <span className="text-violet-500 mt-1 font-bold">•</span>
+                                <span className="leading-snug">{item}</span>
+                              </li>
+                            ))}
+                          </ul>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
 
