@@ -20,6 +20,9 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Cpu,
+  Layers,
+  Award,
 } from "lucide-react";
 import { useJobsStore } from "@/store/useJobsStore";
 import { useResumeStore } from "@/store/useResumeStore";
@@ -44,6 +47,15 @@ const ALL_STATUSES: ApplicationStatus[] = [
   "rejected",
   "closed",
 ];
+
+const STATUS_ACTIVE_COLORS: Record<ApplicationStatus, string> = {
+  bookmarked: "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs",
+  applied: "bg-blue-600 text-white shadow-xs ring-1 ring-blue-500/50",
+  interviewing: "bg-violet-600 text-white shadow-xs ring-1 ring-violet-500/50",
+  offer: "bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-500/50",
+  rejected: "bg-red-600 text-white shadow-xs ring-1 ring-red-500/50",
+  closed: "bg-zinc-600 text-white shadow-xs ring-1 ring-zinc-500/50",
+};
 
 export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewProps) {
   const {
@@ -215,6 +227,35 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
   const matchedCount = report?.requirements.filter((r) => r.matched).length || 0;
   const totalCount = report?.requirements.length || 0;
 
+  // Visual tokens de puntuación
+  const matchColor =
+    (report?.matchScore ?? 0) >= 70
+      ? "text-emerald-600 dark:text-emerald-400"
+      : (report?.matchScore ?? 0) >= 40
+      ? "text-amber-600 dark:text-amber-400"
+      : "text-red-500";
+
+  const matchBg =
+    (report?.matchScore ?? 0) >= 70
+      ? "bg-emerald-500/10 border-emerald-500/30"
+      : (report?.matchScore ?? 0) >= 40
+      ? "bg-amber-500/10 border-amber-500/30"
+      : "bg-red-500/10 border-red-500/30";
+
+  const atsColor =
+    (report?.atsScore ?? 0) >= 80
+      ? "text-emerald-600 dark:text-emerald-400"
+      : (report?.atsScore ?? 0) >= 60
+      ? "text-amber-600 dark:text-amber-400"
+      : "text-red-500";
+
+  const atsBg =
+    (report?.atsScore ?? 0) >= 80
+      ? "bg-emerald-500/10 border-emerald-500/30"
+      : (report?.atsScore ?? 0) >= 60
+      ? "bg-amber-500/10 border-amber-500/30"
+      : "bg-red-500/10 border-red-500/30";
+
   return (
     <div className="flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-950 overflow-hidden font-sans">
       {/* ─── 1. TOP BAR COMPACTO ─── */}
@@ -233,22 +274,22 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
           <div className="h-4 w-px bg-zinc-200 dark:border-zinc-800 hidden sm:block" />
 
-          {/* Breadcrumb minimalista */}
+          {/* Breadcrumb con acento */}
           <div className="flex items-center gap-2 text-xs text-zinc-500 truncate">
             <span className="text-zinc-400">Postulaciones</span>
             <span>/</span>
-            <span className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">{company}</span>
+            <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{company}</span>
           </div>
         </div>
 
-        {/* Acciones */}
+        {/* Acciones con contraste */}
         <div className="flex items-center gap-2">
           {aiEnabled && (
             <button
               onClick={() => setShowChat(!showChat)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/80 text-zinc-800 dark:text-zinc-200 text-xs font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-xs font-bold hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors cursor-pointer shadow-2xs"
             >
-              <MessageSquare className="w-3.5 h-3.5 text-zinc-500" />
+              <MessageSquare className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
               <span>Chat IA</span>
             </button>
           )}
@@ -256,7 +297,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
           <button
             onClick={handleRunEvaluation}
             disabled={isEvaluating || !descInput}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-semibold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-2xs disabled:opacity-40 cursor-pointer"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-2xs disabled:opacity-40 cursor-pointer"
           >
             {isEvaluating ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -298,20 +339,20 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
             {/* Header del Puesto */}
             <div className="p-5 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3.5 shadow-2xs">
               <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="space-y-1 min-w-0">
+                <div className="space-y-1.5 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+                    <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100 leading-tight tracking-tight">
                       {title}
                     </h1>
                     {portal && (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 border border-zinc-200/80 dark:border-zinc-700">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60">
                         {portal}
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
-                    <span className="font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
+                    <span className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
                       <Building2 className="w-3.5 h-3.5 text-zinc-400" />
                       {company}
                     </span>
@@ -322,8 +363,8 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       </span>
                     )}
                     {salary && (
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                        <DollarSign className="w-3.5 h-3.5" />
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/50">
+                        <DollarSign className="w-3 h-3" />
                         {salary}
                       </span>
                     )}
@@ -332,7 +373,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline font-medium"
+                        className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-semibold"
                       >
                         <ExternalLink className="w-3 h-3" />
                         Ver oferta
@@ -342,17 +383,17 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 </div>
               </div>
 
-              {/* Selector de estado segmentado */}
+              {/* Selector de estado segmentado con colores de contraste */}
               <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
                 <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 flex-wrap">
                   {ALL_STATUSES.map((s) => (
                     <button
                       key={s}
                       onClick={() => updateApplication(application.id, { status: s })}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         status === s
-                          ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-2xs font-bold"
-                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                          ? STATUS_ACTIVE_COLORS[s]
+                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
                       }`}
                     >
                       {STATUS_LABELS[s]}
@@ -368,9 +409,9 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 <button
                   type="button"
                   onClick={() => setActiveTab("requirements")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                     activeTab === "requirements"
-                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-2xs font-bold"
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
                       : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                   }`}
                 >
@@ -379,9 +420,9 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 <button
                   type="button"
                   onClick={() => setActiveTab("ats")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                     activeTab === "ats"
-                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-2xs font-bold"
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
                       : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                   }`}
                 >
@@ -390,9 +431,9 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 <button
                   type="button"
                   onClick={() => setActiveTab("simulation")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                     activeTab === "simulation"
-                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-2xs font-bold"
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
                       : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                   }`}
                 >
@@ -401,9 +442,9 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 <button
                   type="button"
                   onClick={() => setActiveTab("offer_text")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                     activeTab === "offer_text"
-                      ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-2xs font-bold"
+                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
                       : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                   }`}
                 >
@@ -428,10 +469,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       <button
                         type="button"
                         onClick={() => setFilterImportance("all")}
-                        className={`px-2 py-1 text-[11px] rounded-md transition-colors cursor-pointer ${
+                        className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-bold ${
                           filterImportance === "all"
-                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold"
-                            : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xs"
+                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
                         }`}
                       >
                         Todos ({report?.requirements.length || 0})
@@ -439,10 +480,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       <button
                         type="button"
                         onClick={() => setFilterImportance("must_have")}
-                        className={`px-2 py-1 text-[11px] rounded-md transition-colors cursor-pointer ${
+                        className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-bold ${
                           filterImportance === "must_have"
-                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold"
-                            : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                            ? "bg-red-600 text-white shadow-2xs"
+                            : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-100 border border-red-200/60 dark:border-red-900/40"
                         }`}
                       >
                         Excluyentes ({report?.requirements.filter((r) => r.importance === "must_have").length || 0})
@@ -450,37 +491,41 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       <button
                         type="button"
                         onClick={() => setFilterImportance("nice_to_have")}
-                        className={`px-2 py-1 text-[11px] rounded-md transition-colors cursor-pointer ${
+                        className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-bold ${
                           filterImportance === "nice_to_have"
-                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-bold"
-                            : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                            ? "bg-blue-600 text-white shadow-2xs"
+                            : "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 border border-blue-200/60 dark:border-blue-900/40"
                         }`}
                       >
                         Deseables ({report?.requirements.filter((r) => r.importance === "nice_to_have").length || 0})
                       </button>
                     </div>
 
-                    <span className="text-[11px] text-zinc-400">
-                      {matchedCount} de {totalCount} cumplidos en tu CV
+                    <span className="text-xs font-semibold text-zinc-500">
+                      <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{matchedCount}</strong> de {totalCount} cumplidos en tu CV
                     </span>
                   </div>
 
-                  {/* Lista de Requisitos Estilo Matriz Limpia */}
+                  {/* Lista de Requisitos Estilo Matriz Limpia con Alto Contraste */}
                   <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-2xs divide-y divide-zinc-100 dark:divide-zinc-800">
                     {filteredRequirements.map((req) => (
                       <div
                         key={req.id}
-                        className="p-3.5 flex items-center justify-between gap-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors"
+                        className={`p-3.5 flex items-center justify-between gap-3 transition-colors ${
+                          req.matched
+                            ? "hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10"
+                            : "hover:bg-amber-50/30 dark:hover:bg-amber-950/10"
+                        }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="shrink-0">
                             {req.matched ? (
-                              <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                                <Check className="w-3 h-3" />
+                              <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
                               </div>
                             ) : (
-                              <div className="w-5 h-5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-zinc-400">
-                                <span className="w-1.5 h-1.5 rounded-full bg-zinc-400" />
+                              <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold">
+                                <span className="w-2 h-2 rounded-full bg-amber-500" />
                               </div>
                             )}
                           </div>
@@ -491,10 +536,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                                 {req.text}
                               </span>
                               <span
-                                className={`text-[9px] font-mono px-1.5 py-0.2 rounded font-medium ${
+                                className={`text-[10px] font-mono px-2 py-0.5 rounded-md font-bold ${
                                   req.importance === "must_have"
-                                    ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
-                                    : "bg-zinc-50 dark:bg-zinc-900 text-zinc-400 border border-zinc-200/60 dark:border-zinc-800"
+                                    ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50"
+                                    : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50"
                                 }`}
                               >
                                 {req.importance === "must_have" ? "Excluyente" : "Deseable"}
@@ -509,10 +554,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                         </div>
 
                         <span
-                          className={`text-[11px] font-mono shrink-0 font-semibold ${
+                          className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full shrink-0 border ${
                             req.matched
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-zinc-400"
+                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                              : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
                           }`}
                         >
                           {req.matched ? "Cumple ✓" : "Pendiente"}
@@ -561,7 +606,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs font-mono font-bold text-zinc-400">
+                            <span className="text-xs font-mono font-bold text-zinc-500">
                               {rule.scoreEarned}/{rule.scoreWeight} pts
                             </span>
                             {isExpanded ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
@@ -570,15 +615,15 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
                         {/* Detalle expandible */}
                         {isExpanded && (
-                          <div className="px-4 pb-4 pt-1 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs space-y-2">
-                            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed pt-1">
-                              <strong>Por qué importa:</strong> {rule.fixGuide.whyItMatters}
+                          <div className="px-4 pb-4 pt-2 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs space-y-2">
+                            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                              <strong className="text-zinc-900 dark:text-zinc-100">Por qué importa:</strong> {rule.fixGuide.whyItMatters}
                             </p>
                             <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                              <strong>Cómo solucionarlo:</strong> {rule.fixGuide.howToFix}
+                              <strong className="text-zinc-900 dark:text-zinc-100">Cómo solucionarlo:</strong> {rule.fixGuide.howToFix}
                             </p>
                             {rule.fixGuide.example && (
-                              <div className="p-2 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-[11px] font-mono text-zinc-700 dark:text-zinc-300">
+                              <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-[11px] font-mono text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
                                 {rule.fixGuide.example}
                               </div>
                             )}
@@ -592,8 +637,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
               {/* ─── TAB 3: SIMULACIÓN DE LECTURA DEL ROBOT ─── */}
               {activeTab === "simulation" && report && (
-                <div className="p-4 rounded-2xl bg-zinc-950 text-zinc-300 font-mono text-[11px] space-y-2 max-h-96 overflow-y-auto">
-                  <span className="text-[10px] text-zinc-500 block">Texto plano leído por el parser ATS:</span>
+                <div className="p-4 rounded-2xl bg-zinc-950 text-zinc-300 font-mono text-[11px] space-y-2 max-h-96 overflow-y-auto border border-zinc-800 shadow-inner">
+                  <span className="text-[10px] text-zinc-500 block font-bold uppercase tracking-wider">
+                    Texto plano leído por el parser ATS:
+                  </span>
                   <pre className="whitespace-pre-wrap leading-relaxed select-all">
                     {report.simulation.rawExtractedText}
                   </pre>
@@ -612,7 +659,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                         type="button"
                         onClick={handleScrape}
                         disabled={isScrapingDesc}
-                        className="flex items-center gap-1 text-[11px] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:underline disabled:opacity-40 cursor-pointer font-medium"
+                        className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-40 cursor-pointer font-bold"
                       >
                         {isScrapingDesc ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                         Re-scrapear oferta
@@ -632,7 +679,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     <button
                       type="button"
                       onClick={handleSaveDescription}
-                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-2xs cursor-pointer"
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-2xs cursor-pointer"
                     >
                       Guardar y Re-evaluar
                     </button>
@@ -644,23 +691,23 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
           {/* ════ COLUMNA DERECHA: SCORES, NOTAS & CONTEXTO (5 de 12) ════ */}
           <div className="lg:col-span-4 space-y-4">
-            {/* Widget Unificado de Puntuación */}
+            {/* Widget Unificado de Puntuación con Alto Contraste y Gradientes */}
             {report && (
-              <div className="p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-4 shadow-2xs">
+              <div className="p-5 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-4 shadow-2xs">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono block">
                   Índices de Evaluación
                 </span>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  {/* Match Score */}
-                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/60 space-y-1">
-                    <span className="text-[10px] text-zinc-500 block font-medium">Match con Oferta</span>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Match Score Card */}
+                  <div className={`p-3.5 rounded-2xl border ${matchBg} space-y-1.5`}>
+                    <span className="text-[10px] text-zinc-500 font-bold block">Match Oferta</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`text-3xl font-black tracking-tight ${matchColor}`}>
                         {report.matchScore}%
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden mt-1">
+                    <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-zinc-800 overflow-hidden">
                       <div
                         style={{ width: `${report.matchScore}%` }}
                         className={`h-full rounded-full ${
@@ -670,15 +717,15 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     </div>
                   </div>
 
-                  {/* ATS Format Score */}
-                  <div className="p-3 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200/60 dark:border-zinc-700/60 space-y-1">
-                    <span className="text-[10px] text-zinc-500 block font-medium">Formato ATS</span>
-                    <div className="flex items-baseline gap-1.5">
-                      <span className="text-2xl font-black text-zinc-900 dark:text-zinc-100">
+                  {/* ATS Format Score Card */}
+                  <div className={`p-3.5 rounded-2xl border ${atsBg} space-y-1.5`}>
+                    <span className="text-[10px] text-zinc-500 font-bold block">Formato ATS</span>
+                    <div className="flex items-baseline gap-1">
+                      <span className={`text-3xl font-black tracking-tight ${atsColor}`}>
                         {report.atsScore}%
                       </span>
                     </div>
-                    <div className="h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-700 overflow-hidden mt-1">
+                    <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-zinc-800 overflow-hidden">
                       <div
                         style={{ width: `${report.atsScore}%` }}
                         className={`h-full rounded-full ${
@@ -689,29 +736,29 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   </div>
                 </div>
 
-                {/* Desglose compacto de competencias */}
-                <div className="grid grid-cols-2 gap-1.5 text-[11px] pt-1">
-                  <div className="p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-800/30 flex items-center justify-between">
-                    <span className="text-zinc-500">Hard Skills:</span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                {/* Desglose compacto de competencias con badges de colores */}
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                  <div className="p-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/30 flex items-center justify-between">
+                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Hard Skills:</span>
+                    <span className="font-bold text-blue-700 dark:text-blue-400">
                       {report.categoryBreakdown.hardSkills.matched}/{report.categoryBreakdown.hardSkills.total}
                     </span>
                   </div>
-                  <div className="p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-800/30 flex items-center justify-between">
-                    <span className="text-zinc-500">Tools / Cloud:</span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                  <div className="p-2.5 rounded-xl bg-violet-50/50 dark:bg-violet-950/20 border border-violet-200/50 dark:border-violet-900/30 flex items-center justify-between">
+                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Tools / Cloud:</span>
+                    <span className="font-bold text-violet-700 dark:text-violet-400">
                       {report.categoryBreakdown.toolsPlatforms.matched}/{report.categoryBreakdown.toolsPlatforms.total}
                     </span>
                   </div>
-                  <div className="p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-800/30 flex items-center justify-between">
-                    <span className="text-zinc-500">Soft Skills:</span>
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100">
+                  <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/30 flex items-center justify-between">
+                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Soft Skills:</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
                       {report.categoryBreakdown.softSkills.matched}/{report.categoryBreakdown.softSkills.total}
                     </span>
                   </div>
-                  <div className="p-2 rounded-lg bg-zinc-50/80 dark:bg-zinc-800/30 flex items-center justify-between">
-                    <span className="text-zinc-500">Años Exp:</span>
-                    <span className={`font-bold ${report.categoryBreakdown.experienceYears.meets ? "text-emerald-600" : "text-amber-600"}`}>
+                  <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 flex items-center justify-between">
+                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Años Exp:</span>
+                    <span className={`font-bold ${report.categoryBreakdown.experienceYears.meets ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
                       {report.categoryBreakdown.experienceYears.candidateYears}/{report.categoryBreakdown.experienceYears.requiredYears ?? "—"}a
                     </span>
                   </div>
@@ -729,7 +776,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 onChange={(e) => {
                   setSelectedProfileId(e.target.value);
                 }}
-                className="w-full h-8 pl-2.5 pr-7 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:focus:ring-white/10 cursor-pointer"
+                className="w-full h-8 pl-2.5 pr-7 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:focus:ring-white/10 cursor-pointer"
               >
                 <option value="active">CV Activo en Editor ({resumeData.name || "Principal"})</option>
                 <option value="master">Perfil Base Maestro</option>
@@ -769,7 +816,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     key={act.id}
                     className="flex items-center justify-between text-[11px] p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800"
                   >
-                    <span className="text-zinc-700 dark:text-zinc-300 truncate mr-2">{act.description}</span>
+                    <span className="text-zinc-700 dark:text-zinc-300 truncate mr-2 font-medium">{act.description}</span>
                     <span className="text-[10px] font-mono text-zinc-400 shrink-0">
                       {new Date(act.createdAt).toLocaleDateString()}
                     </span>
