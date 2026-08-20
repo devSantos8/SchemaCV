@@ -49,6 +49,7 @@ import type { ApplicationStatus, Keyword } from "@/types/jobs";
 import { STATUS_LABELS } from "@/types/jobs";
 import type { EvaluationReport, ATSAuditRule } from "@/types/evaluator";
 import { AIChat } from "@/components/jobs/AIChat";
+import { buildResumeContext } from "@/lib/ai/prompts";
 import { ScoreProjectorSimulator } from "@/components/jobs/evaluate/ScoreProjectorSimulator";
 import { runATSEvaluationPipeline } from "@/lib/ats";
 import { toast } from "sonner";
@@ -1234,7 +1235,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
           jobTitle={application.title}
           company={application.company}
           jobDescription={descInput}
-          resumeSummary={currentResumeData.summary || ""}
+          resumeSummary={buildResumeContext(currentResumeData)}
           onClose={() => setShowChat(false)}
         />
       )}
