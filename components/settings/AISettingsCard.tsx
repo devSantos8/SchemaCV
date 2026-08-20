@@ -39,7 +39,7 @@ const PROVIDER_METAS: Record<
 > = {
   google: {
     name: "Google (Gemini)",
-    modelInfo: "Gemini 2.0 Flash / Pro",
+    modelInfo: "Gemini 1.5 Flash / Pro",
     icon: Sparkles,
   },
   openai: {

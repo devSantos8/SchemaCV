@@ -68,7 +68,7 @@ function getModel(provider: AIProvider, apiKey: string) {
   switch (provider) {
     case "google": {
       const google = createGoogleGenerativeAI({ apiKey: cleanKey });
-      return google("gemini-2.0-flash");
+      return google("gemini-1.5-flash");
     }
     case "openai": {
       const openai = createOpenAI({ apiKey: cleanKey });
@@ -191,21 +191,21 @@ export async function testAIConnection(
     const google = createGoogleGenerativeAI({ apiKey: cleanKey });
     try {
       const { text } = await generateText({
-        model: google("gemini-2.0-flash"),
+        model: google("gemini-1.5-flash"),
         prompt: "Responde: OK",
         maxOutputTokens: 5,
       });
-      return { ok: text.trim().length > 0, model: "gemini-2.0-flash" };
+      return { ok: text.trim().length > 0, model: "gemini-1.5-flash" };
     } catch (err: unknown) {
       const errStr = String(err);
-      if (errStr.includes("404") || errStr.includes("not found")) {
+      if (errStr.includes("404") || errStr.includes("not found") || errStr.includes("no longer available")) {
         try {
           const { text } = await generateText({
-            model: google("gemini-1.5-flash"),
+            model: google("gemini-1.5-pro"),
             prompt: "Responde: OK",
             maxOutputTokens: 5,
           });
-          return { ok: text.trim().length > 0, model: "gemini-1.5-flash" };
+          return { ok: text.trim().length > 0, model: "gemini-1.5-pro" };
         } catch (innerErr) {
           throw mapError(innerErr);
         }
@@ -222,7 +222,7 @@ export async function testAIConnection(
       maxOutputTokens: 5,
     });
     const modelMap: Record<AIProvider, string> = {
-      google: "gemini-2.0-flash",
+      google: "gemini-1.5-flash",
       openai: "gpt-4o-mini",
       anthropic: "claude-3-5-haiku",
     };
