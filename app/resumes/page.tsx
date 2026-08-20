@@ -6,7 +6,7 @@ import { AuthView } from "@/components/auth/AuthView";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 
-export default function RootPage() {
+export default function ResumesPage() {
   const { isAuthenticated, initSession } = useAuthStore();
   const router = useRouter();
 
@@ -20,7 +20,7 @@ export default function RootPage() {
 
   return (
     <DashboardView
-      initialSection="home"
+      initialSection="resumes"
       onOpenWorkspace={(profileId) => {
         router.push(profileId ? `/editor/${profileId}` : "/editor");
       }}

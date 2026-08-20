@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { LayoutGrid, Database, BookOpen, Cpu, Minimize2, GitFork, Globe2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
@@ -94,8 +95,33 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
   const [isCopied, setIsCopied] = useState(false);
   const [isAtsAuditOpen, setIsAtsAuditOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const router = useRouter();
 
-  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0];
+  const handleBackToDashboard = () => {
+    if (onBackToDashboard) {
+      onBackToDashboard();
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
+  const handleOpenSettings = () => {
+    if (onOpenSettings) {
+      onOpenSettings();
+    } else {
+      router.push("/settings");
+    }
+  };
+
+  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0] || {
+    id: "default",
+    name: "Mi Currículum",
+    targetRole: "Rol no definido",
+    templateId: activeTemplate,
+    paperSize: paperSize,
+    data: resumeData,
+    updatedAt: new Date().toISOString(),
+  };
 
   const toggleDarkMode = () => {
     const root = document.documentElement;
@@ -209,7 +235,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       <div className="flex items-center gap-3">
         {/* LOGOTIPO TIPOGRÁFICO MINIMALISTA (Clic lleva a Mis CVs / Dashboard) */}
         <div
-          onClick={onBackToDashboard}
+          onClick={handleBackToDashboard}
           className="flex items-baseline gap-1 select-none cursor-pointer group py-1"
           title="Volver a Mis CVs (Dashboard)"
         >
@@ -226,7 +252,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900/80 transition-colors text-left group"
+              className="flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900/80 transition-colors text-left group cursor-pointer"
             >
               <div className="flex items-center gap-2">
                 <div className="relative">
@@ -250,18 +276,14 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64 bg-card/95 backdrop-blur-md border-border">
-            {onBackToDashboard && (
-              <>
-                <DropdownMenuItem
-                  onClick={onBackToDashboard}
-                  className="text-xs font-semibold text-foreground cursor-pointer gap-2 py-2"
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>Ir al Dashboard (Mis CVs)</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            )}
+            <DropdownMenuItem
+              onClick={handleBackToDashboard}
+              className="text-xs font-semibold text-foreground cursor-pointer gap-2 py-2"
+            >
+              <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Ir al Dashboard (Mis CVs)</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
               <span>Versiones de CV</span>
               <Badge variant="outline" className="text-[10px] font-mono">

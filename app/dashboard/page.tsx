@@ -6,7 +6,7 @@ import { AuthView } from "@/components/auth/AuthView";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 
-export default function RootPage() {
+export default function DashboardPage() {
   const { isAuthenticated, initSession } = useAuthStore();
   const router = useRouter();
 

@@ -51,10 +51,14 @@ export const GithubIcon: React.FC<{ className?: string }> = ({ className = "h-4 
   </svg>
 );
 
-export const AuthView: React.FC = () => {
+interface AuthViewProps {
+  initialMode?: "login" | "register";
+}
+
+export const AuthView: React.FC<AuthViewProps> = ({ initialMode = "login" }) => {
   const { login, register, loginWithProvider, loginAsGuest, isLoading, error } = useAuthStore();
 
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { JobTrackerView } from "@/components/jobs/JobTrackerView";
 import { AISettingsCard } from "@/components/settings/AISettingsCard";
 import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
@@ -114,6 +115,64 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   academic_international: Globe2,
 };
 
+const TEMPLATE_METADATA_CONST: Record<TemplateId, { name: string; tag: string; description: string }> = {
+  harvard: {
+    name: "Harvard Classic",
+    tag: "Académico & Corporativo",
+    description: "Diseño tradicional de 1 columna con jerarquía tipográfica estándar ATS.",
+  },
+  tech_minimalist: {
+    name: "Tech Minimalist",
+    tag: "Ingeniería de Software",
+    description: "Compacto y denso, ideal para destacar stack tecnológico y métricas cuantificables.",
+  },
+  modern_executive: {
+    name: "Modern Executive",
+    tag: "Liderazgo & Gestión",
+    description: "Elegante y estructurado para directores, jefes de producto y líderes técnicos.",
+  },
+  skills_first: {
+    name: "Skills Focused",
+    tag: "Especialistas & Tech",
+    description: "Prioriza competencias técnicas y habilidades clave en la parte superior.",
+  },
+  stanford_clean: {
+    name: "Stanford Modern",
+    tag: "Innovación & Startups",
+    description: "Limpio, espaciado y moderno para roles en producto, diseño y tecnología.",
+  },
+  compact_swiss: {
+    name: "Compact Swiss Grid",
+    tag: "Alta Densidad 1 Página",
+    description: "Aprovecha al máximo el espacio vertical para carreras con amplia experiencia.",
+  },
+  executive_serif: {
+    name: "Executive Serif",
+    tag: "Finanzas & Legal",
+    description: "Tipografía clásica serif con elegancia editorial de alto impacto.",
+  },
+  tech_compact: {
+    name: "Tech Condensed",
+    tag: "DevOps & Cloud",
+    description: "Optimizado para certificaciones, herramientas cloud y arquitectura de sistemas.",
+  },
+  modern_minimal: {
+    name: "Minimalist Clean",
+    tag: "Diseño & General",
+    description: "Estructura simplificada y directa sin distracciones visuales.",
+  },
+  career_changer: {
+    name: "Career Transition",
+    tag: "Cambio de Carrera",
+    description: "Destaca habilidades transferibles y proyectos de impacto.",
+  },
+  academic_international: {
+    name: "Academic CV",
+    tag: "Investigación & PhD",
+    description: "Formato internacional para publicaciones, docencia y trayectoria académica.",
+  },
+};
+
 const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: string }> = {
   harvard: {
     bg: "bg-slate-500/10 dark:bg-slate-400/10",
@@ -176,14 +235,55 @@ type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "a
 type SettingsSubTab = "account" | "security" | "workspace" | "notifications" | "support" | "terms";
 
 interface DashboardViewProps {
-  onOpenWorkspace: () => void;
+  initialSection?: DashboardSection;
+  onOpenWorkspace: (profileId?: string) => void;
   onOpenSettings?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
+  initialSection = "home",
   onOpenWorkspace,
   onOpenSettings,
 }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const getSectionFromPath = (path: string | null): DashboardSection => {
+    if (!path) return initialSection;
+    if (path === "/resumes" || path.startsWith("/resumes")) return "resumes";
+    if (path === "/master-profile" || path.startsWith("/master-profile")) return "master_profile";
+    if (path === "/templates" || path.startsWith("/templates")) return "templates";
+    if (path === "/import" || path.startsWith("/import")) return "ai_import";
+    if (path === "/jobs" || path.startsWith("/jobs")) return "job_tracker";
+    if (path === "/settings" || path.startsWith("/settings")) return "settings";
+    return initialSection;
+  };
+
+  const [activeSection, setActiveSectionState] = useState<DashboardSection>(() => getSectionFromPath(pathname));
+
+  useEffect(() => {
+    if (pathname) {
+      setActiveSectionState(getSectionFromPath(pathname));
+    }
+  }, [pathname]);
+
+  const setActiveSection = (section: DashboardSection) => {
+    setActiveSectionState(section);
+    const routeMap: Record<DashboardSection, string> = {
+      home: "/dashboard",
+      resumes: "/resumes",
+      master_profile: "/master-profile",
+      templates: "/templates",
+      ai_import: "/import",
+      job_tracker: "/jobs",
+      settings: "/settings",
+    };
+    const target = routeMap[section] || "/dashboard";
+    if (pathname !== target) {
+      router.push(target);
+    }
+  };
+
   const {
     profiles,
     activeProfileId,
@@ -207,7 +307,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateUserProfile,
   } = useAuthStore();
 
-  const [activeSection, setActiveSection] = useState<DashboardSection>("home");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -936,7 +1035,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {activeSection === "home" && (
               <Button
                 size="sm"
-                onClick={onOpenWorkspace}
+                onClick={() => onOpenWorkspace()}
                 className="h-8 px-3.5 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90"
               >
                 <span>Abrir Editor</span>
@@ -1101,7 +1200,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Tarjetas de Accesos Directos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
-                  onClick={activeProfile ? onOpenWorkspace : () => setIsWizardOpen(true)}
+                  onClick={activeProfile ? () => onOpenWorkspace() : () => setIsWizardOpen(true)}
                   className="p-5 rounded-2xl border border-border bg-card hover:border-foreground/30 cursor-pointer transition-all flex items-center justify-between group shadow-2xs"
                 >
                   <div className="space-y-1">
