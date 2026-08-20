@@ -40,6 +40,7 @@ import { useAISettingsStore } from "@/store/useAISettingsStore";
 import type { EvaluationReport, ATSAuditRule } from "@/types/evaluator";
 import type { ApplicationStatus, Keyword } from "@/types/jobs";
 import { ScoreProjectorSimulator } from "@/components/jobs/evaluate/ScoreProjectorSimulator";
+import { MatchKeywordsTab } from "@/components/jobs/evaluate/MatchKeywordsTab";
 import { AIChat } from "@/components/jobs/AIChat";
 import { runATSEvaluationPipeline } from "@/lib/ats";
 import { toast } from "sonner";
@@ -103,7 +104,7 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isScrapingDesc, setIsScrapingDesc] = useState(false);
   const [manualDescInput, setManualDescInput] = useState("");
-  const [activeTab, setActiveTab] = useState<"checklist" | "match" | "simulation" | "offer_text">("checklist");
+  const [activeTab, setActiveTab] = useState<"match" | "checklist" | "simulation" | "offer_text">("match");
   const [report, setReport] = useState<EvaluationReport | null>(null);
   const [evalError, setEvalError] = useState<string | null>(null);
   const [filterRuleStatus, setFilterRuleStatus] = useState<"all" | "fail" | "warning" | "pass">("all");
@@ -425,6 +426,19 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
               <div className="flex items-center gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/60 rounded-2xl border border-zinc-200/60 dark:border-zinc-700/60 w-fit flex-wrap">
                 <button
                   type="button"
+                  onClick={() => setActiveTab("match")}
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                    activeTab === "match"
+                      ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                  }`}
+                >
+                  <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                  <span>Comparativa y Fit Técnico ({report?.requirements?.length || 0})</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setActiveTab("checklist")}
                   className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                     activeTab === "checklist"
@@ -434,19 +448,6 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
                 >
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                   <span>Checklist de Normas ATS ({report?.auditRules?.length || 10})</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("match")}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                    activeTab === "match"
-                      ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-                  }`}
-                >
-                  <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                  <span>Match y Competencias ({report?.requirements?.length || 0})</span>
                 </button>
 
                 <button
@@ -615,45 +616,9 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
                 </div>
               )}
 
-              {/* ─── TAB 2: MATCH Y COMPETENCIAS ─── */}
-              {activeTab === "match" && (
-                <div className="space-y-4">
-                  {/* Simulador Proyectado */}
-                  {report?.missingKeywords && report.missingKeywords.length > 0 && (
-                    <ScoreProjectorSimulator
-                      currentScore={report.matchScore}
-                      missingKeywords={report.missingKeywords}
-                    />
-                  )}
-
-                  {/* Requisitos Evaluados */}
-                  <div className="space-y-2.5">
-                    <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                      Requisitos Detectados en la Oferta:
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {report?.requirements.map((req) => (
-                        <div
-                          key={req.id}
-                          className="p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between text-xs"
-                        >
-                          <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate mr-2">
-                            {req.text}
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md font-mono shrink-0 ${
-                              req.matched
-                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-                                : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
-                            }`}
-                          >
-                            {req.matched ? "Presente" : "Falta en CV"}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+              {/* ─── TAB 1: COMPARATIVA Y FIT TÉCNICO (MATCH) ─── */}
+              {activeTab === "match" && report && (
+                <MatchKeywordsTab report={report} />
               )}
 
               {/* ─── TAB 3: SIMULACIÓN DE LECTURA DEL ROBOT ATS ─── */}
