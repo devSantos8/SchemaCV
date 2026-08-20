@@ -90,6 +90,11 @@ export const useAIChatStore = create<AIChatState>()(
         const current = state.getCurrentSession();
         const now = Date.now();
 
+        // Evitar duplicados exactos por ID
+        if (current.messages.some((m) => m.id === message.id)) {
+          return;
+        }
+
         // Si es el primer mensaje de usuario, usarlo como título de la sesión
         let newTitle = current.title;
         if (message.role === "user" && current.messages.filter((m) => m.role === "user").length === 0) {

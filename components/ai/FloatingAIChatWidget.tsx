@@ -186,19 +186,7 @@ export function FloatingAIChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent, isLoading]);
 
-  // Mensaje de bienvenida inicial por sesión si está vacía
-  useEffect(() => {
-    if (messages.length === 0) {
-      const candidateName = resumeData.name || user?.name || "profesional";
-      const welcome: ChatMessage = {
-        id: `welcome-${currentSession.id}`,
-        role: "assistant",
-        content: `¡Hola ${candidateName}! 👋 Soy tu Copilot de carrera y optimización ATS en SchemaCV.\n\nTengo acceso a tu CV completo y a tus postulaciones. Puedo ayudarte a:\n• Mejorar la redacción de tu experiencia con métricas de impacto.\n• Auditar la compatibilidad de tu CV con ofertas de empleo.\n• Simular entrevistas técnicas con la metodología STAR.\n\n¿En qué te gustaría trabajar hoy?`,
-        createdAt: new Date().toISOString(),
-      };
-      addMessage(welcome);
-    }
-  }, [currentSession.id, messages.length, resumeData.name, user?.name, addMessage]);
+  const candidateName = resumeData.name || user?.name || "profesional";
 
   // Comprobar inactividad al abrir el chat
   useEffect(() => {
@@ -514,11 +502,30 @@ export function FloatingAIChatWidget() {
               <>
                 {/* Cuerpo del Chat / Mensajes */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 text-xs">
-                  {messages.map((msg) => {
+                  {/* Mensaje de Bienvenida Inicial */}
+                  {messages.length === 0 && (
+                    <motion.div
+                      key={`static-welcome-${currentSession.id}`}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex items-start gap-2.5"
+                    >
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xs">
+                        <Sparkles className="w-3 h-3" />
+                      </div>
+                      <div className="max-w-[85%] p-3.5 rounded-2xl leading-relaxed bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-tl-xs border border-zinc-200/60 dark:border-zinc-800/80">
+                        <MarkdownMessageRenderer
+                          content={`¡Hola ${candidateName}! 👋 Soy tu Copilot de carrera y optimización ATS en SchemaCV.\n\nTengo acceso a tu CV completo y a tus postulaciones. Puedo ayudarte a:\n• Mejorar la redacción de tu experiencia con métricas de impacto.\n• Auditar la compatibilidad de tu CV con ofertas de empleo.\n• Simular entrevistas técnicas con la metodología STAR.\n\n¿En qué te gustaría trabajar hoy?`}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {messages.map((msg, index) => {
                     const isUser = msg.role === "user";
                     return (
                       <motion.div
-                        key={msg.id}
+                        key={`${msg.id}-${index}`}
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.2 }}
