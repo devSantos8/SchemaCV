@@ -8,10 +8,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { useResumeStore } from "@/store/useResumeStore";
 import { ResumeData, TemplateId } from "@/types/resume";
-import { SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
+import { useAuthStore } from "@/store/useAuthStore";
+import { EMPTY_RESUME_DATA, SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
 import { TEMPLATE_METADATA } from "@/components/templates/TemplateRenderer";
 import {
   Sparkles,
@@ -65,7 +67,7 @@ const PRESET_ROLES = [
   {
     id: "preset_fullstack",
     title: "Full Stack & Cloud Engineer",
-    description: "React, Next.js, Node.js, TypeScript, Docker y CI/CD.",
+    description: "Estructura optimizada para desarrollo web y cloud.",
     roleName: "Senior Full Stack & Cloud Developer",
     template: "tech_minimalist" as TemplateId,
     icon: Code2,
@@ -73,7 +75,7 @@ const PRESET_ROLES = [
   {
     id: "preset_backend",
     title: "Backend & Systems Architect",
-    description: "APIs de alta concurrencia, PostgreSQL y microservicios.",
+    description: "Estructura orientada a APIs, bases de datos y microservicios.",
     roleName: "Backend Engineer & Systems Architect",
     template: "harvard" as TemplateId,
     icon: Server,
@@ -81,7 +83,7 @@ const PRESET_ROLES = [
   {
     id: "preset_lead",
     title: "Tech Lead & Engineering Manager",
-    description: "Liderazgo técnico, metodologías ágiles y arquitectura.",
+    description: "Estructura para liderazgo técnico y gestión de ingeniería.",
     roleName: "Tech Lead / Engineering Manager",
     template: "modern_executive" as TemplateId,
     icon: Briefcase,
@@ -134,17 +136,18 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
   onComplete,
 }) => {
   const { createProfile, loadImportedResume, setActiveTemplate, masterProfileData } = useResumeStore();
+  const { user } = useAuthStore();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [startMethod, setStartMethod] = useState<StartMethod>("master_base");
 
   // Datos del Paso 2
-  const [profileName, setProfileName] = useState("CV desde Perfil Base");
-  const [targetRole, setTargetRole] = useState(masterProfileData?.headline || "Senior Full Stack & Cloud Developer");
-  const [candidateName, setCandidateName] = useState(masterProfileData?.name || "Carlos Mendoza Rivera");
-  const [candidateEmail, setCandidateEmail] = useState(masterProfileData?.email || "carlos.mendoza.dev@example.com");
-  const [candidatePhone, setCandidatePhone] = useState(masterProfileData?.phone || "+1 (555) 382-9102");
-  const [candidateLocation, setCandidateLocation] = useState(masterProfileData?.location || "San Francisco, CA (Remoto)");
+  const [profileName, setProfileName] = useState("Mi Currículum");
+  const [targetRole, setTargetRole] = useState(masterProfileData?.headline || "Ingeniero de Software");
+  const [candidateName, setCandidateName] = useState(user?.name || masterProfileData?.name || "");
+  const [candidateEmail, setCandidateEmail] = useState(user?.email || masterProfileData?.email || "");
+  const [candidatePhone, setCandidatePhone] = useState(masterProfileData?.phone || "");
+  const [candidateLocation, setCandidateLocation] = useState(masterProfileData?.location || "");
 
   // Ingesta con IA
   const [file, setFile] = useState<File | null>(null);
@@ -254,50 +257,19 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
       finalResumeData = {
         name: candidateName,
         headline: targetRole,
-        summary: "Resumen profesional enfocado en el logro de resultados técnicos y métricas de impacto.",
+        summary: "",
         email: candidateEmail,
         phone: candidatePhone,
         location: candidateLocation,
         social_networks: [],
-        skills: [
-          {
-            id: "skills-core",
-            category: "Languages & Core",
-            skills: ["TypeScript", "Python", "SQL"],
-          },
-        ],
-        experience: [
-          {
-            id: `exp-${Date.now()}-1`,
-            company: "Empresa Tecnológica",
-            position: targetRole,
-            location: candidateLocation,
-            start_date: "2024",
-            end_date: "Presente",
-            current: true,
-            highlights: [
-              "Desarrollé funcionalidades clave utilizando tecnologías modernas, logrando optimizaciones medibles.",
-            ],
-            summary: "",
-          },
-        ],
+        skills: [],
+        experience: [],
         projects: [],
-        education: [
-          {
-            id: `edu-${Date.now()}-1`,
-            institution: "Universidad / Instituto",
-            degree: "Ingeniería en Informática",
-            area: "Desarrollo de Software",
-            location: candidateLocation,
-            start_date: "2020",
-            end_date: "2024",
-            current: false,
-            highlights: [],
-          },
-        ],
+        education: [],
         certifications: [],
         custom_sections: [],
         section_order: ["summary", "skills", "experience", "projects", "education", "certifications"],
+        hidden_sections: [],
       };
     } else if (startMethod === "master_base") {
       finalResumeData = {
@@ -309,8 +281,9 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
         location: candidateLocation || masterProfileData.location,
       };
     } else {
+      // Roles predefinidos: estructura limpia orientada al rol
       finalResumeData = {
-        ...SAMPLE_RESUME_FULLSTACK,
+        ...EMPTY_RESUME_DATA,
         name: candidateName,
         headline: targetRole,
         email: candidateEmail,
@@ -322,6 +295,10 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
     createProfile(profileName, targetRole, false);
     loadImportedResume(finalResumeData);
     setActiveTemplate(selectedTemplate);
+
+    toast.success("¡Currículum creado con éxito!", {
+      description: `"${profileName}" listo para editar.`,
+    });
 
     onOpenChange(false);
     onComplete();

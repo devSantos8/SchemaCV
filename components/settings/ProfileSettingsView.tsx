@@ -25,6 +25,7 @@ import {
   CheckCircle2,
   Layers,
   FileDown,
+  Trash2,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useResumeStore } from "@/store/useResumeStore";
@@ -34,6 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BANNER_THEMES } from "../dashboard/ProfileSettingsModal";
+import { DeleteAccountModal } from "./DeleteAccountModal";
 
 const GithubIcon: React.FC<{ className?: string }> = ({ className = "h-3.5 w-3.5" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -76,6 +78,7 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onBack
   const [syncWithActiveCv, setSyncWithActiveCv] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -612,9 +615,36 @@ export const ProfileSettingsView: React.FC<ProfileSettingsViewProps> = ({ onBack
                 </Button>
               </div>
             </form>
+
+            {/* Zona de Peligro: Eliminar Cuenta */}
+            <div className="p-4 sm:p-5 rounded-2xl border border-red-200/80 dark:border-red-950/80 bg-red-50/30 dark:bg-red-950/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                  <Trash2 className="h-4 w-4" />
+                  <span>Zona de Peligro — Eliminar Cuenta</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground max-w-md">
+                  Elimina permanentemente tu cuenta, tus currículums guardados, perfil base y postulaciones. Esta acción no se puede deshacer.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="h-8.5 text-xs font-semibold rounded-xl text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-100/50 dark:hover:bg-red-950/40 shrink-0 cursor-pointer"
+              >
+                Eliminar Cuenta...
+              </Button>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Modal de Confirmación para Eliminar Cuenta */}
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+      />
     </div>
   );
 };

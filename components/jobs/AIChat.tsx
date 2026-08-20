@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +25,83 @@ function TypingIndicator() {
           transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15, ease: "easeInOut" }}
         />
       ))}
+    </div>
+  );
+}
+
+function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?: boolean }) {
+  const parseInlineMarkdown = (text: string) => {
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+        return (
+          <strong
+            key={index}
+            className={`font-bold ${
+              isUser ? "text-white dark:text-zinc-900" : "text-zinc-900 dark:text-zinc-50"
+            }`}
+          >
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      if (part.startsWith("*") && part.endsWith("*") && part.length >= 2 && !part.startsWith("**")) {
+        return (
+          <em key={index} className="italic opacity-90">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
+      if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+        return (
+          <code
+            key={index}
+            className={`px-1 py-0.5 rounded font-mono text-[11px] ${
+              isUser
+                ? "bg-zinc-800 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-900"
+                : "bg-zinc-200/80 dark:bg-zinc-800 text-violet-600 dark:text-violet-400"
+            }`}
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      return part;
+    });
+  };
+
+  const lines = content.split("\n");
+
+  return (
+    <div className="space-y-1.5 leading-relaxed text-xs">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-1" />;
+
+        if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("* ")) {
+          const bulletText = trimmed.replace(/^[-•*]\s*/, "");
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-0.5">
+              <span className={`font-bold mt-0.5 ${isUser ? "text-zinc-300" : "text-violet-500"}`}>•</span>
+              <span className="flex-1 leading-snug">{parseInlineMarkdown(bulletText)}</span>
+            </div>
+          );
+        }
+
+        const numMatch = trimmed.match(/^(\d+)[\.\)]\s*(.+)/);
+        if (numMatch) {
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-0.5">
+              <span className={`font-mono font-bold shrink-0 ${isUser ? "text-zinc-300" : "text-violet-600 dark:text-violet-400"}`}>
+                {numMatch[1]}.
+              </span>
+              <span className="flex-1 leading-snug">{parseInlineMarkdown(numMatch[2])}</span>
+            </div>
+          );
+        }
+
+        return <p key={idx} className="leading-snug">{parseInlineMarkdown(line)}</p>;
+      })}
     </div>
   );
 }
@@ -202,12 +279,12 @@ export function AIChat({ jobTitle, company, jobDescription, resumeSummary, onClo
                   : <Sparkles className="w-3 h-3 text-white" />
                 }
               </div>
-              <div className={`max-w-[280px] px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
+              <div className={`max-w-[280px] px-3 py-2 rounded-2xl text-sm leading-relaxed ${
                 msg.role === "user"
                   ? "rounded-tr-sm bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                   : "rounded-tl-sm bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
               }`}>
-                {msg.content}
+                <MarkdownMessageRenderer content={msg.content} isUser={msg.role === "user"} />
               </div>
             </motion.div>
           ))}
@@ -222,8 +299,8 @@ export function AIChat({ jobTitle, company, jobDescription, resumeSummary, onClo
               <div className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center mt-0.5 bg-gradient-to-br from-violet-500 to-indigo-600">
                 <Sparkles className="w-3 h-3 text-white" />
               </div>
-              <div className="max-w-[280px] px-3 py-2 rounded-2xl rounded-tl-sm text-sm leading-relaxed bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100 whitespace-pre-wrap">
-                {streamingContent}
+              <div className="max-w-[280px] px-3 py-2 rounded-2xl rounded-tl-sm text-sm leading-relaxed bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100">
+                <MarkdownMessageRenderer content={streamingContent} />
                 <motion.span
                   animate={{ opacity: [1, 0] }}
                   transition={{ duration: 0.5, repeat: Infinity }}

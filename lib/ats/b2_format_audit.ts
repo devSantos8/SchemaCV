@@ -1,4 +1,4 @@
-﻿import type { ResumeData } from '@/types/resume';
+import type { ResumeData } from '@/types/resume';
 import type { ATSAuditRule, ATSParsedSimulation } from '@/types/evaluator';
 
 /**
@@ -11,7 +11,9 @@ export function auditATSFormat(input: {
   sourceType: 'schema_profile' | 'uploaded_pdf';
 }): { rules: ATSAuditRule[]; atsScore: number } {
   const { simulation, resumeData, sourceType } = input;
-  const rawText = simulation.rawExtractedText;
+  const rawText = simulation.rawExtractedText || '';
+  const wordCount = simulation.wordCount || 0;
+  const isBlankOrEmpty = wordCount < 30 || (!resumeData?.name && !rawText.trim());
   const rules: ATSAuditRule[] = [];
 
   // ─── 1. Layout de 1 Sola Columna Secuencial ─────────────────────────────────
@@ -20,11 +22,13 @@ export function auditATSFormat(input: {
     id: 'single_column',
     name: 'Estructura de 1 Columna (Lectura Secuencial)',
     category: 'layout',
-    status: hasReadingOrderIssue ? 'fail' : 'pass',
+    status: isBlankOrEmpty ? 'fail' : hasReadingOrderIssue ? 'fail' : 'pass',
     severity: 'critical',
     scoreWeight: 15,
-    scoreEarned: hasReadingOrderIssue ? 0 : 15,
-    message: hasReadingOrderIssue
+    scoreEarned: isBlankOrEmpty ? 0 : hasReadingOrderIssue ? 0 : 15,
+    message: isBlankOrEmpty
+      ? 'Documento vacío o sin texto suficiente para validar estructura lineal.'
+      : hasReadingOrderIssue
       ? 'Se detectó desorden o fragmentación en las secciones de experiencia/educación.'
       : 'Estructura lineal top-to-bottom correcta sin sidebars ni columnas flotantes.',
     detail: hasReadingOrderIssue ? simulation.readingOrderIssues.join(' ') : undefined,
@@ -36,7 +40,9 @@ export function auditATSFormat(input: {
   });
 
   // ─── 2. Datos de Contacto en el Cuerpo Principal ────────────────────────────
-  const hasContact = Boolean(simulation.detectedContact.email || simulation.detectedContact.phone);
+  const hasEmail = Boolean(simulation.detectedContact.email && simulation.detectedContact.email.trim());
+  const hasPhone = Boolean(simulation.detectedContact.phone && simulation.detectedContact.phone.trim());
+  const hasContact = hasEmail || hasPhone;
   const contactInBody = simulation.detectedContact.isInBody;
   const contactPassed = hasContact && contactInBody;
 
@@ -50,7 +56,7 @@ export function auditATSFormat(input: {
     scoreEarned: contactPassed ? 15 : hasContact ? 7 : 0,
     message: contactPassed
       ? `Contacto identificado (${simulation.detectedContact.email || 'Email'}, ${simulation.detectedContact.phone || 'Teléfono'}).`
-      : 'No se detectó email o teléfono en el texto accesible del documento.',
+      : 'No se detectó email o teléfono de contacto en el texto del currículum.',
     detail: !hasContact ? 'El parser no pudo extraer ninguna dirección de correo o teléfono.' : undefined,
     fixGuide: {
       whyItMatters: 'Muchos sistemas ATS omiten las cabeceras y pies de página (headers/footers) del PDF al extraer el texto plano.',
@@ -69,11 +75,13 @@ export function auditATSFormat(input: {
     id: 'standard_headings',
     name: 'Encabezados de Sección Canónicos',
     category: 'headings',
-    status: headingsPassed ? 'pass' : nonStandardSections.length > 0 ? 'fail' : 'warning',
+    status: isBlankOrEmpty || totalSections === 0 ? 'fail' : headingsPassed ? 'pass' : nonStandardSections.length > 0 ? 'fail' : 'warning',
     severity: 'critical',
     scoreWeight: 15,
-    scoreEarned: headingsPassed ? 15 : nonStandardSections.length > 0 ? 5 : 8,
-    message: headingsPassed
+    scoreEarned: isBlankOrEmpty || totalSections === 0 ? 0 : headingsPassed ? 15 : nonStandardSections.length > 0 ? 5 : 8,
+    message: isBlankOrEmpty || totalSections === 0
+      ? 'No se identificaron encabezados de sección estándar en el documento.'
+      : headingsPassed
       ? `Todos los encabezados (${totalSections}) usan nombres estándar reconocibles por ATS.`
       : nonStandardSections.length > 0
       ? `Encabezados no estándar detectados: ${nonStandardSections.map((s) => `"${s.detectedHeader}"`).join(', ')}.`
@@ -87,23 +95,39 @@ export function auditATSFormat(input: {
   });
 
   // ─── 4. Consistencia y Legibilidad de Fechas ─────────────────────────────────
-  // Detectar patrones de fechas (con mes obligatorio)
   const dateWithMonthRegex = /(?:Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{1,2}\/|\d{4}-\d{2})[\w\s.-]*\d{4}/gi;
   const yearOnlyRegex = /\b(19\d\d|20\d\d)\s*[-—–]\s*(19\d\d|20\d\d|Presente|Present)\b/gi;
   
   const datesWithMonth = (rawText.match(dateWithMonthRegex) || []).length;
   const yearsOnly = (rawText.match(yearOnlyRegex) || []).length;
-  const datesPassed = datesWithMonth > 0 || (resumeData?.experience?.length ? resumeData.experience.every((e) => Boolean(e.start_date)) : true);
+  const hasExperienceEntries = (resumeData?.experience?.filter((e) => !e.hidden)?.length ?? 0) > 0;
+  const datesPassed = hasExperienceEntries
+    ? resumeData!.experience!.every((e) => Boolean(e.start_date))
+    : datesWithMonth > 0;
 
   rules.push({
     id: 'date_consistency',
     name: 'Fechas con Mes y Año Estructurados',
     category: 'dates',
-    status: datesPassed ? 'pass' : yearsOnly > 0 ? 'warning' : 'fail',
+    status: isBlankOrEmpty || (!hasExperienceEntries && datesWithMonth === 0 && yearsOnly === 0)
+      ? 'fail'
+      : datesPassed
+      ? 'pass'
+      : yearsOnly > 0
+      ? 'warning'
+      : 'fail',
     severity: 'warning',
     scoreWeight: 10,
-    scoreEarned: datesPassed ? 10 : yearsOnly > 0 ? 6 : 2,
-    message: datesPassed
+    scoreEarned: isBlankOrEmpty || (!hasExperienceEntries && datesWithMonth === 0 && yearsOnly === 0)
+      ? 0
+      : datesPassed
+      ? 10
+      : yearsOnly > 0
+      ? 6
+      : 2,
+    message: isBlankOrEmpty || (!hasExperienceEntries && datesWithMonth === 0 && yearsOnly === 0)
+      ? 'No se encontraron fechas de empleo ni historial cronológico registrado.'
+      : datesPassed
       ? 'Fechas estructuradas detectadas correctamente con mes y año.'
       : 'Se detectaron fechas solo con año o rangos incompletos sin mes.',
     detail: yearsOnly > 0 ? 'Poner solo el año ("2022 - 2023") confunde el cálculo de meses de experiencia en el ATS.' : undefined,
@@ -122,11 +146,13 @@ export function auditATSFormat(input: {
     id: 'standard_bullets',
     name: 'Viñetas Estándar (•)',
     category: 'bullets',
-    status: hasWeirdBullets ? 'fail' : 'pass',
+    status: isBlankOrEmpty ? 'warning' : hasWeirdBullets ? 'fail' : 'pass',
     severity: 'warning',
     scoreWeight: 10,
-    scoreEarned: hasWeirdBullets ? 2 : 10,
-    message: hasWeirdBullets
+    scoreEarned: isBlankOrEmpty ? 3 : hasWeirdBullets ? 2 : 10,
+    message: isBlankOrEmpty
+      ? 'No hay viñetas ni logros laborales redactados aún.'
+      : hasWeirdBullets
       ? 'Se detectaron flechas, íconos decorativos o checks en lugar de viñetas estándar.'
       : 'Viñetas y listas con formato estándar limpio.',
     detail: hasWeirdBullets ? 'Los glifos especiales se extraen a menudo como caracteres basura o rompen la línea.' : undefined,
@@ -143,12 +169,14 @@ export function auditATSFormat(input: {
     id: 'clean_encoding',
     name: 'Codificación Limpia UTF-8 (Acentos y Ñ)',
     category: 'encoding',
-    status: hasEncodingIssue ? 'fail' : 'pass',
+    status: hasEncodingIssue ? 'fail' : isBlankOrEmpty ? 'warning' : 'pass',
     severity: 'critical',
     scoreWeight: 10,
-    scoreEarned: hasEncodingIssue ? 0 : 10,
+    scoreEarned: hasEncodingIssue ? 0 : isBlankOrEmpty ? 4 : 10,
     message: hasEncodingIssue
       ? `Se detectaron caracteres corruptos (mojibake): ${simulation.encodingIssues.corruptedCharacters.slice(0, 5).join(', ')}.`
+      : isBlankOrEmpty
+      ? 'Texto insuficiente para comprobar codificación.'
       : 'Texto 100% libre de caracteres corruptos o fallas de codificación.',
     fixGuide: {
       whyItMatters: 'Si un acento se corrompe en "GestiÃ³n", el ATS no encontrará la palabra clave "Gestión".',
@@ -157,38 +185,54 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 7. Texto Seleccionable y Libre de Rasterización ─────────────────────────
+  // ─── 7. Densidad de Texto y Seleccionabilidad (Copy-Paste Test) ──────────────
   const isSelectable = simulation.ocrConfidence >= 80;
+  const hasGoodWordCount = wordCount >= 180;
+  const isModerateWordCount = wordCount >= 70;
+
   rules.push({
     id: 'selectable_text',
-    name: 'Texto 100% Seleccionable (Copy-Paste Test)',
+    name: 'Densidad de Contenido & Texto Seleccionable',
     category: 'content',
-    status: isSelectable ? 'pass' : simulation.ocrConfidence >= 50 ? 'warning' : 'fail',
+    status: isBlankOrEmpty || wordCount < 40
+      ? 'fail'
+      : hasGoodWordCount && isSelectable
+      ? 'pass'
+      : 'warning',
     severity: 'critical',
     scoreWeight: 10,
-    scoreEarned: isSelectable ? 10 : simulation.ocrConfidence >= 50 ? 4 : 0,
-    message: isSelectable
-      ? `Documento con capa de texto digital nítida (${simulation.wordCount} palabras detectadas).`
-      : 'Documento con poco texto seleccionable o posible imagen escaneada/rasterizada.',
+    scoreEarned: isBlankOrEmpty || wordCount < 40
+      ? 0
+      : hasGoodWordCount && isSelectable
+      ? 10
+      : isModerateWordCount
+      ? 5
+      : 2,
+    message: isBlankOrEmpty || wordCount < 40
+      ? `Contenido insuficiente (${wordCount} palabras). Un CV profesional para ATS requiere entre 250 y 650 palabras.`
+      : hasGoodWordCount
+      ? `Documento con capa de texto nítida y densidad adecuada (${wordCount} palabras).`
+      : `Contenido escaso (${wordCount} palabras). Se recomienda expandir descripciones de logros.`,
     fixGuide: {
-      whyItMatters: 'Los ATS no pueden leer imágenes escaneadas ni PDFs generados como imagen (Canvas / Photoshop).',
-      howToFix: 'Genera el PDF con texto vectorial nativo.',
+      whyItMatters: 'Un CV con menos de 150 palabras carece de densidad de palabras clave técnicas para superar el filtro del robot.',
+      howToFix: 'Agrega detalles cuantificables y viñetas de logros en cada experiencia.',
       example: 'Verifica seleccionando el texto con Ctrl+A en tu visor de PDF.',
     },
   });
 
   // ─── 8. Sin Elementos Gráficos ni Fotos Innecesarias ────────────────────────
-  // En SchemaCV las plantillas son ATS-first sin fotos.
   const hasPhotoRisk = sourceType === 'uploaded_pdf' && rawText.length < 250;
   rules.push({
     id: 'no_graphics_photos',
     name: 'Sin Gráficos, Barras de Progreso ni Fotos',
     category: 'layout',
-    status: hasPhotoRisk ? 'warning' : 'pass',
+    status: hasPhotoRisk ? 'warning' : isBlankOrEmpty ? 'warning' : 'pass',
     severity: 'info',
     scoreWeight: 5,
-    scoreEarned: hasPhotoRisk ? 2 : 5,
-    message: hasPhotoRisk
+    scoreEarned: hasPhotoRisk || isBlankOrEmpty ? 2 : 5,
+    message: isBlankOrEmpty
+      ? 'Pendiente de contenido estructurado.'
+      : hasPhotoRisk
       ? 'Precaución: asegúrate de no incluir fotos o barras porcentuales de habilidades.'
       : 'Formato limpio de texto sin elementos gráficos que obstaculicen la lectura.',
     fixGuide: {
@@ -203,11 +247,13 @@ export function auditATSFormat(input: {
     id: 'web_safe_typography',
     name: 'Tipografía Estándar y Alto Contraste',
     category: 'typography',
-    status: 'pass',
+    status: isBlankOrEmpty ? 'warning' : 'pass',
     severity: 'info',
     scoreWeight: 5,
-    scoreEarned: 5,
-    message: 'Fuentes estándar compatibles con renderizado vectorial limpio.',
+    scoreEarned: isBlankOrEmpty ? 2 : 5,
+    message: isBlankOrEmpty
+      ? 'Tipografía base configurada.'
+      : 'Fuentes estándar compatibles con renderizado vectorial limpio.',
     fixGuide: {
       whyItMatters: 'Fuentes decorativas o no estándar pueden no estar embebidas y causar caracteres invisibles en el ATS.',
       howToFix: 'Usa familias tipográficas estándar (EB Garamond, Calibri, Arial, Helvetica, Georgia).',
@@ -217,22 +263,25 @@ export function auditATSFormat(input: {
 
   // ─── 10. Completitud Esencial de Secciones ──────────────────────────────────
   const canonicalNames = new Set(simulation.detectedSections.map((s) => s.canonicalName));
-  const hasExperience = canonicalNames.has('experience') || (resumeData?.experience?.length ?? 0) > 0;
-  const hasSkills = canonicalNames.has('skills') || (resumeData?.skills?.length ?? 0) > 0;
-  const hasEducation = canonicalNames.has('education') || (resumeData?.education?.length ?? 0) > 0;
+  const hasExperience = (resumeData?.experience?.filter((e) => !e.hidden)?.length ?? 0) > 0 || canonicalNames.has('experience');
+  const hasSkills = (resumeData?.skills?.filter((s) => !s.hidden)?.length ?? 0) > 0 || canonicalNames.has('skills');
+  const hasEducation = (resumeData?.education?.filter((ed) => !ed.hidden)?.length ?? 0) > 0 || canonicalNames.has('education');
   const completenessPassed = hasExperience && hasSkills && hasEducation;
+  const missingCount = [!hasExperience, !hasSkills, !hasEducation].filter(Boolean).length;
 
   rules.push({
     id: 'section_completeness',
     name: 'Completitud de Secciones Esenciales',
     category: 'content',
-    status: completenessPassed ? 'pass' : 'warning',
+    status: completenessPassed ? 'pass' : isBlankOrEmpty || missingCount >= 2 ? 'fail' : 'warning',
     severity: 'critical',
     scoreWeight: 5,
-    scoreEarned: completenessPassed ? 5 : 2,
+    scoreEarned: completenessPassed ? 5 : isBlankOrEmpty || missingCount >= 2 ? 0 : 2,
     message: completenessPassed
       ? 'Secciones clave presentes (Experiencia, Habilidades, Educación y Contacto).'
-      : 'Falta al menos una sección clave en el documento.',
+      : isBlankOrEmpty
+      ? 'Currículum en blanco; faltan las 3 secciones indispensables (Experiencia, Habilidades, Educación).'
+      : `Faltan secciones clave: ${[!hasExperience ? 'Experiencia' : '', !hasSkills ? 'Habilidades' : '', !hasEducation ? 'Educación' : ''].filter(Boolean).join(', ')}.`,
     fixGuide: {
       whyItMatters: 'Un CV sin sección explícita de habilidades o educación es descartado automáticamente por filtros de preselección.',
       howToFix: 'Asegúrate de incluir siempre las 4 secciones fundamentales.',
@@ -242,7 +291,9 @@ export function auditATSFormat(input: {
 
   // Calcular score total (0-100)
   const totalEarned = rules.reduce((acc, r) => acc + r.scoreEarned, 0);
-  const atsScore = Math.max(0, Math.min(100, Math.round(totalEarned)));
+  const atsScore = isBlankOrEmpty
+    ? Math.min(15, Math.round(totalEarned))
+    : Math.max(0, Math.min(100, Math.round(totalEarned)));
 
   return { rules, atsScore };
 }

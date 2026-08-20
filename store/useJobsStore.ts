@@ -11,6 +11,8 @@ import type {
 } from "@/types/jobs";
 import type { ResumeData } from "@/types/resume";
 import { extractKeywordsLocal, computeMatchScore } from "@/lib/ai/localAnalyzer";
+import { useAuthStore } from "./useAuthStore";
+import { upsertJobToSupabase, deleteJobFromSupabase, saveATSEvaluationToSupabase } from "@/lib/supabase/db";
 
 const STALE_DAYS = 7;
 
@@ -27,6 +29,17 @@ function addActivity(
     { id: crypto.randomUUID(), type, description, createdAt: now() },
     ...activities,
   ].slice(0, 50);
+}
+
+function syncJobIfAuthenticated(job: JobApplication) {
+  try {
+    const user = useAuthStore.getState().user;
+    if (user && !user.isDemoUser && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
+      upsertJobToSupabase(user.id, job);
+    }
+  } catch (err) {
+    console.error("Error en sync de job:", err);
+  }
 }
 
 // ─── Estado del store ─────────────────────────────────────────────────────────
@@ -103,29 +116,32 @@ export const useJobsStore = create<JobsStoreState>()(
           appliedAt: data.appliedAt,
         };
         set((s) => ({ applications: [entry, ...s.applications] }));
+        syncJobIfAuthenticated(entry);
         return entry;
       },
 
       updateApplication(id, updates) {
-        set((s) => ({
-          applications: s.applications.map((app) =>
-            app.id === id
-              ? {
-                  ...app,
-                  ...updates,
-                  updatedAt: now(),
-                  activity:
-                    updates.status && updates.status !== app.status
-                      ? addActivity(
-                          app.activity,
-                          "status_change",
-                          `Estado cambiado a "${updates.status}"`
-                        )
-                      : app.activity,
-                }
-              : app
-          ),
-        }));
+        set((s) => {
+          const updatedApps = s.applications.map((app) => {
+            if (app.id !== id) return app;
+            const updated = {
+              ...app,
+              ...updates,
+              updatedAt: now(),
+              activity:
+                updates.status && updates.status !== app.status
+                  ? addActivity(
+                      app.activity,
+                      "status_change",
+                      `Estado cambiado a "${updates.status}"`
+                    )
+                  : app.activity,
+            };
+            syncJobIfAuthenticated(updated);
+            return updated;
+          });
+          return { applications: updatedApps };
+        });
       },
 
       deleteApplication(id) {
@@ -133,6 +149,14 @@ export const useJobsStore = create<JobsStoreState>()(
           applications: s.applications.filter((a) => a.id !== id),
           selectedId: s.selectedId === id ? null : s.selectedId,
         }));
+        try {
+          const user = useAuthStore.getState().user;
+          if (user && !user.isDemoUser) {
+            deleteJobFromSupabase(id);
+          }
+        } catch (err) {
+          console.error("Error al eliminar job en Supabase:", err);
+        }
       },
 
       duplicateApplication(id) {
@@ -150,6 +174,7 @@ export const useJobsStore = create<JobsStoreState>()(
           appliedAt: undefined,
         };
         set((s) => ({ applications: [copy, ...s.applications] }));
+        syncJobIfAuthenticated(copy);
       },
 
       setSelectedId(id) {
@@ -170,66 +195,78 @@ export const useJobsStore = create<JobsStoreState>()(
             suggestions: [],
           };
 
-          set((s) => ({
-            isAnalyzing: false,
-            applications: s.applications.map((a) =>
-              a.id === id
-                ? {
-                    ...a,
-                    keywords,
-                    matchAnalysis: fullAnalysis,
-                    updatedAt: now(),
-                    activity: addActivity(a.activity, "ai_analysis", "Analisis de keywords realizado"),
-                  }
-                : a
-            ),
-          }));
+          set((s) => {
+            const updatedApps = s.applications.map((a) => {
+              if (a.id !== id) return a;
+              const updated = {
+                ...a,
+                keywords,
+                matchAnalysis: fullAnalysis,
+                updatedAt: now(),
+                activity: addActivity(a.activity, "ai_analysis", "Analisis de keywords realizado"),
+              };
+              syncJobIfAuthenticated(updated);
+              return updated;
+            });
+            return {
+              isAnalyzing: false,
+              applications: updatedApps,
+            };
+          });
         } catch {
           set({ isAnalyzing: false });
         }
       },
 
       setMatchAnalysis(id, analysis) {
-        set((s) => ({
-          applications: s.applications.map((a) =>
-            a.id === id
-              ? {
-                  ...a,
-                  matchAnalysis: analysis,
-                  updatedAt: now(),
-                  activity: addActivity(a.activity, "ai_analysis", "Analisis de match actualizado por IA"),
-                }
-              : a
-          ),
-        }));
+        set((s) => {
+          const updatedApps = s.applications.map((a) => {
+            if (a.id !== id) return a;
+            const updated = {
+              ...a,
+              matchAnalysis: analysis,
+              updatedAt: now(),
+              activity: addActivity(a.activity, "ai_analysis", "Analisis de match actualizado por IA"),
+            };
+            syncJobIfAuthenticated(updated);
+            return updated;
+          });
+          return { applications: updatedApps };
+        });
       },
 
       setKeywords(id, keywords) {
-        set((s) => ({
-          applications: s.applications.map((a) =>
-            a.id === id ? { ...a, keywords, updatedAt: now() } : a
-          ),
-        }));
+        set((s) => {
+          const updatedApps = s.applications.map((a) => {
+            if (a.id !== id) return a;
+            const updated = { ...a, keywords, updatedAt: now() };
+            syncJobIfAuthenticated(updated);
+            return updated;
+          });
+          return { applications: updatedApps };
+        });
       },
 
       // ─── Links ───────────────────────────────────────────────────────────
       setLinkCheck(id, result) {
-        set((s) => ({
-          applications: s.applications.map((a) =>
-            a.id === id
-              ? {
-                  ...a,
-                  linkCheck: result,
-                  updatedAt: now(),
-                  activity: addActivity(
-                    a.activity,
-                    "link_check",
-                    result.ok ? "Link verificado: activo" : "Link verificado: inactivo o roto"
-                  ),
-                }
-              : a
-          ),
-        }));
+        set((s) => {
+          const updatedApps = s.applications.map((a) => {
+            if (a.id !== id) return a;
+            const updated = {
+              ...a,
+              linkCheck: result,
+              updatedAt: now(),
+              activity: addActivity(
+                a.activity,
+                "link_check",
+                result.ok ? "Link verificado: activo" : "Link verificado: inactivo o roto"
+              ),
+            };
+            syncJobIfAuthenticated(updated);
+            return updated;
+          });
+          return { applications: updatedApps };
+        });
       },
 
       setIsCheckingLinks(v) {
@@ -242,46 +279,53 @@ export const useJobsStore = create<JobsStoreState>()(
 
       // ─── Evaluaciones ATS ────────────────────────────────────────────────
       saveEvaluation(jobId, report) {
-        set((s) => ({
-          applications: s.applications.map((a) =>
-            a.id === jobId
-              ? {
-                  ...a,
-                  lastEvaluationReport: report,
-                  evaluations: [report, ...(a.evaluations || [])].slice(0, 20),
-                  updatedAt: now(),
-                  activity: addActivity(
-                    a.activity,
-                    "ats_evaluation",
-                    `Evaluación ATS completada: ${report.atsScore}% ATS / ${report.matchScore}% Match`
-                  ),
-                }
-              : a
-          ),
-        }));
+        set((s) => {
+          const updatedApps = s.applications.map((a) => {
+            if (a.id !== jobId) return a;
+            const evals = a.evaluations ?? [];
+            const updated = {
+              ...a,
+              lastEvaluationReport: report,
+              evaluations: [report, ...evals].slice(0, 20),
+              updatedAt: now(),
+              activity: addActivity(
+                a.activity,
+                "ats_evaluation",
+                `Evaluacion ATS realizada: Match ${report.matchScore}% | Formato ATS ${report.atsScore}%`
+              ),
+            };
+            syncJobIfAuthenticated(updated);
+            return updated;
+          });
+          return { applications: updatedApps };
+        });
+
+        try {
+          const user = useAuthStore.getState().user;
+          if (user && !user.isDemoUser && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)) {
+            saveATSEvaluationToSupabase(user.id, report);
+          }
+        } catch (err) {
+          console.error("Error al guardar evaluacion ATS en Supabase:", err);
+        }
       },
 
       getLatestEvaluation(jobId) {
         const app = get().applications.find((a) => a.id === jobId);
-        return app?.lastEvaluationReport || (app?.evaluations && app.evaluations[0]);
+        if (!app) return undefined;
+        return app.lastEvaluationReport ?? app.evaluations?.[0];
       },
 
       // ─── Notas ───────────────────────────────────────────────────────────
       updateNotes(id, notes) {
-        set((s) => ({
-          applications: s.applications.map((a) =>
-            a.id === id ? { ...a, notes, updatedAt: now() } : a
-          ),
-        }));
+        get().updateApplication(id, { notes });
       },
 
-      // ─── Selectores derivados ─────────────────────────────────────────────
+      // ─── Selectores ──────────────────────────────────────────────────────
       getStaleApplications() {
-        const cutoff = Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000;
+        const threshold = new Date(Date.now() - STALE_DAYS * 24 * 60 * 60 * 1000).toISOString();
         return get().applications.filter(
-          (a) =>
-            a.status === "applied" &&
-            new Date(a.updatedAt).getTime() < cutoff
+          (a) => a.status !== "rejected" && a.status !== "offer" && a.updatedAt < threshold
         );
       },
 
@@ -291,12 +335,12 @@ export const useJobsStore = create<JobsStoreState>()(
 
       getTopMissingKeywords(id) {
         const app = get().applications.find((a) => a.id === id);
-        if (!app?.matchAnalysis) return [];
-        return app.matchAnalysis.missing.slice(0, 8);
+        if (!app?.matchAnalysis?.missing) return [];
+        return app.matchAnalysis.missing.slice(0, 5);
       },
     }),
     {
-      name: "schemacv-jobs",
+      name: "schemacv-jobs-storage",
       storage: createJSONStorage(() => localStorage),
     }
   )

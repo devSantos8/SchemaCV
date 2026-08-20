@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   FileUp,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export const ImportResumeModal: React.FC = () => {
   const { isImportModalOpen, setImportModalOpen, loadImportedResume } = useResumeStore();
@@ -88,6 +89,9 @@ export const ImportResumeModal: React.FC = () => {
       }
 
       loadImportedResume(result.data);
+      toast.success("¡Currículum importado con éxito!", {
+        description: "Datos estructurados y mapeados al formato ATS.",
+      });
       setImportModalOpen(false);
       setFile(null);
       setPastedText("");

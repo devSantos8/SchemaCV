@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { JobTrackerView } from "@/components/jobs/JobTrackerView";
 import { AISettingsCard } from "@/components/settings/AISettingsCard";
 import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
@@ -41,6 +42,8 @@ import {
   FolderGit2,
   Search,
   SlidersHorizontal,
+  Pencil,
+  X,
   Eye,
   User,
   Mail,
@@ -49,7 +52,6 @@ import {
   Globe,
   Save,
   Menu,
-  X,
   Clock,
   Zap,
   Award,
@@ -81,6 +83,7 @@ import { TEMPLATE_METADATA, TemplateRenderer } from "@/components/templates/Temp
 import { generateResumeDocx } from "@/lib/exporters/docxExporter";
 import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
 import { SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
+import { upsertMasterResumeToSupabase } from "@/lib/supabase/db";
 import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -98,6 +101,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CreateResumeWizard } from "./CreateResumeWizard";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
+import { toast } from "sonner";
+import { OverviewSkeleton, ResumesGridSkeleton, KanbanSkeleton } from "./DashboardSkeleton";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
@@ -111,6 +117,64 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   modern_minimal: Minimize2,
   career_changer: GitFork,
   academic_international: Globe2,
+};
+
+const TEMPLATE_METADATA_CONST: Record<TemplateId, { name: string; tag: string; description: string }> = {
+  harvard: {
+    name: "Harvard Classic",
+    tag: "Académico & Corporativo",
+    description: "Diseño tradicional de 1 columna con jerarquía tipográfica estándar ATS.",
+  },
+  tech_minimalist: {
+    name: "Tech Minimalist",
+    tag: "Ingeniería de Software",
+    description: "Compacto y denso, ideal para destacar stack tecnológico y métricas cuantificables.",
+  },
+  modern_executive: {
+    name: "Modern Executive",
+    tag: "Liderazgo & Gestión",
+    description: "Elegante y estructurado para directores, jefes de producto y líderes técnicos.",
+  },
+  skills_first: {
+    name: "Skills Focused",
+    tag: "Especialistas & Tech",
+    description: "Prioriza competencias técnicas y habilidades clave en la parte superior.",
+  },
+  stanford_clean: {
+    name: "Stanford Modern",
+    tag: "Innovación & Startups",
+    description: "Limpio, espaciado y moderno para roles en producto, diseño y tecnología.",
+  },
+  compact_swiss: {
+    name: "Compact Swiss Grid",
+    tag: "Alta Densidad 1 Página",
+    description: "Aprovecha al máximo el espacio vertical para carreras con amplia experiencia.",
+  },
+  executive_serif: {
+    name: "Executive Serif",
+    tag: "Finanzas & Legal",
+    description: "Tipografía clásica serif con elegancia editorial de alto impacto.",
+  },
+  tech_compact: {
+    name: "Tech Condensed",
+    tag: "DevOps & Cloud",
+    description: "Optimizado para certificaciones, herramientas cloud y arquitectura de sistemas.",
+  },
+  modern_minimal: {
+    name: "Minimalist Clean",
+    tag: "Diseño & General",
+    description: "Estructura simplificada y directa sin distracciones visuales.",
+  },
+  career_changer: {
+    name: "Career Transition",
+    tag: "Cambio de Carrera",
+    description: "Destaca habilidades transferibles y proyectos de impacto.",
+  },
+  academic_international: {
+    name: "Academic CV",
+    tag: "Investigación & PhD",
+    description: "Formato internacional para publicaciones, docencia y trayectoria académica.",
+  },
 };
 
 const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: string }> = {
@@ -175,20 +239,62 @@ type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "a
 type SettingsSubTab = "account" | "security" | "workspace" | "notifications" | "support" | "terms";
 
 interface DashboardViewProps {
-  onOpenWorkspace: () => void;
+  initialSection?: DashboardSection;
+  onOpenWorkspace: (profileId?: string) => void;
   onOpenSettings?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
+  initialSection = "home",
   onOpenWorkspace,
   onOpenSettings,
 }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const getSectionFromPath = (path: string | null): DashboardSection => {
+    if (!path) return initialSection;
+    if (path === "/resumes" || path.startsWith("/resumes")) return "resumes";
+    if (path === "/master-profile" || path.startsWith("/master-profile")) return "master_profile";
+    if (path === "/templates" || path.startsWith("/templates")) return "templates";
+    if (path === "/import" || path.startsWith("/import")) return "ai_import";
+    if (path === "/jobs" || path.startsWith("/jobs")) return "job_tracker";
+    if (path === "/settings" || path.startsWith("/settings")) return "settings";
+    return initialSection;
+  };
+
+  const [activeSection, setActiveSectionState] = useState<DashboardSection>(() => getSectionFromPath(pathname));
+
+  useEffect(() => {
+    if (pathname) {
+      setActiveSectionState(getSectionFromPath(pathname));
+    }
+  }, [pathname]);
+
+  const setActiveSection = (section: DashboardSection) => {
+    setActiveSectionState(section);
+    const routeMap: Record<DashboardSection, string> = {
+      home: "/dashboard",
+      resumes: "/resumes",
+      master_profile: "/master-profile",
+      templates: "/templates",
+      ai_import: "/import",
+      job_tracker: "/jobs",
+      settings: "/settings",
+    };
+    const target = routeMap[section] || "/dashboard";
+    if (pathname !== target) {
+      router.push(target);
+    }
+  };
+
   const {
     profiles,
     activeProfileId,
     setActiveProfile,
     duplicateProfile,
     deleteProfile,
+    updateProfileMeta,
     loadImportedResume,
     masterProfileData,
     updateMasterProfileData,
@@ -206,12 +312,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     updateUserProfile,
   } = useAuthStore();
 
-  const [activeSection, setActiveSection] = useState<DashboardSection>("home");
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Estados de edición de nombre / rol de CV
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [editingRole, setEditingRole] = useState("");
 
   // Estados de exportación
   const [downloadingDocxId, setDownloadingDocxId] = useState<string | null>(null);
@@ -226,19 +336,40 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isMasterSaved, setIsMasterSaved] = useState(false);
   const [masterSubSection, setMasterSubSection] = useState<"general" | "social" | "experience" | "skills" | "projects" | "education" | "certifications">("general");
 
+  // Sincronizar masterFormData cuando masterProfileData cambia
+  useEffect(() => {
+    setMasterFormData(masterProfileData);
+  }, [masterProfileData]);
+
   // Estados de Configuración Estilo Propel
   const [settingsSubTab, setSettingsSubTab] = useState<SettingsSubTab>("account");
-  const [firstName, setFirstName] = useState(user?.name ? user.name.split(" ")[0] : "Joain");
-  const [lastName, setLastName] = useState(user?.name ? user.name.split(" ").slice(1).join(" ") : "Monroy Santos");
-  const [settingsEmail, setSettingsEmail] = useState(user?.email || "matiasmonroy483@gmail.com");
-  const [settingsHeadline, setSettingsHeadline] = useState(user?.headline || "Senior Full Stack & Cloud Developer");
-  const [settingsPhone, setSettingsPhone] = useState(user?.phone || "+56 9 4900 2793");
-  const [settingsLocation, setSettingsLocation] = useState(user?.location || "Santiago, Chile");
-  const [settingsBio, setSettingsBio] = useState(user?.bio || "Ingeniero de Software enfocado en arquitecturas escalables, sistemas cloud y diseño de experiencias web de alto impacto.");
-  const [settingsGithub, setSettingsGithub] = useState(user?.githubUrl || "https://github.com/devSantos8");
-  const [settingsLinkedin, setSettingsLinkedin] = useState(user?.linkedinUrl || "https://linkedin.com/in/jmonroys17");
-  const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "https://jmonroys.dev");
+  const [firstName, setFirstName] = useState(user?.name ? user.name.split(" ")[0] : "");
+  const [lastName, setLastName] = useState(user?.name ? user.name.split(" ").slice(1).join(" ") : "");
+  const [settingsEmail, setSettingsEmail] = useState(user?.email || "");
+  const [settingsHeadline, setSettingsHeadline] = useState(user?.headline || "");
+  const [settingsPhone, setSettingsPhone] = useState(user?.phone || "");
+  const [settingsLocation, setSettingsLocation] = useState(user?.location || "");
+  const [settingsBio, setSettingsBio] = useState(user?.bio || "");
+  const [settingsGithub, setSettingsGithub] = useState(user?.githubUrl || "");
+  const [settingsLinkedin, setSettingsLinkedin] = useState(user?.linkedinUrl || "");
+  const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "");
   const [isSettingsSaved, setIsSettingsSaved] = useState(false);
+
+  // Sincronizar formulario de settings cuando el usuario cambia
+  useEffect(() => {
+    if (user) {
+      setFirstName(user.name ? user.name.split(" ")[0] : "");
+      setLastName(user.name ? user.name.split(" ").slice(1).join(" ") : "");
+      setSettingsEmail(user.email || "");
+      setSettingsHeadline(user.headline || "");
+      setSettingsPhone(user.phone || "");
+      setSettingsLocation(user.location || "");
+      setSettingsBio(user.bio || "");
+      setSettingsGithub(user.githubUrl || "");
+      setSettingsLinkedin(user.linkedinUrl || "");
+      setSettingsWebsite(user.websiteUrl || "");
+    }
+  }, [user]);
 
   // Estados de Auditoría ATS
   const [auditResumeData, setAuditResumeData] = useState<ResumeData | null>(null);
@@ -250,6 +381,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordSaved, setIsPasswordSaved] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Notificaciones & Toggles de Configuración
   const [notif1PageWarning, setNotif1PageWarning] = useState(true);
@@ -302,9 +434,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return copy;
   };
 
-  const handleSaveMasterProfile = () => {
+  const handleSaveMasterProfile = async () => {
     updateMasterProfileData(masterFormData);
+    if (user?.id) {
+      await upsertMasterResumeToSupabase(user.id, masterFormData);
+    }
     setIsMasterSaved(true);
+    toast.success("Perfil Base Maestro guardado", {
+      description: "Tus datos y proyectos se sincronizaron con éxito en la nube.",
+    });
     setTimeout(() => setIsMasterSaved(false), 2500);
   };
 
@@ -323,7 +461,24 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       websiteUrl: settingsWebsite,
     });
     setIsSettingsSaved(true);
+    toast.success("Ajustes de cuenta actualizados");
     setTimeout(() => setIsSettingsSaved(false), 2500);
+  };
+
+  const handleSaveProfileMeta = (profileId: string) => {
+    if (!editingName.trim()) {
+      toast.error("El nombre del currículum no puede estar vacío");
+      return;
+    }
+    updateProfileMeta(profileId, editingName.trim(), editingRole.trim());
+    toast.success("Nombre del currículum actualizado");
+    setEditingProfileId(null);
+  };
+
+  const handleCancelEditing = () => {
+    setEditingProfileId(null);
+    setEditingName("");
+    setEditingRole("");
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
@@ -913,7 +1068,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {activeSection === "home" && (
               <Button
                 size="sm"
-                onClick={onOpenWorkspace}
+                onClick={() => onOpenWorkspace()}
                 className="h-8 px-3.5 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90"
               >
                 <span>Abrir Editor</span>
@@ -1078,7 +1233,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Tarjetas de Accesos Directos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
-                  onClick={onOpenWorkspace}
+                  onClick={activeProfile ? () => onOpenWorkspace() : () => setIsWizardOpen(true)}
                   className="p-5 rounded-2xl border border-border bg-card hover:border-foreground/30 cursor-pointer transition-all flex items-center justify-between group shadow-2xs"
                 >
                   <div className="space-y-1">
@@ -1087,11 +1242,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <ArrowRight className="h-3.5 w-3.5" />
                       </div>
                       <h3 className="text-sm font-bold text-foreground">
-                        Continuar Editando CV Activo
+                        {activeProfile ? "Continuar Editando CV Activo" : "Crear Mi Primer Currículum"}
                       </h3>
                     </div>
                     <p className="text-xs text-muted-foreground pl-9">
-                      {activeProfile.name} • {TEMPLATE_METADATA[activeProfile.templateId]?.name}
+                      {activeProfile
+                        ? `${activeProfile.name} • ${TEMPLATE_METADATA[activeProfile.templateId]?.name || "Plantilla"}`
+                        : "Comienza a diseñar tu CV optimizado para ATS"}
                     </p>
                   </div>
                   <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
@@ -1122,43 +1279,67 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-foreground">Tus Versiones de CV</h3>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("resumes")}
-                    className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1"
-                  >
-                    <span>Ver todas ({profiles.length})</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
+                  {profiles.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("resumes")}
+                      className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Ver todas ({profiles.length})</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {profiles.slice(0, 4).map((p) => {
-                    const meta = TEMPLATE_METADATA[p.templateId] || TEMPLATE_METADATA.tech_minimalist;
-                    return (
-                      <div
-                        key={p.id}
-                        className="p-4 rounded-xl border border-border bg-card flex items-center justify-between gap-3 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
-                      >
-                        <div className="space-y-0.5 min-w-0">
-                          <h4 className="font-bold text-xs text-foreground truncate">{p.name}</h4>
-                          <p className="text-[11px] text-muted-foreground truncate">{p.targetRole}</p>
-                          <span className="text-[10px] font-mono text-muted-foreground">{meta.name}</span>
-                        </div>
+                {profiles.length === 0 ? (
+                  <div className="p-8 rounded-2xl border border-dashed border-border bg-card/40 text-center space-y-3">
+                    <div className="h-10 w-10 mx-auto rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-muted-foreground">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-foreground">Aún no tienes currículums creados</h4>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        Crea tu primera versión de currículum con nuestro asistente inteligente optimizado para ATS.
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setIsWizardOpen(true)}
+                      className="h-8.5 px-4 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Crear mi primer CV</span>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {profiles.slice(0, 4).map((p) => {
+                      const meta = TEMPLATE_METADATA[p.templateId] || TEMPLATE_METADATA.tech_minimalist;
+                      return (
+                        <div
+                          key={p.id}
+                          className="p-4 rounded-xl border border-border bg-card flex items-center justify-between gap-3 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
+                        >
+                          <div className="space-y-0.5 min-w-0">
+                            <h4 className="font-bold text-xs text-foreground truncate">{p.name}</h4>
+                            <p className="text-[11px] text-muted-foreground truncate">{p.targetRole}</p>
+                            <span className="text-[10px] font-mono text-muted-foreground">{meta.name}</span>
+                          </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <Button
-                            size="sm"
-                            onClick={() => handleOpenResume(p.id)}
-                            className="h-7 px-2.5 text-xs font-semibold bg-foreground text-background"
-                          >
-                            Editar
-                          </Button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={() => handleOpenResume(p.id)}
+                              className="h-7 px-2.5 text-xs font-semibold bg-foreground text-background"
+                            >
+                              Editar
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -1209,22 +1390,88 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
 
                       <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                        <div className="space-y-1">
-                          <h3 className="font-bold text-sm text-foreground truncate">
-                            {profile.name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {profile.targetRole || "Rol no definido"}
-                          </p>
-
-                          <div className="pt-2 flex flex-wrap gap-1">
-                            {profile.data.skills?.[0]?.skills.slice(0, 3).map((sk, i) => (
-                              <Badge key={i} variant="secondary" className="text-[9px] font-mono py-0 px-1.5">
-                                {sk}
-                              </Badge>
-                            ))}
+                        {editingProfileId === profile.id ? (
+                          <div className="space-y-2 bg-zinc-50 dark:bg-zinc-900/80 p-2.5 rounded-xl border border-border">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-semibold text-muted-foreground uppercase">Nombre de la versión</label>
+                              <Input
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveProfileMeta(profile.id);
+                                  if (e.key === "Escape") handleCancelEditing();
+                                }}
+                                autoFocus
+                                placeholder="Ej. CV Software Engineer"
+                                className="h-7 text-xs rounded-lg"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-semibold text-muted-foreground uppercase">Puesto / Rol Objetivo</label>
+                              <Input
+                                value={editingRole}
+                                onChange={(e) => setEditingRole(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveProfileMeta(profile.id);
+                                  if (e.key === "Escape") handleCancelEditing();
+                                }}
+                                placeholder="Ej. Full Stack Engineer"
+                                className="h-7 text-xs rounded-lg"
+                              />
+                            </div>
+                            <div className="flex items-center justify-end gap-1.5 pt-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleCancelEditing}
+                                className="h-6 px-2 text-[11px]"
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                <span>Cancelar</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveProfileMeta(profile.id)}
+                                className="h-6 px-2.5 text-[11px] bg-foreground text-background"
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                <span>Guardar</span>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between group/title">
+                              <h3 className="font-bold text-sm text-foreground truncate flex-1">
+                                {profile.name}
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingProfileId(profile.id);
+                                  setEditingName(profile.name);
+                                  setEditingRole(profile.targetRole || "");
+                                }}
+                                className="opacity-0 group-hover/title:opacity-100 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md text-muted-foreground hover:text-foreground transition-all ml-1 cursor-pointer shrink-0"
+                                title="Editar nombre y rol del currículum"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {profile.targetRole || "Rol no definido"}
+                            </p>
+
+                            <div className="pt-2 flex flex-wrap gap-1">
+                              {profile.data.skills?.[0]?.skills.slice(0, 3).map((sk, i) => (
+                                <Badge key={i} variant="secondary" className="text-[9px] font-mono py-0 px-1.5">
+                                  {sk}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
                           <Button
@@ -1246,7 +1493,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 text-xs">
+                            <DropdownMenuContent align="end" className="w-52 text-xs">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingProfileId(profile.id);
+                                  setEditingName(profile.name);
+                                  setEditingRole(profile.targetRole || "");
+                                }}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Pencil className="h-3.5 w-3.5 text-amber-500" />
+                                <span>Cambiar Nombre & Rol</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDownloadPdf(profile)}
                                 className="cursor-pointer gap-2"
@@ -1280,7 +1539,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onClick={() => duplicateProfile(profile.id)}
+                                onClick={() => {
+                                  duplicateProfile(profile.id);
+                                  toast.info(`Versión "${profile.name}" duplicada`);
+                                }}
                                 className="cursor-pointer gap-2"
                               >
                                 <Copy className="h-3.5 w-3.5" />
@@ -1288,7 +1550,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </DropdownMenuItem>
                               {profiles.length > 1 && (
                                 <DropdownMenuItem
-                                  onClick={() => deleteProfile(profile.id)}
+                                  onClick={() => {
+                                    deleteProfile(profile.id);
+                                    toast.error(`Versión "${profile.name}" eliminada`);
+                                  }}
                                   className="cursor-pointer gap-2 text-rose-500 hover:text-rose-600"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
@@ -3673,6 +3938,27 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           <span>Descargar Respaldo</span>
                         </Button>
                       </div>
+
+                      {/* Zona de Peligro: Eliminar Cuenta */}
+                      <div className="p-5 rounded-2xl border border-red-200/80 dark:border-red-950/80 bg-red-50/30 dark:bg-red-950/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                          <div className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                            <Trash2 className="h-4 w-4" />
+                            <span>Zona de Peligro — Eliminar Cuenta</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground max-w-md">
+                            Elimina permanentemente tu cuenta, tus currículums guardados, perfil base y postulaciones. Esta acción no se puede deshacer.
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsDeleteModalOpen(true)}
+                          className="h-8 text-xs font-semibold rounded-xl text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/60 hover:bg-red-100/50 dark:hover:bg-red-950/40 shrink-0 cursor-pointer"
+                        >
+                          Eliminar Cuenta...
+                        </Button>
+                      </div>
                     </div>
                   )}
 
@@ -3930,6 +4216,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         onComplete={onOpenWorkspace}
       />
       <AuthModal />
+      <DeleteAccountModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+      />
     </div>
   );
 };

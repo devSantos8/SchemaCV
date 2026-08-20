@@ -10,6 +10,8 @@ import {
   Sparkles,
   Moon,
   Sun,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
@@ -49,10 +51,14 @@ export const GithubIcon: React.FC<{ className?: string }> = ({ className = "h-4 
   </svg>
 );
 
-export const AuthView: React.FC = () => {
-  const { login, register, loginWithProvider, loginAsGuest } = useAuthStore();
+interface AuthViewProps {
+  initialMode?: "login" | "register";
+}
 
-  const [mode, setMode] = useState<"login" | "register">("login");
+export const AuthView: React.FC<AuthViewProps> = ({ initialMode = "login" }) => {
+  const { login, register, loginWithProvider, loginAsGuest, isLoading, error } = useAuthStore();
+
+  const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -69,16 +75,16 @@ export const AuthView: React.FC = () => {
     }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    login(email);
+    await login(email, password);
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email) return;
-    register(name, email);
+    await register(name, email, password);
   };
 
   return (
@@ -119,42 +125,26 @@ export const AuthView: React.FC = () => {
             </h1>
           </div>
 
-          {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
-          <div className="space-y-2">
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => loginWithProvider("google")}
-                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                title="Continuar con Google"
-              >
-                <GoogleIcon />
-                <span className="hidden sm:inline font-medium">Google</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => loginWithProvider("linkedin")}
-                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                title="Continuar con LinkedIn"
-              >
-                <LinkedinIcon />
-                <span className="hidden sm:inline font-medium">LinkedIn</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => loginWithProvider("github")}
-                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                title="Continuar con GitHub"
-              >
-                <GithubIcon />
-                <span className="hidden sm:inline font-medium">GitHub</span>
-              </Button>
+          {/* Mensaje de Error si ocurre */}
+          {error && (
+            <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
             </div>
+          )}
+
+          {/* Botón OAuth Exclusivo: Google */}
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => loginWithProvider("google")}
+              className="w-full h-10 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2.5 shadow-xs cursor-pointer"
+              title="Continuar con Google"
+            >
+              <GoogleIcon className="h-4 w-4" />
+              <span className="font-semibold text-foreground">Continuar con Google</span>
+            </Button>
 
             {/* Separador */}
             <div className="relative py-1">
@@ -239,10 +229,12 @@ export const AuthView: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
+                  disabled={isLoading}
+                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer disabled:opacity-50"
                 >
+                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>Ingresar a mi Cuenta</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  {!isLoading && <ArrowRight className="h-3.5 w-3.5" />}
                 </Button>
               </form>
             ) : (
@@ -303,10 +295,12 @@ export const AuthView: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
+                  disabled={isLoading}
+                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer disabled:opacity-50"
                 >
+                  {isLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>Crear Cuenta Gratuita</span>
-                  <ArrowRight className="h-3.5 w-3.5" />
+                  {!isLoading && <ArrowRight className="h-3.5 w-3.5" />}
                 </Button>
               </form>
             )}
