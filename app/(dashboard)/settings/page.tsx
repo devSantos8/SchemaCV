@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { ProfileSettingsView } from "@/components/settings/ProfileSettingsView";
+import { DashboardView } from "@/components/dashboard/DashboardView";
 import { AuthView } from "@/components/auth/AuthView";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
@@ -19,9 +19,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <ProfileSettingsView
-      onBack={() => {
-        router.push("/dashboard");
+    <DashboardView
+      initialSection="settings"
+      onOpenWorkspace={(profileId?: string) => {
+        router.push(profileId ? `/editor/${profileId}` : "/editor");
+      }}
+      onOpenSettings={() => {
+        router.push("/settings");
       }}
     />
   );
