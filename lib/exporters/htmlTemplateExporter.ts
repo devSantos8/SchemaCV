@@ -1,4 +1,4 @@
-import { ResumeData, TemplateId, PaperSize, SECTION_LABELS, ResumeLanguage, getVisibleResumeData } from "@/types/resume";
+import { ResumeData, TemplateId, PaperSize, SECTION_LABELS, ResumeLanguage, getVisibleResumeData, formatSocialDisplay } from "@/types/resume";
 
 /**
  * Compilador de HTML puro independiente (sin dependencias de react-dom/server).
@@ -18,12 +18,21 @@ export function generateTemplateHtml(
   const contactItems: string[] = [];
   if (data.location) contactItems.push(data.location);
   if (data.phone) contactItems.push(data.phone);
-  if (data.email) contactItems.push(data.email);
-  if (data.website) contactItems.push(data.website.replace(/^https?:\/\//, ""));
+  if (data.email) contactItems.push(`<a href="mailto:${data.email}" style="color: inherit; text-decoration: underline;">${data.email}</a>`);
+  if (data.website) {
+    const webClean = data.website.replace(/^https?:\/\//, "");
+    const webUrl = data.website.startsWith("http") ? data.website : `https://${data.website}`;
+    contactItems.push(`<a href="${webUrl}" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: underline;">${webClean}</a>`);
+  }
 
   if (data.social_networks && data.social_networks.length > 0) {
     data.social_networks.forEach((sn) => {
-      contactItems.push(`${sn.network}: ${sn.username || sn.url.replace(/^https?:\/\//, "")}`);
+      const { label, url } = formatSocialDisplay(sn);
+      if (url) {
+        contactItems.push(`<a href="${url}" target="_blank" rel="noreferrer" style="color: inherit; text-decoration: underline;">${label}</a>`);
+      } else {
+        contactItems.push(label);
+      }
     });
   }
 
@@ -60,7 +69,7 @@ export function generateTemplateHtml(
             .map(
               (cat) => `
               <div class="skill-row">
-                <span class="skill-cat font-semibold">${cat.category}:</span>
+                <span class="skill-cat font-semibold">${cat.category}: </span>
                 <span class="skill-items">${cat.skills.join(", ")}</span>
               </div>
             `
@@ -83,17 +92,18 @@ export function generateTemplateHtml(
               const bullets = (exp.highlights || [])
                 .map((h) => `<li>${h}</li>`)
                 .join("");
+              const endDateStr = exp.current ? labels.present : (exp.end_date || labels.present);
 
               return `
                 <div class="entry-block page-break-avoid">
                   <div class="entry-header">
                     <div>
                       <span class="entry-title font-bold">${exp.position}</span>
-                      <span class="entry-subtitle font-semibold"> – ${exp.company}</span>
+                      <span class="entry-subtitle font-semibold"> — ${exp.company}</span>
+                      ${exp.location ? `<span class="entry-loc font-normal text-zinc-600"> (${exp.location})</span>` : ""}
                     </div>
-                    <div class="entry-dates">
-                      ${exp.location ? `<span class="entry-loc">${exp.location} | </span>` : ""}
-                      ${exp.start_date} – ${exp.current ? labels.present : exp.end_date || ""}
+                    <div class="entry-dates font-mono">
+                      ${exp.start_date} – ${endDateStr}
                     </div>
                   </div>
                   ${exp.summary ? `<p class="entry-summary">${exp.summary}</p>` : ""}
@@ -149,15 +159,16 @@ export function generateTemplateHtml(
         if (data.education && data.education.length > 0) {
           const eduList = data.education
             .map((edu) => {
+              const eduEndDate = edu.current ? labels.present : (edu.end_date || "");
               return `
                 <div class="entry-block page-break-avoid">
                   <div class="entry-header">
                     <div>
                       <span class="entry-title font-bold">${edu.institution}</span>
-                      <span class="entry-subtitle"> – ${edu.degree}${edu.area ? ` en ${edu.area}` : ""}</span>
+                      <span class="entry-subtitle"> — ${edu.degree}${edu.area ? ` en ${edu.area}` : ""}</span>
                       ${edu.gpa ? `<span class="entry-gpa"> (GPA: ${edu.gpa})</span>` : ""}
                     </div>
-                    ${edu.start_date ? `<div class="entry-dates">${edu.start_date}${edu.end_date ? ` – ${edu.end_date}` : ""}</div>` : ""}
+                    ${edu.start_date ? `<div class="entry-dates">${edu.start_date}${eduEndDate ? ` – ${eduEndDate}` : ""}</div>` : ""}
                   </div>
                   ${(edu.highlights && edu.highlights.length > 0) ? `<ul class="entry-bullets">${edu.highlights.map(h => `<li>${h}</li>`).join("")}</ul>` : ""}
                 </div>
@@ -180,9 +191,11 @@ export function generateTemplateHtml(
             .map((cert) => {
               return `
                 <div class="cert-row">
-                  <span class="cert-name font-semibold">${cert.name}</span>
-                  <span class="cert-issuer"> – ${cert.issuer}</span>
-                  ${cert.date ? `<span class="cert-date"> (${cert.date})</span>` : ""}
+                  <div>
+                    <span class="cert-name font-semibold">${cert.name}</span>
+                    <span class="cert-issuer"> — ${cert.issuer}</span>
+                  </div>
+                  ${cert.date ? `<span class="cert-date font-mono">(${cert.date})</span>` : ""}
                 </div>
               `;
             })
@@ -211,11 +224,12 @@ export function generateTemplateHtml(
           font-family: ${isSerif ? "'EB Garamond', Georgia, 'Times New Roman', serif" : "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"};
         }
         .header-title {
-          font-size: 24px;
-          font-weight: 700;
+          font-size: 22px;
+          font-weight: 800;
           text-align: center;
           margin: 0 0 4px 0;
           letter-spacing: -0.02em;
+          display: block;
         }
         .header-headline {
           font-size: 13px;
@@ -223,12 +237,14 @@ export function generateTemplateHtml(
           color: #3f3f46;
           margin: 0 0 6px 0;
           font-weight: 500;
+          display: block;
         }
         .header-contact {
           font-size: 10px;
           text-align: center;
           color: #52525b;
           margin: 0 0 16px 0;
+          display: block;
         }
         .section-block {
           margin-bottom: 14px;
@@ -250,17 +266,17 @@ export function generateTemplateHtml(
           color: #27272a;
         }
         .skill-row {
-          display: flex;
+          display: block;
           font-size: 10.5px;
           margin-bottom: 3px;
+          line-height: 1.4;
         }
         .skill-cat {
-          width: 140px;
-          flex-shrink: 0;
+          font-weight: 700;
+          margin-right: 4px;
           color: #09090b;
         }
         .skill-items {
-          flex: 1;
           color: #27272a;
         }
         .entry-block {

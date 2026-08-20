@@ -275,6 +275,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           html: htmlContent,
           paperSize,
           resumeData,
+          templateId: activeTemplate,
           title: atsFileName,
         }),
       });
