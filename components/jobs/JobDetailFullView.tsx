@@ -211,7 +211,6 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     setIsEvaluating(true);
     setEvalProgressStep(1);
 
-    // Animación de etapas
     const stepTimer1 = setTimeout(() => setEvalProgressStep(2), 600);
     const stepTimer2 = setTimeout(() => setEvalProgressStep(3), 1200);
 
@@ -246,7 +245,6 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
         });
       }
 
-      // Pequeño retardo para visualización fluida de la animación
       await new Promise((r) => setTimeout(r, 600));
 
       setReport(newReport);
@@ -283,7 +281,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
       setViewMode(targetMode);
 
       toast.success("Evaluación ATS completada", {
-        description: `Formato ATS: ${newReport.atsScore}% • Match: ${newReport.matchScore}%`,
+        description: `Formato ATS: ${newReport.atsScore}% • Afinidad: ${newReport.matchScore}%`,
       });
     } catch (err) {
       console.error("Error al evaluar:", err);
@@ -311,7 +309,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     const candidateEmail = currentResumeData.email || user?.email || "";
     const candidatePhone = currentResumeData.phone || "";
 
-    return `Estimado equipo de contratación de ${company},\n\nLe escribo con gran entusiasmo para presentar mi candidatura al puesto de ${title}. Con mi sólida trayectoria como ${candidateRole} y mi experiencia comprobada en el desarrollo de soluciones escalables, considero que mi perfil se alinea estrechamente con las necesidades de ${company}.\n\nRevisando los requisitos del puesto, cuento con experiencia directa en las tecnologías clave requeridas para este rol. A lo largo de mi carrera me he caracterizado por entregar proyectos de alto impacto, optimizar procesos de ingeniería y colaborar eficazmente en equipos multidisciplinarios.\n\nMe entusiasma la posibilidad de aportar valor a ${company} y me encantaría tener la oportunidad de conversar más a fondo sobre cómo mi experiencia puede contribuir al éxito del equipo.\n\nQuedo a su entera disposición.\n\nAtentamente,\n${candidateName}\n${candidateEmail} | ${candidatePhone}`;
+    return `Estimado equipo de selección de ${company},\n\nLe escribo para presentar formalmente mi postulación al cargo de ${title}. Con mi experiencia como ${candidateRole} y mis competencias en desarrollo de soluciones tecnológicas, considero que mi perfil se ajusta estrechamente a los requerimientos de ${company}.\n\nRevisando el perfil solicitado, poseo experiencia práctica en las tecnologías clave requeridas para este rol. Me he caracterizado por entregar proyectos de alto impacto, optimizar procesos de ingeniería y colaborar eficazmente en equipos multidisciplinarios.\n\nMe entusiasma la oportunidad de aportar valor en ${company} y estaré encantado de conversar más a fondo sobre cómo mi experiencia puede contribuir al éxito del equipo.\n\nQuedo a su entera disposición.\n\nAtentamente,\n${candidateName}\n${candidateEmail} | ${candidatePhone}`;
   }, [company, title, currentResumeData, user]);
 
   const handleCopyCoverLetter = () => {
@@ -333,7 +331,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     },
     {
       question: "¿Cómo manejas la priorización y el trabajo bajo metodologías ágiles en entornos de alta exigencia?",
-      tip: "Menciona comunicación proactiva con stakeholders y enfoque iterativo.",
+      tip: "Menciona comunicación proactiva con el equipo y enfoque iterativo.",
     },
   ];
 
@@ -356,12 +354,12 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     <div className="min-h-full bg-[#f8fafc] dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
         
-        {/* ─── 1. ENCABEZADO SUPERIOR CON CONMUTADOR DE VISTAS SUAVE ─── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
+        {/* ─── 1. ENCABEZADO SUPERIOR CON SELECTOR MINIMALISTA Y COMPACTO ─── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1.5">
             <motion.h1
               key={viewMode}
-              initial={{ opacity: 0, y: -4 }}
+              initial={{ opacity: 0, y: -3 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.2 }}
               className="text-2xl sm:text-3xl font-serif text-zinc-900 dark:text-zinc-50 font-medium tracking-tight"
@@ -379,19 +377,19 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
             </button>
           </div>
 
-          {/* Botones de Cambio de Apartado con Transición Suave */}
-          <div className="flex items-center gap-1 p-1 bg-zinc-200/60 dark:bg-zinc-800/80 rounded-2xl border border-zinc-200 dark:border-zinc-700/60 self-start sm:self-auto shadow-2xs">
+          {/* Selector de Modo Compacto & Minimalista */}
+          <div className="inline-flex items-center p-0.5 bg-zinc-100 dark:bg-zinc-800/80 rounded-xl border border-zinc-200/80 dark:border-zinc-700/60 self-start sm:self-auto shadow-2xs">
             <button
               type="button"
               onClick={() => setViewMode("job_info")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 relative ${
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === "job_info"
-                  ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-2xs"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
-              <FileText className="h-3.5 w-3.5" />
-              <span>Información del Puesto</span>
+              <FileText className="h-3 w-3" />
+              <span>Información</span>
             </button>
 
             <button
@@ -403,16 +401,16 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   setViewMode("ats_evaluation");
                 }
               }}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 relative ${
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                 viewMode === "ats_evaluation"
-                  ? "bg-emerald-600 text-white shadow-xs"
-                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+                  ? "bg-emerald-600 text-white shadow-2xs font-bold"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Evaluación & Puntaje ATS</span>
+              <ShieldCheck className="h-3 w-3" />
+              <span>Evaluación ATS</span>
               {report && (
-                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold ml-0.5">
+                <span className="text-[10px] font-mono px-1 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-200 font-bold">
                   {matchScore}%
                 </span>
               )}
@@ -423,10 +421,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
         {/* ─── 2. CONTENEDOR PRINCIPAL: 2 COLUMNAS ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* ═════════ COLUMNA IZQUIERDA: CONTENIDO CAMBIANTE CON ANIMACIÓN (8 de 12) ═════════ */}
+          {/* ═════════ COLUMNA IZQUIERDA: CONTENIDO DE LA OFERTA / EVALUACIÓN (8 de 12) ═════════ */}
           <div className="lg:col-span-8 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 p-6 sm:p-8 shadow-xs space-y-6 relative overflow-hidden">
             
-            {/* Header del Puesto (Logo, Título, Acciones) */}
+            {/* Header de la Empresa */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-2">
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0 shadow-2xs">
@@ -467,13 +465,13 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   }`}
                 >
                   <Heart className={`h-3.5 w-3.5 ${isSaved ? "fill-red-500 text-red-500" : ""}`} />
-                  <span>{isSaved ? "Guardado" : "Save Job"}</span>
+                  <span>{isSaved ? "Guardado" : "Guardar"}</span>
                 </Button>
 
                 <Button
                   size="sm"
                   onClick={handleSendApplication}
-                  className="h-9 px-4 text-xs font-bold rounded-xl bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-xs gap-1.5"
+                  className="h-9 px-4 text-xs font-bold rounded-xl bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-xs gap-1.5 cursor-pointer"
                 >
                   <Send className="h-3.5 w-3.5" />
                   <span>Enviar solicitud</span>
@@ -483,7 +481,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   size="sm"
                   onClick={() => handleRunEvaluation(viewMode)}
                   disabled={isEvaluating}
-                  className="h-9 px-3 text-xs font-bold rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs gap-1.5"
+                  className="h-9 px-3 text-xs font-bold rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs gap-1.5 cursor-pointer"
                 >
                   {isEvaluating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
                   <span className="hidden sm:inline">Re-evaluar</span>
@@ -491,7 +489,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
               </div>
             </div>
 
-            {/* ─── PANTALLA DE CARGA Y ANIMACIÓN ATS DURANTE EVALUACIÓN ─── */}
+            {/* ─── PANTALLA DE CARGA Y RADAR ANIMADO ─── */}
             <AnimatePresence mode="wait">
               {isEvaluating ? (
                 <motion.div
@@ -502,48 +500,46 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   transition={{ duration: 0.25 }}
                   className="p-8 rounded-3xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800 text-center space-y-6 my-4"
                 >
-                  {/* Radar / Scanner Visual */}
-                  <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+                  <div className="relative mx-auto w-16 h-16 flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full border-2 border-emerald-500/20 animate-ping" />
                     <div className="absolute inset-2 rounded-full border-2 border-emerald-500/40 animate-pulse" />
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10">
-                      <Sparkles className="h-6 w-6 animate-spin" />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/10">
+                      <Sparkles className="h-5 w-5 animate-spin" />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 max-w-sm mx-auto">
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                  <div className="space-y-1 max-w-sm mx-auto">
+                    <h3 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
                       Analizando compatibilidad ATS con tu CV
                     </h3>
-                    <p className="text-xs text-zinc-500">
-                      Procesando texto, requisitos indispensables y auditoría de 10 reglas deterministas...
+                    <p className="text-[11px] text-zinc-500">
+                      Verificando 10 reglas de oro y calculando afinidad de competencias...
                     </p>
                   </div>
 
-                  {/* Etapas de progreso */}
-                  <div className="max-w-xs mx-auto space-y-2 text-left text-xs font-medium">
+                  <div className="max-w-xs mx-auto space-y-1.5 text-left text-xs font-medium">
                     <div className={`flex items-center gap-2 transition-colors ${evalProgressStep >= 1 ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}>
                       {evalProgressStep >= 2 ? <Check className="h-3.5 w-3.5" /> : <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                       <span>1. Extracción y parseo de texto plano</span>
                     </div>
                     <div className={`flex items-center gap-2 transition-colors ${evalProgressStep >= 2 ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}>
-                      {evalProgressStep >= 3 ? <Check className="h-3.5 w-3.5" /> : evalProgressStep === 2 ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <div className="w-3.5 h-3.5 rounded-full border border-zinc-300" />}
+                      {evalProgressStep >= 3 ? <Check className="h-3.5 w-3.5" /> : evalProgressStep === 2 ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <div className="w-3.5 h-3.5 rounded-full border border-zinc-300 dark:border-zinc-700" />}
                       <span>2. Auditoría de 10 reglas de formato ATS</span>
                     </div>
                     <div className={`flex items-center gap-2 transition-colors ${evalProgressStep >= 3 ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400"}`}>
-                      {evalProgressStep === 3 ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <div className="w-3.5 h-3.5 rounded-full border border-zinc-300" />}
+                      {evalProgressStep === 3 ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <div className="w-3.5 h-3.5 rounded-full border border-zinc-300 dark:border-zinc-700" />}
                       <span>3. Cálculo de match de competencias</span>
                     </div>
                   </div>
                 </motion.div>
               ) : viewMode === "job_info" ? (
-                /* ─── VISTA 1: INFORMACIÓN DEL PUESTO (Job Details) ─── */
+                /* ─── VISTA 1: INFORMACIÓN DEL PUESTO ─── */
                 <motion.div
                   key="job_info_view"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
                   className="space-y-6"
                 >
                   {/* Badges de Metadatos */}
@@ -570,7 +566,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
                       <Briefcase className="h-3 w-3 text-zinc-400" />
-                      Nivel básico
+                      Nivel inicial / Práctica
                     </span>
 
                     {salary && (
@@ -615,11 +611,11 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     </div>
                   ) : (
                     <div className="space-y-6 pt-2 text-zinc-800 dark:text-zinc-200 leading-relaxed text-sm">
-                      {/* Minimum Qualifications */}
+                      {/* Requisitos Mínimos */}
                       {parsedJob.minimumQualifications.length > 0 && (
                         <div className="space-y-2.5">
                           <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                            Minimum qualifications:
+                            Requisitos mínimos:
                           </h3>
                           <ul className="space-y-2 pl-1">
                             {parsedJob.minimumQualifications.map((item, idx) => (
@@ -632,11 +628,11 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                         </div>
                       )}
 
-                      {/* Preferred Qualifications */}
+                      {/* Requisitos Valorados / Deseables */}
                       {parsedJob.preferredQualifications.length > 0 && (
                         <div className="space-y-2.5">
                           <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                            Preferred qualifications:
+                            Requisitos valorados:
                           </h3>
                           <ul className="space-y-2 pl-1">
                             {parsedJob.preferredQualifications.map((item, idx) => (
@@ -649,10 +645,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                         </div>
                       )}
 
-                      {/* About the job */}
+                      {/* Acerca del Empleo */}
                       <div className="space-y-2.5">
                         <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                          About the job:
+                          Acerca del empleo:
                         </h3>
                         <div className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 space-y-3 leading-relaxed whitespace-pre-line">
                           {parsedJob.aboutTheJob || "No se ha proporcionado una descripción detallada aún. Haz clic en 'Editar texto' para pegarla."}
@@ -661,16 +657,16 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     </div>
                   )}
 
-                  {/* Banner de llamada a la acción para cambiar al modo ATS */}
+                  {/* Banner CTA para ver análisis ATS */}
                   <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
                       <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                       <div>
                         <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                          ¿Quieres ver si tu CV pasa los filtros ATS de esta vacante?
+                          ¿Quieres verificar si tu CV supera los filtros ATS de esta vacante?
                         </h4>
                         <p className="text-[11px] text-zinc-500">
-                          Audita 10 reglas de oro, analiza palabras clave y visualiza la lectura del robot.
+                          Audita 10 reglas de oro de formato, detecta palabras clave faltantes y simula la lectura del robot.
                         </p>
                       </div>
                     </div>
@@ -686,17 +682,17 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   </div>
                 </motion.div>
               ) : (
-                /* ─── VISTA 2: EVALUACIÓN & AUDITORÍA ATS (10 Reglas & Robot) ─── */
+                /* ─── VISTA 2: EVALUACIÓN ATS ─── */
                 <motion.div
                   key="ats_evaluation_view"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.22, ease: "easeOut" }}
                   className="space-y-6"
                 >
                   {/* Selector de CV a Evaluar */}
-                  <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-950/60 border border-zinc-200/70 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="p-3 rounded-2xl bg-zinc-50/80 dark:bg-zinc-950/60 border border-zinc-200/70 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
@@ -756,40 +752,40 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       <button
                         type="button"
                         onClick={() => setActiveAtsTab("checklist")}
-                        className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                           activeAtsTab === "checklist"
-                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs font-bold"
                             : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                         }`}
                       >
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                        <span>Checklist de Normas ATS ({report?.auditRules?.length || 10})</span>
+                        <span>Normas ATS ({report?.auditRules?.length || 10})</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setActiveAtsTab("match")}
-                        className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                           activeAtsTab === "match"
-                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs font-bold"
                             : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                         }`}
                       >
                         <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                        <span>Match y Competencias ({report?.requirements?.length || 0})</span>
+                        <span>Competencias y Palabras Clave ({report?.requirements?.length || 0})</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setActiveAtsTab("simulation")}
-                        className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                           activeAtsTab === "simulation"
-                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs font-bold"
                             : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
                         }`}
                       >
                         <Terminal className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
-                        <span>Así te lee el Robot ATS</span>
+                        <span>Lectura del Robot ATS</span>
                       </button>
                     </div>
 
@@ -895,7 +891,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                                     <button
                                       type="button"
                                       onClick={() => setExpandedRuleId(isExpanded ? null : rule.id)}
-                                      className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors"
+                                      className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                                     >
                                       <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                                     </button>
@@ -956,7 +952,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                                       : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
                                   }`}
                                 >
-                                  {req.matched ? "Presente" : "Falta en CV"}
+                                  {req.matched ? "Presente en CV" : "Falta en CV"}
                                 </span>
                               </div>
                             ))}
@@ -989,15 +985,15 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
               Prepárate para este empleo
             </h3>
 
-            {/* ─── ACORDEÓN 1: TAILOR YOUR RESUME ─── */}
+            {/* ─── ACORDEÓN 1: ADAPTAR TU CURRÍCULUM ─── */}
             <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden bg-zinc-50/40 dark:bg-zinc-950/40">
               <button
                 type="button"
                 onClick={() => setActivePrepSection(activePrepSection === "tailor" ? ("" as any) : "tailor")}
-                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
               >
                 <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                  Tailor Your Resume
+                  Adaptar tu Currículum
                 </span>
                 <ChevronDown
                   className={`h-4 w-4 text-zinc-400 transition-transform duration-200 ${
@@ -1010,14 +1006,14 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 <div className="p-4 pt-1 space-y-3.5">
                   <div className="space-y-1">
                     <h4 className="text-sm font-bold text-[#b45309] dark:text-amber-400">
-                      Be the perfect match.
+                      Alineación perfecta con la vacante.
                     </h4>
                     <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-snug">
-                      Have your resume tailored to this job post in seconds.
+                      Adapta tu currículum a esta oferta y maximiza tu puntuación ATS en segundos.
                     </p>
                   </div>
 
-                  {/* Ilustración Visual de la Tarjeta del CV Adaptado */}
+                  {/* Tarjeta Visual del CV Adaptado */}
                   <div className="p-3 rounded-2xl bg-gradient-to-b from-amber-50/70 to-amber-100/40 dark:from-zinc-900 dark:to-zinc-800/80 border border-amber-200/70 dark:border-amber-900/30 space-y-2 shadow-2xs">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
@@ -1027,22 +1023,22 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                         <p className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 truncate">
                           {currentResumeData.name || user?.name || "Tu Currículum"}
                         </p>
-                        <p className="text-[10px] text-zinc-500 truncate">{title} at {company}</p>
+                        <p className="text-[10px] text-zinc-500 truncate">{title} en {company}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-950 border border-emerald-200 dark:border-emerald-900/50 text-[11px]">
                       <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
                         <CheckCircle2 className="h-3.5 w-3.5" />
-                        Tailoring completed!
+                        ¡Optimización completada!
                       </span>
                       <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                        {matchScore}% Match
+                        {matchScore}% Afinidad
                       </span>
                     </div>
                   </div>
 
-                  {/* Botón Principal Tailor Your Resume (Inicia animación suave de carga y cambia de vista) */}
+                  {/* Botón Principal Adaptar mi Currículum */}
                   <Button
                     onClick={() => handleRunEvaluation("ats_evaluation")}
                     disabled={isEvaluating}
@@ -1053,7 +1049,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     ) : (
                       <Sparkles className="h-3.5 w-3.5 text-amber-200" />
                     )}
-                    <span>Tailor Your Resume</span>
+                    <span>Adaptar mi Currículum</span>
                   </Button>
                 </div>
               )}
@@ -1064,7 +1060,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
               <button
                 type="button"
                 onClick={() => setActivePrepSection(activePrepSection === "interview" ? ("" as any) : "interview")}
-                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
               >
                 <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
                   Practicar la entrevista de trabajo
@@ -1092,7 +1088,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                           {idx + 1}. {q.question}
                         </p>
                         <p className="text-[11px] text-zinc-500 leading-tight">
-                          💡 <span className="font-semibold text-zinc-700 dark:text-zinc-300">Tip:</span> {q.tip}
+                          💡 <span className="font-semibold text-zinc-700 dark:text-zinc-300">Consejo:</span> {q.tip}
                         </p>
                       </div>
                     ))}
@@ -1102,7 +1098,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     variant="outline"
                     size="sm"
                     onClick={() => setShowChat(true)}
-                    className="w-full h-8 text-xs font-bold rounded-xl gap-1 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/60 hover:bg-violet-50 dark:hover:bg-violet-950/40"
+                    className="w-full h-8 text-xs font-bold rounded-xl gap-1 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/60 hover:bg-violet-50 dark:hover:bg-violet-950/40 cursor-pointer"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
                     <span>Simular entrevista con IA</span>
@@ -1116,7 +1112,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
               <button
                 type="button"
                 onClick={() => setActivePrepSection(activePrepSection === "cover_letter" ? ("" as any) : "cover_letter")}
-                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors"
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
               >
                 <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
                   Escribir una carta de presentación
@@ -1141,10 +1137,10 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   <Button
                     size="sm"
                     onClick={handleCopyCoverLetter}
-                    className="w-full h-8 text-xs font-bold rounded-xl gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xs"
+                    className="w-full h-8 text-xs font-bold rounded-xl gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xs cursor-pointer"
                   >
                     {copiedCoverLetter ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span>{copiedCoverLetter ? "¡Copiada!" : "Copiar Carta de Presentación"}</span>
+                    <span>{copiedCoverLetter ? "¡Copiada!" : "Copiar carta de presentación"}</span>
                   </Button>
                 </div>
               )}
