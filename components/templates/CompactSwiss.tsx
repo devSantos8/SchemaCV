@@ -336,7 +336,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                           </span>
                           {cert.date && (
                             <span className="text-zinc-500 font-mono text-[7.5pt] ml-1">
-                              ({cert.date})
+                              {cert.date}
                             </span>
                           )}
                         </div>

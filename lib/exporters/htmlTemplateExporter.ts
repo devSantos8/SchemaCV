@@ -195,7 +195,7 @@ export function generateTemplateHtml(
                     <span class="cert-name font-semibold">${cert.name}</span>
                     <span class="cert-issuer"> — ${cert.issuer}</span>
                   </div>
-                  ${cert.date ? `<span class="cert-date font-mono">(${cert.date})</span>` : ""}
+                  ${cert.date ? `<span class="cert-date font-mono">${cert.date}</span>` : ""}
                 </div>
               `;
             })

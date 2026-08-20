@@ -282,7 +282,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                         <strong className="text-zinc-900">{cert.name}</strong>
                         <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
                       </span>
-                      {cert.date && <span className="text-[8pt] text-zinc-500">({cert.date})</span>}
+                      {cert.date && <span className="text-[8pt] text-zinc-500">{cert.date}</span>}
                     </div>
                   ))}
                 </div>

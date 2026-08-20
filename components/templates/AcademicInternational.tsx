@@ -281,7 +281,7 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
                         </div>
                         {cert.date && (
                           <span className="text-[8.5pt] text-zinc-600 font-medium">
-                            ({cert.date})
+                            {cert.date}
                           </span>
                         )}
                       </div>

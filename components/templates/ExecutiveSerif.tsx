@@ -282,7 +282,7 @@ export const ExecutiveSerif: React.FC<TemplateProps> = ({ data, paperSize = "let
                         </div>
                         {cert.date && (
                           <span className="text-[8.5pt] font-sans text-zinc-600">
-                            ({cert.date})
+                            {cert.date}
                           </span>
                         )}
                       </div>

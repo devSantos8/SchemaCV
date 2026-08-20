@@ -297,7 +297,7 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                       </div>
                       {cert.date && (
                         <span className="text-[9pt] text-zinc-600 font-sans font-medium">
-                          ({cert.date})
+                          {cert.date}
                         </span>
                       )}
                     </div>

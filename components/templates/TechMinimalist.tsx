@@ -279,7 +279,7 @@ export const TechMinimalist: React.FC<TemplateProps> = ({ data, paperSize = "let
                         <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
                       </span>
                       {cert.date && (
-                        <span className="font-mono text-[8pt] text-zinc-500">({cert.date})</span>
+                        <span className="font-mono text-[8pt] text-zinc-500">{cert.date}</span>
                       )}
                     </div>
                   ))}

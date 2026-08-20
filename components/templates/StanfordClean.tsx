@@ -313,7 +313,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                         </div>
                         {cert.date && (
                           <span className="text-[8pt] text-zinc-500 font-mono ml-2 shrink-0">
-                            ({cert.date})
+                            {cert.date}
                           </span>
                         )}
                       </div>

@@ -267,7 +267,7 @@ export const CareerChanger: React.FC<TemplateProps> = ({ data, paperSize = "lett
                         </div>
                         {cert.date && (
                           <span className="text-[8pt] font-mono text-zinc-500">
-                            ({cert.date})
+                            {cert.date}
                           </span>
                         )}
                       </div>

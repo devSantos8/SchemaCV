@@ -292,7 +292,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                         </span>
                         {cert.date && (
                           <span className="text-[8.5pt] text-zinc-600 font-mono">
-                            ({cert.date})
+                            {cert.date}
                           </span>
                         )}
                       </div>

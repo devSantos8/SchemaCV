@@ -264,7 +264,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
                         <strong className="text-zinc-900">{cert.name}</strong>
                         <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
                       </span>
-                      {cert.date && <span className="font-mono text-zinc-500">({cert.date})</span>}
+                      {cert.date && <span className="font-mono text-zinc-500">{cert.date}</span>}
                     </div>
                   ))}
                 </div>
