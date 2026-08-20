@@ -5,7 +5,19 @@ import { generateObject, generateText } from "ai";
 import { z } from "zod";
 import type { AIProvider, Keyword, MatchAnalysis } from "@/types/jobs";
 import type { ResumeData } from "@/types/resume";
-import { KEYWORDS_PROMPT, EXPLAIN_MATCH_PROMPT, SUGGEST_PROMPT } from "./prompts";
+import {
+  buildExtractKeywordsPrompt,
+  buildExplainMatchPrompt,
+  buildSuggestImprovementsPrompt,
+  buildBulletRewriterPrompt,
+  buildCoverLetterPrompt,
+  buildATSAuditNarrativePrompt,
+  KeywordExtractionResultSchema,
+  ImprovementSuggestionsResultSchema,
+  BulletRewriterResultSchema,
+  RECOMMENDED_PARAMS,
+  type BulletRewriterResult,
+} from "./prompts";
 
 // ─── Errores tipados ──────────────────────────────────────────────────────────
 export class AIProviderError extends Error {
@@ -52,16 +64,6 @@ function mapError(err: unknown): AIProviderError {
   return new AIProviderError(`Error de conexion: ${msg.slice(0, 120)}`, "unknown");
 }
 
-// ─── Schema de keywords ───────────────────────────────────────────────────────
-const KeywordsOutputSchema = z.object({
-  keywords: z.array(
-    z.object({
-      text: z.string(),
-      frequency: z.number().int().min(1),
-    })
-  ).max(30),
-});
-
 // ─── Factory de modelos ───────────────────────────────────────────────────────
 function getModel(provider: AIProvider, apiKey: string) {
   const cleanKey = (apiKey || "").trim();
@@ -84,22 +86,28 @@ function getModel(provider: AIProvider, apiKey: string) {
 // ─── Funciones publicas ───────────────────────────────────────────────────────
 
 /**
- * Extrae keywords usando IA con structured output.
+ * Extrae keywords usando IA con structured output y validación tipada.
  */
 export async function extractKeywordsAI(
   description: string,
   provider: AIProvider,
-  apiKey: string
+  apiKey: string,
+  jobTitle?: string,
+  company?: string
 ): Promise<Pick<Keyword, "text" | "frequency">[]> {
   try {
     const model = getModel(provider, apiKey);
+    const { system, user } = buildExtractKeywordsPrompt({ description, jobTitle, company });
     const { object } = await generateObject({
       model,
-      system: KEYWORDS_PROMPT,
-      prompt: `Descripcion de la oferta:\n\n${description.slice(0, 6000)}`,
-      schema: KeywordsOutputSchema,
+      system,
+      prompt: user,
+      schema: KeywordExtractionResultSchema,
     });
-    return object.keywords;
+    return object.keywords.map((k) => ({
+      text: k.term,
+      frequency: k.frequency,
+    }));
   } catch (err) {
     throw mapError(err);
   }
@@ -113,22 +121,27 @@ export async function explainMatchAI(
   jobDescription: string,
   resumeData: ResumeData,
   provider: AIProvider,
-  apiKey: string
+  apiKey: string,
+  jobTitle: string = "Puesto Tecnológico",
+  company?: string
 ): Promise<string> {
   try {
     const model = getModel(provider, apiKey);
-    const context = `
-Score de match: ${matchAnalysis.score}/100
-Keywords encontradas (${matchAnalysis.matched.length}): ${matchAnalysis.matched.map((k) => k.text).join(", ")}
-Keywords faltantes (${matchAnalysis.missing.length}): ${matchAnalysis.missing.map((k) => k.text).join(", ")}
-Resumen del CV: ${resumeData.summary ?? "No disponible"}
-Descripcion del puesto: ${jobDescription.slice(0, 2000)}`;
+    const { system, user } = buildExplainMatchPrompt({
+      jobTitle,
+      company,
+      score: matchAnalysis.score,
+      matchedKeywords: matchAnalysis.matched.map((k) => k.text),
+      missingKeywords: matchAnalysis.missing.map((k) => k.text),
+      resumeSummary: resumeData.summary ?? "No disponible",
+      jobDescription,
+    });
 
     const { text } = await generateText({
       model,
-      system: EXPLAIN_MATCH_PROMPT,
-      prompt: context,
-      maxOutputTokens: 400,
+      system,
+      prompt: user,
+      maxOutputTokens: RECOMMENDED_PARAMS.explainMatch.maxTokens,
     });
     return text;
   } catch (err) {
@@ -143,36 +156,62 @@ export async function suggestImprovementsAI(
   missingKeywords: Keyword[],
   resumeData: ResumeData,
   provider: AIProvider,
-  apiKey: string
+  apiKey: string,
+  jobDescription?: string
 ): Promise<string[]> {
   try {
     const model = getModel(provider, apiKey);
-    const experienceSummary = (resumeData.experience ?? [])
-      .map((e) => `${e.position} en ${e.company}: ${(e.highlights ?? []).join(" | ")}`)
-      .join("\n");
-
-    const prompt = `
-Keywords faltantes: ${missingKeywords.map((k) => k.text).join(", ")}
-
-Experiencia real del candidato:
-${experienceSummary}
-
-Proyectos:
-${(resumeData.projects ?? []).map((p) => `${p.name}: ${(p.technologies ?? []).join(", ")} - ${p.description ?? ""}`).join("\n")}`;
-
-    const { text } = await generateText({
-      model,
-      system: SUGGEST_PROMPT,
-      prompt,
-      maxOutputTokens: 600,
+    const { system, user } = buildSuggestImprovementsPrompt({
+      missingKeywords: missingKeywords.map((k) => k.text),
+      resumeData,
+      jobDescription,
     });
 
-    // Parsear sugerencias como lista
-    return text
-      .split("\n")
-      .map((line) => line.replace(/^[-*•\d.)\s]+/, "").trim())
-      .filter((line) => line.length > 10)
-      .slice(0, 5);
+    const { object } = await generateObject({
+      model,
+      system,
+      prompt: user,
+      schema: ImprovementSuggestionsResultSchema,
+    });
+
+    return object.suggestions.map((s) => {
+      if (s.backed && s.bulletExample) {
+        return `[${s.section.toUpperCase()}] ${s.bulletExample} (${s.rationale})`;
+      }
+      if (!s.backed && s.acquisitionPath) {
+        return `[BRECHA: ${s.keyword}] Recomendación: ${s.acquisitionPath}`;
+      }
+      return `${s.keyword}: ${s.rationale}`;
+    });
+  } catch (err) {
+    throw mapError(err);
+  }
+}
+
+/**
+ * Reescritura de viñetas con structured output.
+ */
+export async function rewriteBulletAI(
+  originalBullet: string,
+  targetKeywords: string[],
+  provider: AIProvider,
+  apiKey: string
+): Promise<BulletRewriterResult> {
+  try {
+    const model = getModel(provider, apiKey);
+    const { system, user } = buildBulletRewriterPrompt({
+      originalBullet,
+      targetKeywords,
+    });
+
+    const { object } = await generateObject({
+      model,
+      system,
+      prompt: user,
+      schema: BulletRewriterResultSchema,
+    });
+
+    return object;
   } catch (err) {
     throw mapError(err);
   }

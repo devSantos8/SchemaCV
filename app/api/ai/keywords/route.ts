@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { extractKeywordsAI, AIProviderError } from "@/lib/ai/providers";
 import { extractKeywordsLocal } from "@/lib/ai/localAnalyzer";
 import type { AIProvider, Keyword } from "@/types/jobs";
@@ -6,7 +6,11 @@ import type { AIProvider, Keyword } from "@/types/jobs";
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get("X-AI-Key") ?? "";
   const provider = (req.headers.get("X-AI-Provider") ?? "openai") as AIProvider;
-  const { description } = await req.json() as { description: string };
+  const { description, jobTitle, company } = (await req.json()) as {
+    description: string;
+    jobTitle?: string;
+    company?: string;
+  };
 
   if (!description) {
     return NextResponse.json({ error: "description requerida." }, { status: 400 });
@@ -20,7 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const aiRaw = await extractKeywordsAI(description, provider, apiKey);
+    const aiRaw = await extractKeywordsAI(description, provider, apiKey, jobTitle, company);
 
     // Merge: keywords de IA con source "ai", locales no duplicadas como "local"
     const aiTexts = new Set(aiRaw.map((k) => k.text.toLowerCase()));

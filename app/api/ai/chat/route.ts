@@ -3,7 +3,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { streamText } from "ai";
-import { CHAT_SYSTEM_PROMPT } from "@/lib/ai/prompts";
+import { buildChatSystemPrompt, RECOMMENDED_PARAMS } from "@/lib/ai/prompts";
 import type { AIProvider } from "@/types/jobs";
 
 export const runtime = "nodejs";
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { messages, jobTitle, company, jobDescription, resumeSummary } = await req.json() as {
+  const { messages, jobTitle, company, jobDescription, resumeSummary } = (await req.json()) as {
     messages: { role: "user" | "assistant"; content: string }[];
     jobTitle: string;
     company: string;
@@ -27,23 +27,22 @@ export async function POST(req: NextRequest) {
     resumeSummary: string;
   };
 
-  const systemPrompt = `${CHAT_SYSTEM_PROMPT(jobTitle, company)}
-
-Descripcion del puesto:
-${jobDescription.slice(0, 3000)}
-
-Resumen del candidato:
-${resumeSummary}`;
+  const systemPrompt = buildChatSystemPrompt({
+    jobTitle,
+    company,
+    jobDescription,
+    resumeSummary,
+  });
 
   let model;
   if (provider === "google") {
     const google = createGoogleGenerativeAI({ apiKey: apiKey.trim() });
     model = google("gemini-3.6-flash");
   } else if (provider === "anthropic") {
-    const anthropic = createAnthropic({ apiKey });
+    const anthropic = createAnthropic({ apiKey: apiKey.trim() });
     model = anthropic("claude-3-5-haiku-20241022");
   } else {
-    const openai = createOpenAI({ apiKey });
+    const openai = createOpenAI({ apiKey: apiKey.trim() });
     model = openai("gpt-4o-mini");
   }
 
@@ -52,7 +51,8 @@ ${resumeSummary}`;
       model,
       system: systemPrompt,
       messages,
-      maxOutputTokens: 800,
+      temperature: RECOMMENDED_PARAMS.chat.temperature,
+      maxOutputTokens: RECOMMENDED_PARAMS.chat.maxTokens,
     });
 
     return result.toTextStreamResponse();
