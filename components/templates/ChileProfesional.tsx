@@ -202,11 +202,13 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                           {edu.gpa && <span className="ml-1.5 text-zinc-500 font-normal">({edu.gpa})</span>}
                         </div>
 
-                        {edu.highlights && edu.highlights.length > 0 && (
+                        {edu.highlights && edu.highlights.some((h) => h && h.trim()) && (
                           <ul className="list-disc pl-4 space-y-0.5 text-[8.5pt] text-zinc-700 leading-snug mt-1">
-                            {edu.highlights.map((h, i) => (
-                              <li key={i} className="pl-0.5">{h}</li>
-                            ))}
+                            {edu.highlights
+                              .filter((h) => h && h.trim())
+                              .map((h, i) => (
+                                <li key={i} className="pl-0.5">{h}</li>
+                              ))}
                           </ul>
                         )}
                       </article>
@@ -256,19 +258,21 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                           )}
                         </div>
 
-                        {proj.description && (
+                        {proj.description && proj.description.trim() && (
                           <p className="text-[8.5pt] text-zinc-700">
                             {proj.description}
                           </p>
                         )}
 
-                        {proj.highlights && proj.highlights.length > 0 && (
+                        {proj.highlights && proj.highlights.some((h) => h && h.trim()) && (
                           <ul className="list-disc pl-4 space-y-0.5 text-[9pt] text-zinc-800 leading-snug">
-                            {proj.highlights.map((h, i) => (
-                              <li key={i} className="pl-0.5">
-                                {h}
-                              </li>
-                            ))}
+                            {proj.highlights
+                              .filter((h) => h && h.trim())
+                              .map((h, i) => (
+                                <li key={i} className="pl-0.5">
+                                  {h}
+                                </li>
+                              ))}
                           </ul>
                         )}
                       </article>
