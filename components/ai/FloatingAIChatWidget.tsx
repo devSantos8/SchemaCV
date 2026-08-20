@@ -66,6 +66,86 @@ function TypingIndicator() {
   );
 }
 
+function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?: boolean }) {
+  const parseInlineMarkdown = (text: string) => {
+    // Manejar **negrita**, *cursiva* y `código`
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*|`.*?`)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("**") && part.endsWith("**") && part.length >= 4) {
+        return (
+          <strong
+            key={index}
+            className={`font-bold ${
+              isUser ? "text-white dark:text-zinc-900" : "text-zinc-900 dark:text-zinc-50"
+            }`}
+          >
+            {part.slice(2, -2)}
+          </strong>
+        );
+      }
+      if (part.startsWith("*") && part.endsWith("*") && part.length >= 2 && !part.startsWith("**")) {
+        return (
+          <em key={index} className="italic opacity-90">
+            {part.slice(1, -1)}
+          </em>
+        );
+      }
+      if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+        return (
+          <code
+            key={index}
+            className={`px-1 py-0.5 rounded font-mono text-[11px] ${
+              isUser
+                ? "bg-zinc-800 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-900"
+                : "bg-zinc-200/80 dark:bg-zinc-800 text-violet-600 dark:text-violet-400"
+            }`}
+          >
+            {part.slice(1, -1)}
+          </code>
+        );
+      }
+      return part;
+    });
+  };
+
+  const lines = content.split("\n");
+
+  return (
+    <div className="space-y-1.5 leading-relaxed text-xs">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-1" />;
+
+        // Lista de viñetas
+        if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("* ")) {
+          const bulletText = trimmed.replace(/^[-•*]\s*/, "");
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-0.5">
+              <span className={`font-bold mt-0.5 ${isUser ? "text-zinc-300" : "text-violet-500"}`}>•</span>
+              <span className="flex-1 leading-snug">{parseInlineMarkdown(bulletText)}</span>
+            </div>
+          );
+        }
+
+        // Lista numerada
+        const numMatch = trimmed.match(/^(\d+)[\.\)]\s*(.+)/);
+        if (numMatch) {
+          return (
+            <div key={idx} className="flex items-start gap-1.5 pl-0.5">
+              <span className={`font-mono font-bold shrink-0 ${isUser ? "text-zinc-300" : "text-violet-600 dark:text-violet-400"}`}>
+                {numMatch[1]}.
+              </span>
+              <span className="flex-1 leading-snug">{parseInlineMarkdown(numMatch[2])}</span>
+            </div>
+          );
+        }
+
+        return <p key={idx} className="leading-snug">{parseInlineMarkdown(line)}</p>;
+      })}
+    </div>
+  );
+}
+
 export function FloatingAIChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -309,13 +389,13 @@ Experiencia: ${candidateExperience}`;
                     </div>
 
                     <div
-                      className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed whitespace-pre-wrap ${
+                      className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed ${
                         isUser
                           ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-tr-xs font-medium shadow-xs"
                           : "bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-tl-xs border border-zinc-200/60 dark:border-zinc-800/80"
                       }`}
                     >
-                      {msg.content}
+                      <MarkdownMessageRenderer content={msg.content} isUser={isUser} />
                     </div>
                   </motion.div>
                 );
@@ -327,8 +407,8 @@ Experiencia: ${candidateExperience}`;
                   <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5">
                     <Sparkles className="w-3 h-3" />
                   </div>
-                  <div className="max-w-[85%] p-3.5 rounded-2xl rounded-tl-xs bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-zinc-200/60 dark:border-zinc-800 leading-relaxed whitespace-pre-wrap">
-                    {streamingContent}
+                  <div className="max-w-[85%] p-3.5 rounded-2xl rounded-tl-xs bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-zinc-200/60 dark:border-zinc-800 leading-relaxed">
+                    <MarkdownMessageRenderer content={streamingContent} />
                     <motion.span
                       animate={{ opacity: [1, 0] }}
                       transition={{ duration: 0.5, repeat: Infinity }}
