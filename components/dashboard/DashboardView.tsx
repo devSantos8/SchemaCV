@@ -1101,7 +1101,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Tarjetas de Accesos Directos */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div
-                  onClick={onOpenWorkspace}
+                  onClick={activeProfile ? onOpenWorkspace : () => setIsWizardOpen(true)}
                   className="p-5 rounded-2xl border border-border bg-card hover:border-foreground/30 cursor-pointer transition-all flex items-center justify-between group shadow-2xs"
                 >
                   <div className="space-y-1">
@@ -1110,11 +1110,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <ArrowRight className="h-3.5 w-3.5" />
                       </div>
                       <h3 className="text-sm font-bold text-foreground">
-                        Continuar Editando CV Activo
+                        {activeProfile ? "Continuar Editando CV Activo" : "Crear Mi Primer Currículum"}
                       </h3>
                     </div>
                     <p className="text-xs text-muted-foreground pl-9">
-                      {activeProfile.name} • {TEMPLATE_METADATA[activeProfile.templateId]?.name}
+                      {activeProfile
+                        ? `${activeProfile.name} • ${TEMPLATE_METADATA[activeProfile.templateId]?.name || "Plantilla"}`
+                        : "Comienza a diseñar tu CV optimizado para ATS"}
                     </p>
                   </div>
                   <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
@@ -1145,43 +1147,67 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-bold text-foreground">Tus Versiones de CV</h3>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSection("resumes")}
-                    className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1"
-                  >
-                    <span>Ver todas ({profiles.length})</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </button>
+                  {profiles.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveSection("resumes")}
+                      className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Ver todas ({profiles.length})</span>
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {profiles.slice(0, 4).map((p) => {
-                    const meta = TEMPLATE_METADATA[p.templateId] || TEMPLATE_METADATA.tech_minimalist;
-                    return (
-                      <div
-                        key={p.id}
-                        className="p-4 rounded-xl border border-border bg-card flex items-center justify-between gap-3 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
-                      >
-                        <div className="space-y-0.5 min-w-0">
-                          <h4 className="font-bold text-xs text-foreground truncate">{p.name}</h4>
-                          <p className="text-[11px] text-muted-foreground truncate">{p.targetRole}</p>
-                          <span className="text-[10px] font-mono text-muted-foreground">{meta.name}</span>
-                        </div>
+                {profiles.length === 0 ? (
+                  <div className="p-8 rounded-2xl border border-dashed border-border bg-card/40 text-center space-y-3">
+                    <div className="h-10 w-10 mx-auto rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-muted-foreground">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-foreground">Aún no tienes currículums creados</h4>
+                      <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                        Crea tu primera versión de currículum con nuestro asistente inteligente optimizado para ATS.
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setIsWizardOpen(true)}
+                      className="h-8.5 px-4 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Crear mi primer CV</span>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {profiles.slice(0, 4).map((p) => {
+                      const meta = TEMPLATE_METADATA[p.templateId] || TEMPLATE_METADATA.tech_minimalist;
+                      return (
+                        <div
+                          key={p.id}
+                          className="p-4 rounded-xl border border-border bg-card flex items-center justify-between gap-3 hover:border-zinc-300 dark:hover:border-zinc-700 transition-all"
+                        >
+                          <div className="space-y-0.5 min-w-0">
+                            <h4 className="font-bold text-xs text-foreground truncate">{p.name}</h4>
+                            <p className="text-[11px] text-muted-foreground truncate">{p.targetRole}</p>
+                            <span className="text-[10px] font-mono text-muted-foreground">{meta.name}</span>
+                          </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <Button
-                            size="sm"
-                            onClick={() => handleOpenResume(p.id)}
-                            className="h-7 px-2.5 text-xs font-semibold bg-foreground text-background"
-                          >
-                            Editar
-                          </Button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <Button
+                              size="sm"
+                              onClick={() => handleOpenResume(p.id)}
+                              className="h-7 px-2.5 text-xs font-semibold bg-foreground text-background"
+                            >
+                              Editar
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
