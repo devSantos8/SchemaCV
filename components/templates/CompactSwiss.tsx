@@ -219,10 +219,30 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                       {projects.map((proj) => (
                         <div key={proj.id} className="break-inside-avoid">
                           <div className="flex justify-between items-baseline">
-                            <div className="flex items-baseline gap-1.5">
+                            <div className="flex flex-wrap items-baseline gap-x-1.5">
                               <span className="font-bold text-[8.5pt] text-zinc-950">
                                 {proj.name}
                               </span>
+                              {proj.github_url && (
+                                <a
+                                  href={proj.github_url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[7pt] font-mono text-zinc-600 hover:text-zinc-950 underline font-semibold"
+                                >
+                                  [GitHub]
+                                </a>
+                              )}
+                              {proj.url && (
+                                <a
+                                  href={proj.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[7pt] font-mono text-zinc-600 hover:text-zinc-950 underline font-semibold"
+                                >
+                                  [Demo]
+                                </a>
+                              )}
                               {proj.technologies && proj.technologies.length > 0 && (
                                 <span className="text-[7.5pt] font-mono text-zinc-500">
                                   ({proj.technologies.join(", ")})

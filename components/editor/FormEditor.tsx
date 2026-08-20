@@ -117,15 +117,13 @@ export const FormEditor: React.FC = () => {
   const handleAddExperience = () => {
     const newExp: ExperienceEntry = {
       id: `exp-${Date.now()}`,
-      company: "Nueva Empresa",
-      position: "Cargo / Rol",
-      location: "Ciudad, País",
-      start_date: "2024",
-      end_date: "Presente",
-      current: true,
-      highlights: [
-        "Desarrollé e implementé [solución técnica], logrando [métrica de impacto: X% de mejora] mediante [tecnología].",
-      ],
+      company: "",
+      position: "",
+      location: "",
+      start_date: "",
+      end_date: "",
+      current: false,
+      highlights: [""],
       summary: "",
     };
     setResumeData({ experience: [newExp, ...(resumeData.experience || [])] });
@@ -149,7 +147,7 @@ export const FormEditor: React.FC = () => {
       if (exp.id === expId) {
         return {
           ...exp,
-          highlights: [...(exp.highlights || []), "Nuevo logro o responsabilidad de impacto"],
+          highlights: [...(exp.highlights || []), ""],
         };
       }
       return exp;
@@ -186,14 +184,14 @@ export const FormEditor: React.FC = () => {
   const handleAddProject = () => {
     const newProj: ProjectEntry = {
       id: `proj-${Date.now()}`,
-      name: "Nombre del Proyecto",
-      description: "Descripción breve del problema que resuelve la solución.",
+      name: "",
+      description: "",
       url: "",
       github_url: "",
-      start_date: "2024",
+      start_date: "",
       end_date: "",
-      technologies: ["React", "TypeScript", "Node.js"],
-      highlights: ["Construí [funcionalidad clave] optimizando el tiempo de respuesta en un 30%."],
+      technologies: [],
+      highlights: [],
     };
     setResumeData({ projects: [newProj, ...(resumeData.projects || [])] });
   };
@@ -211,16 +209,54 @@ export const FormEditor: React.FC = () => {
     });
   };
 
+  const handleAddHighlightProj = (projId: string) => {
+    const updated = (resumeData.projects || []).map((p) => {
+      if (p.id === projId) {
+        return {
+          ...p,
+          highlights: [...(p.highlights || []), ""],
+        };
+      }
+      return p;
+    });
+    setResumeData({ projects: updated });
+  };
+
+  const handleUpdateHighlightProj = (projId: string, index: number, value: string) => {
+    const updated = (resumeData.projects || []).map((p) => {
+      if (p.id === projId) {
+        const nextHl = [...(p.highlights || [])];
+        nextHl[index] = value;
+        return { ...p, highlights: nextHl };
+      }
+      return p;
+    });
+    setResumeData({ projects: updated });
+  };
+
+  const handleRemoveHighlightProj = (projId: string, index: number) => {
+    const updated = (resumeData.projects || []).map((p) => {
+      if (p.id === projId) {
+        return {
+          ...p,
+          highlights: (p.highlights || []).filter((_, i) => i !== index),
+        };
+      }
+      return p;
+    });
+    setResumeData({ projects: updated });
+  };
+
   // 4. Manejadores de Educación
   const handleAddEducation = () => {
     const newEdu: EducationEntry = {
       id: `edu-${Date.now()}`,
-      institution: "Universidad / Instituto",
-      degree: "Título Profesional / Grado",
-      area: "Ingeniería Informática / Software",
-      location: "Ciudad, País",
-      start_date: "2020",
-      end_date: "2024",
+      institution: "",
+      degree: "",
+      area: "",
+      location: "",
+      start_date: "",
+      end_date: "",
       current: false,
       gpa: "",
       highlights: [],
@@ -241,13 +277,51 @@ export const FormEditor: React.FC = () => {
     });
   };
 
+  const handleAddHighlightEdu = (eduId: string) => {
+    const updated = (resumeData.education || []).map((e) => {
+      if (e.id === eduId) {
+        return {
+          ...e,
+          highlights: [...(e.highlights || []), ""],
+        };
+      }
+      return e;
+    });
+    setResumeData({ education: updated });
+  };
+
+  const handleUpdateHighlightEdu = (eduId: string, index: number, value: string) => {
+    const updated = (resumeData.education || []).map((e) => {
+      if (e.id === eduId) {
+        const nextHl = [...(e.highlights || [])];
+        nextHl[index] = value;
+        return { ...e, highlights: nextHl };
+      }
+      return e;
+    });
+    setResumeData({ education: updated });
+  };
+
+  const handleRemoveHighlightEdu = (eduId: string, index: number) => {
+    const updated = (resumeData.education || []).map((e) => {
+      if (e.id === eduId) {
+        return {
+          ...e,
+          highlights: (e.highlights || []).filter((_, i) => i !== index),
+        };
+      }
+      return e;
+    });
+    setResumeData({ education: updated });
+  };
+
   // 5. Manejadores de Certificaciones
   const handleAddCertification = () => {
     const newCert: CertificationEntry = {
       id: `cert-${Date.now()}`,
-      name: "Nombre de Certificación Oficial",
-      issuer: "Amazon Web Services / Microsoft / Google",
-      date: "2025",
+      name: "",
+      issuer: "",
+      date: "",
       url: "",
       summary: "",
     };
@@ -931,6 +1005,7 @@ export const FormEditor: React.FC = () => {
                           <Input
                             value={proj.name}
                             onChange={(e) => handleUpdateProject(proj.id, { name: e.target.value })}
+                            placeholder="ej: SchemaCV, API Gateway, etc."
                             className="h-7 text-xs"
                           />
                         </div>
@@ -946,7 +1021,7 @@ export const FormEditor: React.FC = () => {
                                   .filter(Boolean),
                               })
                             }
-                            placeholder="React, TypeScript, Docker"
+                            placeholder="React, TypeScript, Next.js, PostgreSQL"
                             className="h-7 text-xs"
                           />
                         </div>
@@ -955,7 +1030,7 @@ export const FormEditor: React.FC = () => {
                           <Input
                             value={proj.github_url || ""}
                             onChange={(e) => handleUpdateProject(proj.id, { github_url: e.target.value })}
-                            placeholder="https://github.com/..."
+                            placeholder="https://github.com/usuario/repo"
                             className="h-7 text-xs"
                           />
                         </div>
@@ -964,19 +1039,64 @@ export const FormEditor: React.FC = () => {
                           <Input
                             value={proj.url || ""}
                             onChange={(e) => handleUpdateProject(proj.id, { url: e.target.value })}
-                            placeholder="https://..."
+                            placeholder="https://midemo.com"
                             className="h-7 text-xs"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <Label className="text-[11px]">Descripción / Logro principal</Label>
+                        <Label className="text-[11px]">Descripción / Resumen del Proyecto</Label>
                         <Textarea
                           value={proj.description || ""}
                           onChange={(e) => handleUpdateProject(proj.id, { description: e.target.value })}
+                          placeholder="Describe brevemente el objetivo, arquitectura y problema resuelto..."
                           className="text-xs min-h-[48px] resize-y"
                         />
+                      </div>
+
+                      {/* Viñetas de logros del proyecto */}
+                      <div className="space-y-2 pt-1 border-t border-border">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <Sparkles className="h-3 w-3 text-amber-500" />
+                            <Label className="text-[11px] font-semibold">
+                              Logros y Viñetas Técnicas (Opcional)
+                            </Label>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddHighlightProj(proj.id)}
+                            className="h-6 text-[10px] px-2 gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                          >
+                            <Plus className="h-3 w-3" />
+                            Añadir Viñeta
+                          </Button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          {(proj.highlights || []).map((hl, hIdx) => (
+                            <div key={hIdx} className="flex gap-1.5 items-start">
+                              <span className="text-muted-foreground text-xs mt-1">•</span>
+                              <Textarea
+                                value={hl}
+                                onChange={(e) => handleUpdateHighlightProj(proj.id, hIdx, e.target.value)}
+                                placeholder="Logro cuantificable o funcionalidad técnica implementada..."
+                                className="text-xs min-h-[44px] py-1.5 leading-tight flex-1 resize-y"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveHighlightProj(proj.id, hIdx)}
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                title="Eliminar viñeta"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   );
@@ -1092,7 +1212,7 @@ export const FormEditor: React.FC = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className={`text-xs font-bold ${isEduHidden ? "line-through text-muted-foreground" : "text-foreground"}`}>
-                            {edu.degree || "Título"} en {edu.institution || "Institución"}
+                            {edu.degree || "Título"} {edu.institution ? `en ${edu.institution}` : ""}
                           </span>
                           {isEduHidden && (
                             <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 font-medium">
@@ -1139,6 +1259,7 @@ export const FormEditor: React.FC = () => {
                           <Input
                             value={edu.institution}
                             onChange={(e) => handleUpdateEducation(edu.id, { institution: e.target.value })}
+                            placeholder="ej: INACAP, Universidad de Chile, etc."
                             className="h-7 text-xs"
                           />
                         </div>
@@ -1147,6 +1268,7 @@ export const FormEditor: React.FC = () => {
                           <Input
                             value={edu.degree}
                             onChange={(e) => handleUpdateEducation(edu.id, { degree: e.target.value })}
+                            placeholder="ej: Ingeniería en Informática, Licenciatura"
                             className="h-7 text-xs"
                           />
                         </div>
@@ -1155,6 +1277,25 @@ export const FormEditor: React.FC = () => {
                           <Input
                             value={edu.area || ""}
                             onChange={(e) => handleUpdateEducation(edu.id, { area: e.target.value })}
+                            placeholder="ej: Desarrollo de Software, Redes, etc."
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Ubicación (Ciudad, País)</Label>
+                          <Input
+                            value={edu.location || ""}
+                            onChange={(e) => handleUpdateEducation(edu.id, { location: e.target.value })}
+                            placeholder="ej: Santiago, Chile"
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Promedio / Distinción / Honores (Opcional)</Label>
+                          <Input
+                            value={edu.gpa || ""}
+                            onChange={(e) => handleUpdateEducation(edu.id, { gpa: e.target.value })}
+                            placeholder="ej: Distinción Máxima, GPA 3.9, etc."
                             className="h-7 text-xs"
                           />
                         </div>
@@ -1162,18 +1303,62 @@ export const FormEditor: React.FC = () => {
                           <Label className="text-[11px]">Fechas (Inicio – Fin)</Label>
                           <div className="flex gap-2">
                             <Input
-                              placeholder="2020"
+                              placeholder="2021"
                               value={edu.start_date || ""}
                               onChange={(e) => handleUpdateEducation(edu.id, { start_date: e.target.value })}
                               className="h-7 text-xs w-1/2"
                             />
                             <Input
-                              placeholder="2024"
+                              placeholder="2025"
                               value={edu.end_date || ""}
                               onChange={(e) => handleUpdateEducation(edu.id, { end_date: e.target.value })}
                               className="h-7 text-xs w-1/2"
                             />
                           </div>
+                        </div>
+                      </div>
+
+                      {/* Viñetas / Logros / Certificados Académicos adicionales */}
+                      <div className="space-y-2 pt-1 border-t border-border">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <Award className="h-3 w-3 text-blue-500" />
+                            <Label className="text-[11px] font-semibold">
+                              Certificados Académicos o Logros (Opcional)
+                            </Label>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleAddHighlightEdu(edu.id)}
+                            className="h-6 text-[10px] px-2 gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                          >
+                            <Plus className="h-3 w-3" />
+                            Añadir Logro / Certificado
+                          </Button>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          {(edu.highlights || []).map((hl, hIdx) => (
+                            <div key={hIdx} className="flex gap-1.5 items-start">
+                              <span className="text-muted-foreground text-xs mt-1">•</span>
+                              <Input
+                                value={hl}
+                                onChange={(e) => handleUpdateHighlightEdu(edu.id, hIdx, e.target.value)}
+                                placeholder="ej: Certificado de Especialización en Cloud, Tesis destacada, etc."
+                                className="h-7 text-xs flex-1"
+                              />
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveHighlightEdu(edu.id, hIdx)}
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                title="Eliminar viñeta académica"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </div>

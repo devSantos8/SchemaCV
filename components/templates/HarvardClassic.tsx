@@ -178,12 +178,32 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                   {projects.map((proj) => (
                     <div key={proj.id} className="page-break-avoid">
                       <div className="flex justify-between items-baseline mb-0.5">
-                        <div>
+                        <div className="flex flex-wrap items-baseline gap-x-2">
                           <span className="font-bold text-[10pt] text-zinc-950">
                             {proj.name}
                           </span>
+                          {proj.github_url && (
+                            <a
+                              href={proj.github_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[8pt] font-sans text-zinc-600 hover:text-zinc-950 underline font-medium"
+                            >
+                              [GitHub]
+                            </a>
+                          )}
+                          {proj.url && (
+                            <a
+                              href={proj.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[8pt] font-sans text-zinc-600 hover:text-zinc-950 underline font-medium"
+                            >
+                              [Demo]
+                            </a>
+                          )}
                           {proj.technologies && proj.technologies.length > 0 && (
-                            <span className="text-[9pt] font-sans text-zinc-600 ml-1.5 font-medium">
+                            <span className="text-[9pt] font-sans text-zinc-600 font-medium">
                               | {proj.technologies.join(", ")}
                             </span>
                           )}

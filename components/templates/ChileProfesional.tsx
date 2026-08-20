@@ -197,9 +197,18 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                           </div>
                         </div>
                         <div className="text-[9pt] text-zinc-700 font-medium">
-                          {edu.institution} {edu.location ? `• ${edu.location}` : ""}
+                          {edu.institution}
+                          {edu.location && <span> • {edu.location}</span>}
                           {edu.gpa && <span className="ml-1.5 text-zinc-500 font-normal">({edu.gpa})</span>}
                         </div>
+
+                        {edu.highlights && edu.highlights.length > 0 && (
+                          <ul className="list-disc pl-4 space-y-0.5 text-[8.5pt] text-zinc-700 leading-snug mt-1">
+                            {edu.highlights.map((h, i) => (
+                              <li key={i} className="pl-0.5">{h}</li>
+                            ))}
+                          </ul>
+                        )}
                       </article>
                     ))}
                   </div>
@@ -217,16 +226,26 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                     {projects.map((proj) => (
                       <article key={proj.id} className="space-y-0.5">
                         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-x-2">
-                          <h3 className="text-[9.5pt] font-bold text-zinc-950 flex items-center gap-1.5">
-                            {proj.name}
+                          <h3 className="text-[9.5pt] font-bold text-zinc-950 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                            <span>{proj.name}</span>
+                            {proj.github_url && (
+                              <a
+                                href={proj.github_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[8pt] font-mono text-blue-700 hover:underline font-semibold"
+                              >
+                                [GitHub]
+                              </a>
+                            )}
                             {proj.url && (
                               <a
                                 href={proj.url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="text-[8pt] font-mono text-blue-700 hover:underline font-normal"
+                                className="text-[8pt] font-mono text-blue-700 hover:underline font-semibold"
                               >
-                                [Enlace]
+                                [Demo]
                               </a>
                             )}
                           </h3>
