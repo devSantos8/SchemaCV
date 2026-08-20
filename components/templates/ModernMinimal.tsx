@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -41,10 +41,7 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
   if (website) contactItems.push({ label: website.replace(/^https?:\/\//, ""), url: website });
 
   social_networks.forEach((sn) => {
-    contactItems.push({
-      label: sn.username ? `${sn.network}: ${sn.username}` : sn.network,
-      url: sn.url,
-    });
+    contactItems.push(formatSocialDisplay(sn));
   });
 
   return (
@@ -141,11 +138,16 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
                         <div className="flex justify-between items-baseline mb-0.5">
                           <div className="font-bold text-[10pt] text-zinc-950">
                             {exp.position}{" "}
-                            <span className="font-normal text-zinc-600">/ {exp.company}</span>
+                            <span className="font-normal text-zinc-600">— {exp.company}</span>
+                            {exp.location && (
+                              <span className="font-normal text-[8.5pt] text-zinc-500">
+                                {" "}
+                                ({exp.location})
+                              </span>
+                            )}
                           </div>
                           <span className="text-[8.5pt] text-zinc-500 font-mono shrink-0">
-                            {exp.location ? `${exp.location} • ` : ""}
-                            {exp.start_date} – {exp.current ? labels.present : exp.end_date}
+                            {exp.start_date} – {exp.current ? labels.present : (exp.end_date || labels.present)}
                           </span>
                         </div>
 
@@ -190,7 +192,7 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
                           </div>
                           <span className="text-[8.5pt] text-zinc-500 font-mono shrink-0">
                             {edu.start_date ? `${edu.start_date} – ` : ""}
-                            {edu.current ? labels.present : edu.end_date || ""}
+                            {edu.current ? labels.present : (edu.end_date || labels.present)}
                           </span>
                         </div>
                       </div>
@@ -258,11 +260,11 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <div>
                           <span className="font-semibold text-zinc-900">{cert.name}</span>
-                          <span className="text-zinc-600"> — {cert.issuer}</span>
+                          <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
                         </div>
                         {cert.date && (
                           <span className="text-[8.5pt] font-mono text-zinc-500">
-                            {cert.date}
+                            ({cert.date})
                           </span>
                         )}
                       </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -42,10 +42,7 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
   if (website) contactItems.push({ label: website.replace(/^https?:\/\//, ""), url: website });
 
   social_networks.forEach((sn) => {
-    contactItems.push({
-      label: sn.username ? `${sn.network}: ${sn.username}` : sn.network,
-      url: sn.url,
-    });
+    contactItems.push(formatSocialDisplay(sn));
   });
 
   return (
@@ -114,7 +111,7 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
                           </span>
                           <span className="text-[9pt] text-zinc-600 shrink-0 font-medium">
                             {edu.start_date ? `${edu.start_date} – ` : ""}
-                            {edu.current ? labels.present : edu.end_date || ""}
+                            {edu.current ? labels.present : (edu.end_date || labels.present)}
                           </span>
                         </div>
                         <div className="flex justify-between items-baseline text-[9.5pt]">
@@ -156,10 +153,15 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
                               {exp.position}
                             </span>
                             <span className="text-zinc-700 font-medium"> — {exp.company}</span>
+                            {exp.location && (
+                              <span className="font-normal text-[9pt] text-zinc-600">
+                                {" "}
+                                ({exp.location})
+                              </span>
+                            )}
                           </div>
                           <span className="text-[9pt] text-zinc-600 shrink-0 font-medium">
-                            {exp.location ? `${exp.location} | ` : ""}
-                            {exp.start_date} – {exp.current ? labels.present : exp.end_date}
+                            {exp.start_date} – {exp.current ? labels.present : (exp.end_date || labels.present)}
                           </span>
                         </div>
 
@@ -241,7 +243,7 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
                     {skills.map((cat) => (
                       <div key={cat.id || cat.category} className="leading-snug">
                         <span className="font-bold text-zinc-900 text-[9pt] mr-1">
-                          {cat.category}:
+                          {cat.category}:{" "}
                         </span>
                         <span className="text-zinc-800">{cat.skills.join(", ")}</span>
                       </div>
@@ -275,11 +277,11 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <div>
                           <span className="font-bold text-zinc-900">{cert.name}</span>
-                          <span className="text-zinc-700"> — {cert.issuer}</span>
+                          <span className="text-zinc-700"> — {cert.issuer}{" "}</span>
                         </div>
                         {cert.date && (
                           <span className="text-[8.5pt] text-zinc-600 font-medium">
-                            {cert.date}
+                            ({cert.date})
                           </span>
                         )}
                       </div>
