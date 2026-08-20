@@ -21,7 +21,7 @@ export default function ResumesPage() {
   return (
     <DashboardView
       initialSection="resumes"
-      onOpenWorkspace={(profileId) => {
+      onOpenWorkspace={(profileId?: string) => {
         router.push(profileId ? `/editor/${profileId}` : "/editor");
       }}
       onOpenSettings={() => {

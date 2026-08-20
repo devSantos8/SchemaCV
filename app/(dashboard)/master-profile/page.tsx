@@ -21,7 +21,7 @@ export default function MasterProfilePage() {
   return (
     <DashboardView
       initialSection="master_profile"
-      onOpenWorkspace={(profileId) => {
+      onOpenWorkspace={(profileId?: string) => {
         router.push(profileId ? `/editor/${profileId}` : "/editor");
       }}
       onOpenSettings={() => {

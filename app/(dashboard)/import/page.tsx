@@ -21,7 +21,7 @@ export default function ImportPage() {
   return (
     <DashboardView
       initialSection="ai_import"
-      onOpenWorkspace={(profileId) => {
+      onOpenWorkspace={(profileId?: string) => {
         router.push(profileId ? `/editor/${profileId}` : "/editor");
       }}
       onOpenSettings={() => {

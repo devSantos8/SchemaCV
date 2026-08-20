@@ -21,7 +21,7 @@ export default function JobsPage() {
   return (
     <DashboardView
       initialSection="job_tracker"
-      onOpenWorkspace={(profileId) => {
+      onOpenWorkspace={(profileId?: string) => {
         router.push(profileId ? `/editor/${profileId}` : "/editor");
       }}
       onOpenSettings={() => {

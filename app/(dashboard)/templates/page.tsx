@@ -21,7 +21,7 @@ export default function TemplatesPage() {
   return (
     <DashboardView
       initialSection="templates"
-      onOpenWorkspace={(profileId) => {
+      onOpenWorkspace={(profileId?: string) => {
         router.push(profileId ? `/editor/${profileId}` : "/editor");
       }}
       onOpenSettings={() => {
