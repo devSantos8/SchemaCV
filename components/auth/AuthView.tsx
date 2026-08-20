@@ -129,42 +129,18 @@ export const AuthView: React.FC = () => {
             </div>
           )}
 
-          {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
+          {/* Botón OAuth Exclusivo: Google */}
           <div className="space-y-2">
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => loginWithProvider("google")}
-                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                title="Continuar con Google"
-              >
-                <GoogleIcon />
-                <span className="hidden sm:inline font-medium">Google</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => loginWithProvider("linkedin")}
-                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                title="Continuar con LinkedIn"
-              >
-                <LinkedinIcon />
-                <span className="hidden sm:inline font-medium">LinkedIn</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => loginWithProvider("github")}
-                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
-                title="Continuar con GitHub"
-              >
-                <GithubIcon />
-                <span className="hidden sm:inline font-medium">GitHub</span>
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => loginWithProvider("google")}
+              className="w-full h-10 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2.5 shadow-xs cursor-pointer"
+              title="Continuar con Google"
+            >
+              <GoogleIcon className="h-4 w-4" />
+              <span className="font-semibold text-foreground">Continuar con Google</span>
+            </Button>
 
             {/* Separador */}
             <div className="relative py-1">

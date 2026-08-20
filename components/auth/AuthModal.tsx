@@ -87,43 +87,18 @@ export const AuthModal: React.FC = () => {
             <span>{error}</span>
           </div>
         )}
-
-        {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
-        <div className="space-y-2 pt-1">
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => loginWithProvider("google")}
-              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-              title="Continuar con Google"
-            >
-              <GoogleIcon />
-              <span className="hidden sm:inline font-medium">Google</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => loginWithProvider("linkedin")}
-              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-              title="Continuar con LinkedIn"
-            >
-              <LinkedinIcon />
-              <span className="hidden sm:inline font-medium">LinkedIn</span>
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => loginWithProvider("github")}
-              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-              title="Continuar con GitHub"
-            >
-              <GithubIcon />
-              <span className="hidden sm:inline font-medium">GitHub</span>
-            </Button>
-          </div>
+        {/* Botón OAuth Exclusivo: Google */}
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => loginWithProvider("google")}
+            className="w-full h-10 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2.5 shadow-xs cursor-pointer"
+            title="Continuar con Google"
+          >
+            <GoogleIcon className="h-4 w-4" />
+            <span className="font-semibold text-foreground">Continuar con Google</span>
+          </Button>
 
           {/* Separador */}
           <div className="relative py-1">
