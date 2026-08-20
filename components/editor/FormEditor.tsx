@@ -14,6 +14,7 @@ import {
   Sparkles,
   ExternalLink,
   ChevronDown,
+  ChevronUp,
   Eye,
   EyeOff,
 } from "lucide-react";
@@ -55,6 +56,64 @@ export const FormEditor: React.FC = () => {
     setResumeData({ hidden_sections: Array.from(nextHidden) });
   };
 
+  // 1. Manejadores de Información Personal
+  const handlePersonalChange = (field: string, value: string) => {
+    setResumeData({ [field]: value });
+  };
+
+  const handleAddSocial = () => {
+    const newSocial: SocialNetwork = {
+      network: "GitHub",
+      username: "",
+      url: "",
+    };
+    setResumeData({
+      social_networks: [...(resumeData.social_networks || []), newSocial],
+    });
+  };
+
+  const handleUpdateSocial = (index: number, field: keyof SocialNetwork, value: string) => {
+    const updated = [...(resumeData.social_networks || [])];
+    updated[index] = { ...updated[index], [field]: value };
+    setResumeData({ social_networks: updated });
+  };
+
+  const handleRemoveSocial = (index: number) => {
+    const updated = (resumeData.social_networks || []).filter((_, i) => i !== index);
+    setResumeData({ social_networks: updated });
+  };
+
+  // 2. Manejadores de Experiencia Laboral
+  const handleAddExperience = () => {
+    const newExp: ExperienceEntry = {
+      id: `exp-${Date.now()}`,
+      company: "",
+      position: "",
+      location: "",
+      start_date: "",
+      end_date: "",
+      current: false,
+      summary: "",
+      highlights: [],
+    };
+    setResumeData({
+      experience: [newExp, ...(resumeData.experience || [])],
+    });
+  };
+
+  const handleUpdateExperience = (id: string, updates: Partial<ExperienceEntry>) => {
+    const updated = (resumeData.experience || []).map((exp) =>
+      exp.id === id ? { ...exp, ...updates } : exp
+    );
+    setResumeData({ experience: updated });
+  };
+
+  const handleRemoveExperience = (id: string) => {
+    setResumeData({
+      experience: (resumeData.experience || []).filter((exp) => exp.id !== id),
+    });
+  };
+
   // Alternar visibilidad de entradas individuales
   const handleToggleExperienceVisibility = (id: string) => {
     const updated = (resumeData.experience || []).map((exp) =>
@@ -84,70 +143,12 @@ export const FormEditor: React.FC = () => {
     setResumeData({ certifications: updated });
   };
 
-  // 1. Manejadores de Información Personal
-  const handlePersonalChange = (field: string, value: string) => {
-    setResumeData({ [field]: value });
-  };
-
-  // Redes Sociales
-  const handleAddSocial = () => {
-    const newSocial: SocialNetwork = {
-      network: "LinkedIn",
-      username: "",
-      url: "https://linkedin.com/in/",
-      icon: "linkedin",
-    };
-    setResumeData({
-      social_networks: [...(resumeData.social_networks || []), newSocial],
-    });
-  };
-
-  const handleUpdateSocial = (index: number, field: keyof SocialNetwork, value: string) => {
-    const updated = [...(resumeData.social_networks || [])];
-    updated[index] = { ...updated[index], [field]: value };
-    setResumeData({ social_networks: updated });
-  };
-
-  const handleRemoveSocial = (index: number) => {
-    const updated = (resumeData.social_networks || []).filter((_, i) => i !== index);
-    setResumeData({ social_networks: updated });
-  };
-
-  // 2. Manejadores de Experiencia Laboral
-  const handleAddExperience = () => {
-    const newExp: ExperienceEntry = {
-      id: `exp-${Date.now()}`,
-      company: "",
-      position: "",
-      location: "",
-      start_date: "",
-      end_date: "",
-      current: false,
-      highlights: [""],
-      summary: "",
-    };
-    setResumeData({ experience: [newExp, ...(resumeData.experience || [])] });
-  };
-
-  const handleUpdateExperience = (id: string, updates: Partial<ExperienceEntry>) => {
-    const updated = (resumeData.experience || []).map((exp) =>
-      exp.id === id ? { ...exp, ...updates } : exp
-    );
-    setResumeData({ experience: updated });
-  };
-
-  const handleRemoveExperience = (id: string) => {
-    setResumeData({
-      experience: (resumeData.experience || []).filter((exp) => exp.id !== id),
-    });
-  };
-
   const handleAddHighlightExp = (expId: string) => {
     const updated = (resumeData.experience || []).map((exp) => {
       if (exp.id === expId) {
         return {
           ...exp,
-          highlights: [...(exp.highlights || []), ""],
+          highlights: [...exp.highlights, ""],
         };
       }
       return exp;
@@ -158,9 +159,9 @@ export const FormEditor: React.FC = () => {
   const handleUpdateHighlightExp = (expId: string, index: number, value: string) => {
     const updated = (resumeData.experience || []).map((exp) => {
       if (exp.id === expId) {
-        const newHighlights = [...exp.highlights];
-        newHighlights[index] = value;
-        return { ...exp, highlights: newHighlights };
+        const nextHl = [...exp.highlights];
+        nextHl[index] = value;
+        return { ...exp, highlights: nextHl };
       }
       return exp;
     });
@@ -174,6 +175,21 @@ export const FormEditor: React.FC = () => {
           ...exp,
           highlights: exp.highlights.filter((_, i) => i !== index),
         };
+      }
+      return exp;
+    });
+    setResumeData({ experience: updated });
+  };
+
+  const handleMoveHighlightExp = (expId: string, index: number, direction: "up" | "down") => {
+    const updated = (resumeData.experience || []).map((exp) => {
+      if (exp.id === expId) {
+        const nextHl = [...exp.highlights];
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= nextHl.length) return exp;
+        const [moved] = nextHl.splice(index, 1);
+        nextHl.splice(targetIndex, 0, moved);
+        return { ...exp, highlights: nextHl };
       }
       return exp;
     });
@@ -247,6 +263,21 @@ export const FormEditor: React.FC = () => {
     setResumeData({ projects: updated });
   };
 
+  const handleMoveHighlightProj = (projId: string, index: number, direction: "up" | "down") => {
+    const updated = (resumeData.projects || []).map((p) => {
+      if (p.id === projId) {
+        const nextHl = [...(p.highlights || [])];
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= nextHl.length) return p;
+        const [moved] = nextHl.splice(index, 1);
+        nextHl.splice(targetIndex, 0, moved);
+        return { ...p, highlights: nextHl };
+      }
+      return p;
+    });
+    setResumeData({ projects: updated });
+  };
+
   // 4. Manejadores de Educación
   const handleAddEducation = () => {
     const newEdu: EducationEntry = {
@@ -309,6 +340,21 @@ export const FormEditor: React.FC = () => {
           ...e,
           highlights: (e.highlights || []).filter((_, i) => i !== index),
         };
+      }
+      return e;
+    });
+    setResumeData({ education: updated });
+  };
+
+  const handleMoveHighlightEdu = (eduId: string, index: number, direction: "up" | "down") => {
+    const updated = (resumeData.education || []).map((e) => {
+      if (e.id === eduId) {
+        const nextHl = [...(e.highlights || [])];
+        const targetIndex = direction === "up" ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= nextHl.length) return e;
+        const [moved] = nextHl.splice(index, 1);
+        nextHl.splice(targetIndex, 0, moved);
+        return { ...e, highlights: nextHl };
       }
       return e;
     });
@@ -825,21 +871,44 @@ export const FormEditor: React.FC = () => {
 
                         <div className="space-y-1.5">
                           {(exp.highlights || []).map((hl, hIdx) => (
-                            <div key={hIdx} className="flex gap-1.5 items-start">
+                            <div key={hIdx} className="flex gap-1.5 items-start group">
                               <span className="text-muted-foreground text-xs mt-1">•</span>
                               <Textarea
                                 value={hl}
                                 onChange={(e) => handleUpdateHighlightExp(exp.id, hIdx, e.target.value)}
                                 className="text-xs min-h-[44px] py-1.5 leading-tight flex-1 resize-y"
                               />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveHighlightExp(exp.id, hIdx)}
-                                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
+                              <div className="flex items-center gap-0.5 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={hIdx === 0}
+                                  onClick={() => handleMoveHighlightExp(exp.id, hIdx, "up")}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                                  title="Subir viñeta"
+                                >
+                                  <ChevronUp className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={hIdx === (exp.highlights.length - 1)}
+                                  onClick={() => handleMoveHighlightExp(exp.id, hIdx, "down")}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                                  title="Bajar viñeta"
+                                >
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveHighlightExp(exp.id, hIdx)}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                  title="Eliminar viñeta"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1077,7 +1146,7 @@ export const FormEditor: React.FC = () => {
 
                         <div className="space-y-1.5">
                           {(proj.highlights || []).map((hl, hIdx) => (
-                            <div key={hIdx} className="flex gap-1.5 items-start">
+                            <div key={hIdx} className="flex gap-1.5 items-start group">
                               <span className="text-muted-foreground text-xs mt-1">•</span>
                               <Textarea
                                 value={hl}
@@ -1085,15 +1154,37 @@ export const FormEditor: React.FC = () => {
                                 placeholder="Logro cuantificable o funcionalidad técnica implementada..."
                                 className="text-xs min-h-[44px] py-1.5 leading-tight flex-1 resize-y"
                               />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveHighlightProj(proj.id, hIdx)}
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
-                                title="Eliminar viñeta"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex items-center gap-0.5 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={hIdx === 0}
+                                  onClick={() => handleMoveHighlightProj(proj.id, hIdx, "up")}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                                  title="Subir viñeta"
+                                >
+                                  <ChevronUp className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={hIdx === (proj.highlights.length - 1)}
+                                  onClick={() => handleMoveHighlightProj(proj.id, hIdx, "down")}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                                  title="Bajar viñeta"
+                                >
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveHighlightProj(proj.id, hIdx)}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                  title="Eliminar viñeta"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1340,7 +1431,7 @@ export const FormEditor: React.FC = () => {
 
                         <div className="space-y-1.5">
                           {(edu.highlights || []).map((hl, hIdx) => (
-                            <div key={hIdx} className="flex gap-1.5 items-start">
+                            <div key={hIdx} className="flex gap-1.5 items-start group">
                               <span className="text-muted-foreground text-xs mt-1">•</span>
                               <Input
                                 value={hl}
@@ -1348,15 +1439,37 @@ export const FormEditor: React.FC = () => {
                                 placeholder="ej: Certificado de Especialización en Cloud, Tesis destacada, etc."
                                 className="h-7 text-xs flex-1"
                               />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemoveHighlightEdu(edu.id, hIdx)}
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
-                                title="Eliminar viñeta académica"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
+                              <div className="flex items-center gap-0.5 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={hIdx === 0}
+                                  onClick={() => handleMoveHighlightEdu(edu.id, hIdx, "up")}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                                  title="Subir logro"
+                                >
+                                  <ChevronUp className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={hIdx === ((edu.highlights || []).length - 1)}
+                                  onClick={() => handleMoveHighlightEdu(edu.id, hIdx, "down")}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                                  title="Bajar logro"
+                                >
+                                  <ChevronDown className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveHighlightEdu(edu.id, hIdx)}
+                                  className="h-7 w-6 p-0 text-muted-foreground hover:text-destructive shrink-0 cursor-pointer"
+                                  title="Eliminar viñeta académica"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
