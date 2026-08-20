@@ -177,7 +177,6 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     }
   };
 
-
   const toggleDarkMode = () => {
     const root = document.documentElement;
     if (root.classList.contains("dark")) {

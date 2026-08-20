@@ -211,7 +211,6 @@ export function SupabaseSyncProvider({ children }: { children: React.ReactNode }
                 data: lp.data,
               }).catch(console.error);
             }
-          } else {
             // Verificar si el usuario ya estaba editando un CV en el estado local
             const hasActiveEdits = Boolean(
               currentStore.resumeData &&
