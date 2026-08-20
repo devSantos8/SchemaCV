@@ -1,8 +1,8 @@
 {
   "name": "schemacv",
   "version": "0.1.0",
-  "description": "ATS-First Resume & CV Engineering Platform with Dual-Editor and AI Copilot",
-  "author": "Joain Matías Monroy Santos <joainsantos.m@gmail.com> (https://github.com/devSantos8)",
+  "description": "Plataforma de ingeniería de currículums técnicos y auditoría ATS con editor dual e IA Copilot",
+  "author": "Joain Monroy Santos <joainsantos.m@gmail.com> (https://github.com/devSantos8)",
   "license": "MIT",
   "homepage": "https://github.com/devSantos8/schemacv",
   "repository": {

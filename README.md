@@ -311,7 +311,7 @@ npm run test:prompts
 
 **SchemaCV** fue diseñado, desarrollado y es mantenido por:
 
-- **Autor:** Joain Matías Monroy Santos
+- **Autor:** Joain Monroy Santos
 - **GitHub:** [@devSantos8](https://github.com/devSantos8)
 - **LinkedIn:** [linkedin.com/in/jmonroys17](https://linkedin.com/in/jmonroys17)
 - **Email:** [joainsantos.m@gmail.com](mailto:joainsantos.m@gmail.com)
