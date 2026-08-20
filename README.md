@@ -12,6 +12,7 @@ Plataforma de creación y edición de currículums de alto rendimiento diseñada
 [![Zustand](https://img.shields.io/badge/State-Zustand-orange?style=flat-square)](https://zustand-demo.pmnd.rs/)
 [![ATS Score](https://img.shields.io/badge/ATS_Compatibility-100%25-emerald?style=flat-square)](https://github.com/devSantos8/schemacv)
 [![Author](https://img.shields.io/badge/Creator-Joain%20Monroy%20(devSantos8)-black?style=flat-square&logo=github)](https://github.com/devSantos8)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 [Características](#características-principales) •
 [Perfil Base y Versiones](#perfil-base-maestro-y-versiones-de-cv) •
@@ -306,6 +307,23 @@ npm run test:prompts
 
 ---
 
-## Licencia
+## 👤 Autor y Créditos
 
-Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo `LICENSE` para más información.
+**SchemaCV** fue diseñado, desarrollado y es mantenido por:
+
+- **Autor:** Joain Matías Monroy Santos
+- **GitHub:** [@devSantos8](https://github.com/devSantos8)
+- **LinkedIn:** [linkedin.com/in/jmonroys17](https://linkedin.com/in/jmonroys17)
+- **Email:** [joainsantos.m@gmail.com](mailto:joainsantos.m@gmail.com)
+
+---
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la **Licencia MIT**. Puedes usarlo, modificarlo y distribuirlo libremente manteniendo el aviso de derechos de autor original.
+
+Consulta el archivo [LICENSE](LICENSE) para el texto legal completo.
+
+```text
+Copyright (c) 2024-2026 Joain Monroy Santos (devSantos8)
+```
