@@ -111,10 +111,44 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
     <div className="space-y-1.5 leading-relaxed text-xs">
       {lines.map((line, idx) => {
         const trimmed = line.trim();
-        if (!trimmed) return <div key={idx} className="h-1" />;
+        if (!trimmed) return <div key={idx} className="h-0.5" />;
 
-        if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("* ")) {
-          const bulletText = trimmed.replace(/^[-•*]\s*/, "");
+        // Divisores horizontales (---, --, ***, ___)
+        if (/^(\-{2,}|_{2,}|\*{3,})$/.test(trimmed)) {
+          return <div key={idx} className="my-1.5 border-b border-border/40" />;
+        }
+
+        // Encabezados (# Titulo, ## Titulo, ### Titulo)
+        if (/^#{1,4}\s+/.test(trimmed)) {
+          const headingText = trimmed.replace(/^#{1,4}\s+/, "");
+          return (
+            <h4
+              key={idx}
+              className={`font-bold text-xs pt-1 ${
+                isUser ? "text-white dark:text-zinc-900" : "text-foreground"
+              }`}
+            >
+              {parseInlineMarkdown(headingText)}
+            </h4>
+          );
+        }
+
+        // Citas / Blockquotes (> texto)
+        if (trimmed.startsWith(">")) {
+          const quoteText = trimmed.replace(/^>\s*/, "");
+          return (
+            <div
+              key={idx}
+              className="border-l-2 border-violet-500/60 pl-2 italic text-muted-foreground my-0.5"
+            >
+              {parseInlineMarkdown(quoteText)}
+            </div>
+          );
+        }
+
+        // Viñetas (- item, • item, * item)
+        if (/^[-•*]\s+/.test(trimmed)) {
+          const bulletText = trimmed.replace(/^[-•*]\s+/, "");
           return (
             <div key={idx} className="flex items-start gap-1.5 pl-0.5">
               <span className={`font-bold mt-0.5 ${isUser ? "text-zinc-300" : "text-violet-500"}`}>•</span>
@@ -123,6 +157,7 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
           );
         }
 
+        // Listas numeradas (1. item o 1) item)
         const numMatch = trimmed.match(/^(\d+)[\.\)]\s*(.+)/);
         if (numMatch) {
           return (

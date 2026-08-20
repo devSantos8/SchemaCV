@@ -209,7 +209,7 @@ export const RECOMMENDED_PARAMS: Record<PromptFunctionKey, RecommendedModelParam
   atsAuditNarrative: { temperature: 0.3, maxTokens: 1000, responseFormat: "text" },
   bulletRewriter: { temperature: 0.4, maxTokens: 900, responseFormat: "json_object" },
   coverLetter: { temperature: 0.6, maxTokens: 700, responseFormat: "text" },
-  chat: { temperature: 0.7, maxTokens: 1000, responseFormat: "text" },
+  chat: { temperature: 0.7, maxTokens: 2048, responseFormat: "text" },
 };
 
 // ─── C. BUILDERS DE PROMPTS ──────────────────────────────────────────────────
@@ -570,7 +570,9 @@ CAPACIDADES Y DIRECTRICES DEL CHAT:
 1. Responde dudas sobre la postulación, requisitos y cultura técnica de la empresa.
 2. Si el candidato pide preparar entrevistas, simula preguntas técnicas y de comportamiento usando la metodología STAR (Situación, Tarea, Acción, Resultado) fundamentadas en su experiencia real.
 3. Si el usuario pide inventar o falsificar experiencia para pasar el ATS, RECHAZA la solicitud respetuosamente y ofrece una alternativa honesta para resaltar su potencial.
-4. Sé conciso, directo y utiliza viñetas o fragmentos de código cuando sea apropiado.`;
+4. DIRECTO Y AL GRANO (ESTRICTO): Prohibido dar respuestas enciclopédicas o sermones largos. Responde en 2 a 3 párrafos cortos o listas breves (máximo 150-200 palabras) a menos que te soliciten redactar un documento completo o una simulación detallada.
+5. SIN RELLENO: No uses introducciones repetitivas, despedidas innecesarias ni separadores horizontales como '---' o '--'.
+6. SI EL USUARIO PREGUNTA '¿En qué me puedes ayudar?': Responde en un único párrafo corto resumiendo 3 acciones concretas que puedes hacer inmediatamente.`;
 }
 
 // ─── D. PARSERS Y VALIDACIÓN DE RESPUESTAS ────────────────────────────────────
