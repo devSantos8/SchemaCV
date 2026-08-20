@@ -28,6 +28,7 @@ import {
   normalizeSocialUrl,
 } from "@/types/resume";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/TagInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -1101,20 +1102,17 @@ export const FormEditor: React.FC = () => {
                             className="h-7 text-xs"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[11px]">Tecnologías (separadas por coma)</Label>
-                          <Input
-                            value={proj.technologies?.join(", ") || ""}
-                            onChange={(e) =>
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-[11px]">Tecnologías del Proyecto</Label>
+                          <TagInput
+                            value={proj.technologies || []}
+                            onChange={(newTechs) =>
                               handleUpdateProject(proj.id, {
-                                technologies: e.target.value
-                                  .split(",")
-                                  .map((t) => t.trim())
-                                  .filter(Boolean),
+                                technologies: newTechs,
                               })
                             }
-                            placeholder="React, TypeScript, Next.js, PostgreSQL"
-                            className="h-7 text-xs"
+                            placeholder="React, TypeScript, Next.js, PostgreSQL..."
+                            inputClassName="h-7 text-xs"
                           />
                         </div>
                         <div className="space-y-1">

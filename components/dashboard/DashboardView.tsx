@@ -90,6 +90,7 @@ import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModa
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/TagInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -2490,46 +2491,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
                             </div>
 
-                            {/* Tags visuales interactivos */}
-                            {cat.skills.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {cat.skills.map((skill, sIdx) => (
-                                  <Badge
-                                    key={sIdx}
-                                    variant="secondary"
-                                    className="text-[11px] font-mono py-1 px-2.5 rounded-lg flex items-center gap-1.5"
-                                  >
-                                    <span>{skill}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const updated = [...masterFormData.skills];
-                                        updated[catIdx].skills = updated[catIdx].skills.filter((_, i) => i !== sIdx);
-                                        setMasterFormData({ ...masterFormData, skills: updated });
-                                      }}
-                                      className="text-muted-foreground hover:text-rose-500 cursor-pointer"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Input para edición rápida por comas */}
-                            <div className="space-y-1 pt-1">
-                              <Label className="text-[10px] text-muted-foreground font-mono">
-                                Habilidades separadas por comas:
-                              </Label>
-                              <Input
-                                value={cat.skills.join(", ")}
-                                onChange={(e) => {
+                            {/* Tags e Input Interactivo de Habilidades */}
+                            <div className="pt-1">
+                              <TagInput
+                                value={cat.skills || []}
+                                onChange={(newSkills) => {
                                   const updated = [...masterFormData.skills];
-                                  updated[catIdx].skills = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                  updated[catIdx].skills = newSkills;
                                   setMasterFormData({ ...masterFormData, skills: updated });
                                 }}
-                                placeholder="ej: TypeScript, React, Next.js, Node.js, Tailwind CSS, Docker..."
-                                className="h-8 text-xs font-mono rounded-xl bg-background"
+                                placeholder="ej: Python, Django, FastAPI, PostgreSQL..."
                               />
                             </div>
                           </div>
@@ -2718,18 +2689,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                               <div className="space-y-1">
                                 <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
-                                  <span>Tecnologías (separadas por comas)</span>
+                                  <span>Tecnologías del Proyecto</span>
                                   <span className="text-[9px] font-normal">(Opcional)</span>
                                 </Label>
-                                <Input
-                                  value={proj.technologies?.join(", ") || ""}
-                                  onChange={(e) => {
+                                <TagInput
+                                  value={proj.technologies || []}
+                                  onChange={(newTechs) => {
                                     const updated = [...masterFormData.projects];
-                                    updated[idx].technologies = e.target.value.split(",").map((t) => t.trim()).filter(Boolean);
+                                    updated[idx].technologies = newTechs;
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
-                                  placeholder="ej: Next.js, React, Tailwind CSS, Turbopack"
-                                  className="h-8 text-xs font-mono rounded-xl"
+                                  placeholder="ej: Next.js, React, Tailwind CSS, Turbopack..."
                                 />
                               </div>
                             </div>
