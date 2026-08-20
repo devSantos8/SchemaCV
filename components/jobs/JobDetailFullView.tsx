@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   ArrowLeft,
   Building2,
@@ -33,13 +33,18 @@ import {
   Bot,
   UserCheck,
   ShieldCheck,
+  Target,
+  Terminal,
+  Upload,
+  Zap,
 } from "lucide-react";
 import { useJobsStore } from "@/store/useJobsStore";
 import { useResumeStore } from "@/store/useResumeStore";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useAISettingsStore } from "@/store/useAISettingsStore";
 import type { ApplicationStatus, Keyword } from "@/types/jobs";
 import { STATUS_LABELS } from "@/types/jobs";
-import type { EvaluationReport } from "@/types/evaluator";
+import type { EvaluationReport, ATSAuditRule } from "@/types/evaluator";
 import { AIChat } from "@/components/jobs/AIChat";
 import { ScoreProjectorSimulator } from "@/components/jobs/evaluate/ScoreProjectorSimulator";
 import { runATSEvaluationPipeline } from "@/lib/ats";
@@ -60,15 +65,6 @@ const ALL_STATUSES: ApplicationStatus[] = [
   "rejected",
   "closed",
 ];
-
-const STATUS_ACTIVE_COLORS: Record<ApplicationStatus, string> = {
-  bookmarked: "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs",
-  applied: "bg-blue-600 text-white shadow-xs ring-1 ring-blue-500/50",
-  interviewing: "bg-violet-600 text-white shadow-xs ring-1 ring-violet-500/50",
-  offer: "bg-emerald-600 text-white shadow-xs ring-1 ring-emerald-500/50",
-  rejected: "bg-red-600 text-white shadow-xs ring-1 ring-red-500/50",
-  closed: "bg-zinc-600 text-white shadow-xs ring-1 ring-zinc-500/50",
-};
 
 // Parser inteligente de descripciones de empleo
 function parseJobDescription(text: string) {
@@ -129,25 +125,28 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     getLatestEvaluation,
   } = useJobsStore();
 
-  const { profiles, resumeData, masterProfileData, createProfileFromMaster } = useResumeStore();
+  const { profiles, resumeData, masterProfileData } = useResumeStore();
+  const { user } = useAuthStore();
   const { enabled: aiEnabled } = useAISettingsStore();
 
   const application = applications.find((a) => a.id === applicationId);
 
+  // Modo de visualización: Información de la vacante vs Evaluación ATS
+  const [viewMode, setViewMode] = useState<"job_info" | "ats_evaluation">("job_info");
   const [activePrepSection, setActivePrepSection] = useState<"tailor" | "interview" | "cover_letter">("tailor");
-  const [showAdvancedAts, setShowAdvancedAts] = useState(false);
-  const [activeAtsTab, setActiveAtsTab] = useState<"requirements" | "ats" | "simulation" | "raw_text">("requirements");
+  const [activeAtsTab, setActiveAtsTab] = useState<"checklist" | "match" | "simulation" | "offer_text">("checklist");
   const [showChat, setShowChat] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string>("active");
+  const [customPdfFile, setCustomPdfFile] = useState<File | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
-  const [isScrapingDesc, setIsScrapingDesc] = useState(false);
   const [report, setReport] = useState<EvaluationReport | null>(null);
-  const [notesInput, setNotesInput] = useState(application?.notes || "");
   const [descInput, setDescInput] = useState(application?.description || "");
-  const [filterImportance, setFilterImportance] = useState<"all" | "must_have" | "nice_to_have">("all");
+  const [filterRuleStatus, setFilterRuleStatus] = useState<"all" | "fail" | "warning" | "pass">("all");
+  const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [copiedCoverLetter, setCopiedCoverLetter] = useState(false);
-  const [expandedInterviewQuestion, setExpandedInterviewQuestion] = useState<number | null>(0);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Keyboard shortcut Esc
   useEffect(() => {
@@ -167,7 +166,6 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
       if (existing) {
         setReport(existing);
       }
-      setNotesInput(application.notes || "");
       setDescInput(application.description || "");
     }
   }, [application?.id]);
@@ -196,8 +194,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     );
   }
 
-  const { title, company, status, location, salary, url, portal, activity } = application;
-
+  const { title, company, status, location, salary, url, portal } = application;
   const isSaved = status === "bookmarked";
 
   const handleToggleSave = () => {
@@ -216,24 +213,39 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     toast.success("Abriendo portal de postulación...");
   };
 
-  async function handleRunEvaluation() {
+  async function handleRunEvaluation(targetMode?: "job_info" | "ats_evaluation") {
     if (!application || !descInput.trim()) return;
     setIsEvaluating(true);
     try {
-      const newReport = await runATSEvaluationPipeline({
-        jobId: application.id,
-        jobTitle: application.title,
-        company: application.company,
-        jobDescription: descInput,
-        resumeData: currentResumeData,
-        sourceType: "schema_profile",
-        profileName:
-          selectedProfileId === "master"
-            ? "Perfil Base"
-            : selectedProfileId === "active"
-            ? "CV Activo"
-            : profiles.find((p) => p.id === selectedProfileId)?.name || "CV",
-      });
+      let newReport: EvaluationReport;
+
+      if (customPdfFile) {
+        const formData = new FormData();
+        formData.append("file", customPdfFile);
+        formData.append("jobId", application.id);
+        formData.append("jobTitle", application.title);
+        formData.append("company", application.company);
+        formData.append("jobDescription", descInput);
+        formData.append("profileName", customPdfFile.name);
+
+        const res = await fetch("/api/evaluate", { method: "POST", body: formData });
+        newReport = await res.json();
+      } else {
+        newReport = await runATSEvaluationPipeline({
+          jobId: application.id,
+          jobTitle: application.title,
+          company: application.company,
+          jobDescription: descInput,
+          resumeData: currentResumeData,
+          sourceType: "schema_profile",
+          profileName:
+            selectedProfileId === "master"
+              ? "Perfil Base"
+              : selectedProfileId === "active"
+              ? `CV Activo (${resumeData.name || "Sin nombre"})`
+              : profiles.find((p) => p.id === selectedProfileId)?.name || "CV",
+        });
+      }
 
       setReport(newReport);
       saveEvaluation(application.id, newReport);
@@ -265,8 +277,13 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
           generatedAt: new Date().toISOString(),
         },
       });
+
+      if (targetMode) {
+        setViewMode(targetMode);
+      }
+
       toast.success("Evaluación ATS completada", {
-        description: `Puntuación de match: ${newReport.matchScore}%`,
+        description: `Formato ATS: ${newReport.atsScore}% • Match: ${newReport.matchScore}%`,
       });
     } catch (err) {
       console.error("Error al evaluar:", err);
@@ -286,13 +303,13 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
   // Generador de Carta de Presentación
   const generatedCoverLetter = useMemo(() => {
-    const candidateName = currentResumeData.name || "Candidato";
+    const candidateName = currentResumeData.name || user?.name || "Candidato";
     const candidateRole = currentResumeData.headline || "Profesional";
-    const candidateEmail = currentResumeData.email || "";
+    const candidateEmail = currentResumeData.email || user?.email || "";
     const candidatePhone = currentResumeData.phone || "";
 
     return `Estimado equipo de contratación de ${company},\n\nLe escribo con gran entusiasmo para presentar mi candidatura al puesto de ${title}. Con mi sólida trayectoria como ${candidateRole} y mi experiencia comprobada en el desarrollo de soluciones escalables, considero que mi perfil se alinea estrechamente con las necesidades de ${company}.\n\nRevisando los requisitos del puesto, cuento con experiencia directa en las tecnologías clave requeridas para este rol. A lo largo de mi carrera me he caracterizado por entregar proyectos de alto impacto, optimizar procesos de ingeniería y colaborar eficazmente en equipos multidisciplinarios.\n\nMe entusiasma la posibilidad de aportar valor a ${company} y me encantaría tener la oportunidad de conversar más a fondo sobre cómo mi experiencia puede contribuir al éxito del equipo.\n\nQuedo a su entera disposición.\n\nAtentamente,\n${candidateName}\n${candidateEmail} | ${candidatePhone}`;
-  }, [company, title, currentResumeData]);
+  }, [company, title, currentResumeData, user]);
 
   const handleCopyCoverLetter = () => {
     navigator.clipboard.writeText(generatedCoverLetter);
@@ -306,55 +323,104 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     {
       question: `¿Por qué te interesa unirte a ${company} como ${title}?`,
       tip: "Enfócate en la misión de la empresa, su impacto tecnológico y cómo tu experiencia previa resuelve sus retos actuales.",
-      starExample: "Situación: En mi rol anterior... Tarea: Debíamos escalar... Acción: Lideré la migración... Resultado: Redujimos la latencia un 40%.",
     },
     {
-      question: `Cuéntame sobre un desafío técnico complejo relacionado con ${parsedJob.minimumQualifications[0] || "desarrollo full stack"} y cómo lo resolviste.`,
+      question: `Cuéntame sobre un desafío técnico complejo relacionado con ${parsedJob.minimumQualifications[0] || "desarrollo de software"} y cómo lo resolviste.`,
       tip: "Utiliza la metodología STAR (Situación, Tarea, Acción, Resultado) cuantificando el impacto.",
-      starExample: "Situación: Tuvimos un cuello de botella... Tarea: Optimizar la base de datos... Acción: Implementé índices y caché Redis... Resultado: 99.9% uptime.",
     },
     {
       question: "¿Cómo manejas la priorización y el trabajo bajo metodologías ágiles en entornos de alta exigencia?",
       tip: "Menciona comunicación proactiva con stakeholders y enfoque iterativo.",
-      starExample: "Situación: Requerimientos cambiantes... Tarea: Entregar sprint crítico... Acción: Repriorizamos el backlog... Resultado: Entrega a tiempo con cero bugs críticos.",
     },
   ];
 
   // Visual tokens de puntuación
-  const matchScore = report?.matchScore ?? (application.matchAnalysis?.score ?? 85);
-  const matchColor = matchScore >= 70 ? "text-emerald-600 dark:text-emerald-400" : matchScore >= 40 ? "text-amber-600" : "text-red-500";
-  const matchBg = matchScore >= 70 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-amber-50 text-amber-700 border-amber-200";
+  const atsScore = report?.atsScore ?? 0;
+  const matchScore = report?.matchScore ?? (application.matchAnalysis?.score ?? 0);
+
+  // Filtrado de reglas ATS
+  const filteredRules = useMemo(() => {
+    if (!report?.auditRules) return [];
+    if (filterRuleStatus === "all") return report.auditRules;
+    return report.auditRules.filter((r) => r.status === filterRuleStatus);
+  }, [report?.auditRules, filterRuleStatus]);
+
+  const failedRulesCount = report?.auditRules.filter((r) => r.status === "fail").length || 0;
+  const warningRulesCount = report?.auditRules.filter((r) => r.status === "warning").length || 0;
+  const passedRulesCount = report?.auditRules.filter((r) => r.status === "pass").length || 0;
 
   return (
     <div className="min-h-full bg-[#f8fafc] dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
         
-        {/* ─── 1. ENCABEZADO SUPERIOR TIPO GOOGLE / PROPEL ─── */}
-        <div className="space-y-3">
-          <h1 className="text-2xl sm:text-3xl font-serif text-zinc-900 dark:text-zinc-50 font-medium tracking-tight">
-            Información del puesto de {title}
-          </h1>
+        {/* ─── 1. ENCABEZADO SUPERIOR ─── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-serif text-zinc-900 dark:text-zinc-50 font-medium tracking-tight">
+              {viewMode === "job_info" ? `Información del puesto de ${title}` : `Evaluación ATS de ${title}`}
+            </h1>
 
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors group cursor-pointer"
-          >
-            <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Volver a postulaciones</span>
-          </button>
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors group cursor-pointer"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Volver a postulaciones</span>
+            </button>
+          </div>
+
+          {/* Selector de Modo Segmentado (Botón de cambio de vista) */}
+          <div className="flex items-center gap-1 p-1 bg-zinc-200/60 dark:bg-zinc-800/80 rounded-2xl border border-zinc-200 dark:border-zinc-700/60 self-start sm:self-auto shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode("job_info")}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewMode === "job_info"
+                  ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+              }`}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              <span>Información del Puesto</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!report) {
+                  handleRunEvaluation("ats_evaluation");
+                } else {
+                  setViewMode("ats_evaluation");
+                }
+              }}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                viewMode === "ats_evaluation"
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
+              }`}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Evaluación & Puntaje ATS</span>
+              {report && (
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold ml-0.5">
+                  {matchScore}%
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* ─── 2. CONTENEDOR PRINCIPAL 2 COLUMNAS (Exacto a la imagen) ─── */}
+        {/* ─── 2. CONTENEDOR PRINCIPAL: 2 COLUMNAS ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* ═════════ COLUMNA IZQUIERDA: DETALLES DE LA OFERTA (8 de 12) ═════════ */}
+          {/* ═════════ COLUMNA IZQUIERDA: CONTENIDO CAMBIANTE (8 de 12) ═════════ */}
           <div className="lg:col-span-8 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 p-6 sm:p-8 shadow-xs space-y-6">
             
-            {/* Header del Puesto con Logo, Nombre y Botones de Acción */}
+            {/* Header del Puesto (Logo, Título, Acciones) */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-2">
               <div className="flex items-start gap-4">
-                {/* Logo de Empresa (Google o Avatar personalizado) */}
+                {/* Logo de Empresa */}
                 <div className="w-12 h-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0 shadow-2xs">
                   {company.toLowerCase().includes("google") ? (
                     <svg className="w-7 h-7" viewBox="0 0 24 24">
@@ -380,7 +446,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                 </div>
               </div>
 
-              {/* Botones Guardar & Enviar Solicitud */}
+              {/* Botones de Acción */}
               <div className="flex items-center gap-2 shrink-0">
                 <Button
                   variant="outline"
@@ -404,176 +470,454 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   <Send className="h-3.5 w-3.5" />
                   <span>Enviar solicitud</span>
                 </Button>
-              </div>
-            </div>
 
-            {/* Fila de Metadatos / Badges */}
-            <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-600 dark:text-zinc-400 pt-1">
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
-                <MapPin className="h-3 w-3 text-zinc-400" />
-                {location || "Remoto"}
-              </span>
-
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
-                <Clock className="h-3 w-3 text-zinc-400" />
-                Hace 1 día
-              </span>
-
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
-                <Clock className="h-3 w-3 text-zinc-400" />
-                A tiempo completo
-              </span>
-
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
-                <Building2 className="h-3 w-3 text-zinc-400" />
-                Presencial
-              </span>
-
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
-                <Briefcase className="h-3 w-3 text-zinc-400" />
-                Nivel básico
-              </span>
-
-              {salary && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold">
-                  <DollarSign className="h-3 w-3" />
-                  {salary}
-                </span>
-              )}
-
-              {/* Botón para editar texto crudo */}
-              <button
-                type="button"
-                onClick={() => setIsEditingDescription(!isEditingDescription)}
-                className="ml-auto text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 transition-colors"
-              >
-                <Pencil className="h-3 w-3" />
-                <span>{isEditingDescription ? "Cerrar editor" : "Editar texto"}</span>
-              </button>
-            </div>
-
-            {/* Modo Edición de Texto de la Oferta */}
-            {isEditingDescription ? (
-              <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
-                    Pega o edita la descripción completa de la vacante:
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={handleSaveDescription}
-                    className="h-7 text-xs font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
-                  >
-                    Guardar y Actualizar
-                  </Button>
-                </div>
-                <textarea
-                  value={descInput}
-                  onChange={(e) => setDescInput(e.target.value)}
-                  rows={10}
-                  className="w-full p-3 text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 font-mono leading-relaxed resize-y"
-                  placeholder="Pega la descripción completa del puesto..."
-                />
-              </div>
-            ) : (
-              /* ─── CONTENIDO ESTRUCTURADO (Minimum qualifications / Preferred / About) ─── */
-              <div className="space-y-6 pt-2 text-zinc-800 dark:text-zinc-200 leading-relaxed text-sm">
-                
-                {/* 1. Minimum Qualifications */}
-                {parsedJob.minimumQualifications.length > 0 && (
-                  <div className="space-y-2.5">
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                      Minimum qualifications:
-                    </h3>
-                    <ul className="space-y-2 pl-1">
-                      {parsedJob.minimumQualifications.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
-                          <span className="text-zinc-400 mt-0.5">•</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* 2. Preferred Qualifications */}
-                {parsedJob.preferredQualifications.length > 0 && (
-                  <div className="space-y-2.5">
-                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                      Preferred qualifications:
-                    </h3>
-                    <ul className="space-y-2 pl-1">
-                      {parsedJob.preferredQualifications.map((item, idx) => (
-                        <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
-                          <span className="text-zinc-400 mt-0.5">•</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* 3. About the job */}
-                <div className="space-y-2.5">
-                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
-                    About the job:
-                  </h3>
-                  <div className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 space-y-3 leading-relaxed whitespace-pre-line">
-                    {parsedJob.aboutTheJob || "No se ha proporcionado una descripción detallada aún. Haz clic en 'Editar texto' para pegarla."}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Toggle para ver análisis ATS avanzado */}
-            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setShowAdvancedAts(!showAdvancedAts)}
-                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1.5"
-              >
-                <ShieldCheck className="h-4 w-4" />
-                <span>{showAdvancedAts ? "Ocultar Motor ATS Avanzado" : "Ver Análisis de Compatibilidad ATS Completo (10 Reglas)"}</span>
-              </button>
-
-              {aiEnabled && (
-                <button
-                  type="button"
-                  onClick={() => setShowChat(true)}
-                  className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1"
+                <Button
+                  size="sm"
+                  onClick={() => handleRunEvaluation()}
+                  disabled={isEvaluating}
+                  className="h-9 px-3 text-xs font-bold rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-xs gap-1.5"
                 >
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  <span>Chat IA con Oferta</span>
-                </button>
-              )}
+                  {isEvaluating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                  <span className="hidden sm:inline">Re-evaluar</span>
+                </Button>
+              </div>
             </div>
 
-            {/* Sección Desplegable del Motor ATS Avanzado */}
-            {showAdvancedAts && (
-              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                    Simulador & Puntuación ATS
+            {/* ─── VISTA 1: INFORMACIÓN DEL PUESTO (Job Details) ─── */}
+            {viewMode === "job_info" && (
+              <div className="space-y-6">
+                {/* Badges de Metadatos */}
+                <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-600 dark:text-zinc-400 pt-1">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                    <MapPin className="h-3 w-3 text-zinc-400" />
+                    {location || "Remoto"}
                   </span>
-                  <Button
-                    size="sm"
-                    onClick={handleRunEvaluation}
-                    disabled={isEvaluating}
-                    className="h-7 text-xs font-bold gap-1 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                    <Clock className="h-3 w-3 text-zinc-400" />
+                    Hace 1 día
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                    <Clock className="h-3 w-3 text-zinc-400" />
+                    A tiempo completo
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                    <Building2 className="h-3 w-3 text-zinc-400" />
+                    Presencial
+                  </span>
+
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                    <Briefcase className="h-3 w-3 text-zinc-400" />
+                    Nivel básico
+                  </span>
+
+                  {salary && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold">
+                      <DollarSign className="h-3 w-3" />
+                      {salary}
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingDescription(!isEditingDescription)}
+                    className="ml-auto text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 transition-colors cursor-pointer"
                   >
-                    {isEvaluating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 text-amber-400" />}
-                    <span>Re-evaluar CV</span>
-                  </Button>
+                    <Pencil className="h-3 w-3" />
+                    <span>{isEditingDescription ? "Cerrar editor" : "Editar texto"}</span>
+                  </button>
                 </div>
 
-                {report?.missingKeywords && report.missingKeywords.length > 0 && (
-                  <ScoreProjectorSimulator
-                    currentScore={report.matchScore}
-                    missingKeywords={report.missingKeywords}
-                  />
+                {/* Modo Edición o Contenido Estructurado */}
+                {isEditingDescription ? (
+                  <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                        Pega o edita la descripción completa de la vacante:
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveDescription}
+                        className="h-7 text-xs font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                      >
+                        Guardar y Actualizar
+                      </Button>
+                    </div>
+                    <textarea
+                      value={descInput}
+                      onChange={(e) => setDescInput(e.target.value)}
+                      rows={10}
+                      className="w-full p-3 text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 font-mono leading-relaxed resize-y"
+                      placeholder="Pega la descripción completa del puesto..."
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-6 pt-2 text-zinc-800 dark:text-zinc-200 leading-relaxed text-sm">
+                    {/* Minimum Qualifications */}
+                    {parsedJob.minimumQualifications.length > 0 && (
+                      <div className="space-y-2.5">
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                          Minimum qualifications:
+                        </h3>
+                        <ul className="space-y-2 pl-1">
+                          {parsedJob.minimumQualifications.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
+                              <span className="text-zinc-400 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Preferred Qualifications */}
+                    {parsedJob.preferredQualifications.length > 0 && (
+                      <div className="space-y-2.5">
+                        <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                          Preferred qualifications:
+                        </h3>
+                        <ul className="space-y-2 pl-1">
+                          {parsedJob.preferredQualifications.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
+                              <span className="text-zinc-400 mt-0.5">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* About the job */}
+                    <div className="space-y-2.5">
+                      <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                        About the job:
+                      </h3>
+                      <div className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 space-y-3 leading-relaxed whitespace-pre-line">
+                        {parsedJob.aboutTheJob || "No se ha proporcionado una descripción detallada aún. Haz clic en 'Editar texto' para pegarla."}
+                      </div>
+                    </div>
+                  </div>
                 )}
+
+                {/* Banner de llamada a la acción para cambiar al modo ATS */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <ShieldCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div>
+                      <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                        ¿Quieres ver si tu CV pasa los filtros ATS de esta vacante?
+                      </h4>
+                      <p className="text-[11px] text-zinc-500">
+                        Audita 10 reglas de oro, analiza palabras clave y visualiza la lectura del robot.
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (!report) handleRunEvaluation("ats_evaluation");
+                      else setViewMode("ats_evaluation");
+                    }}
+                    className="h-8 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 cursor-pointer"
+                  >
+                    <span>Ver Análisis ATS Completo</span>
+                  </Button>
+                </div>
               </div>
             )}
+
+            {/* ─── VISTA 2: EVALUACIÓN & AUDITORÍA ATS (10 Reglas & Robot) ─── */}
+            {viewMode === "ats_evaluation" && (
+              <div className="space-y-6">
+                
+                {/* Selector de CV a Evaluar */}
+                <div className="p-3.5 rounded-2xl bg-zinc-50/80 dark:bg-zinc-950/60 border border-zinc-200/70 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                      CV evaluado contra esta vacante:
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={customPdfFile ? "uploaded" : selectedProfileId}
+                      onChange={(e) => {
+                        if (e.target.value === "uploaded") {
+                          fileInputRef.current?.click();
+                        } else {
+                          setCustomPdfFile(null);
+                          setSelectedProfileId(e.target.value);
+                          handleRunEvaluation();
+                        }
+                      }}
+                      className="h-8 px-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 cursor-pointer"
+                    >
+                      <option value="active">CV Activo en Editor ({resumeData.name || "Sin nombre"})</option>
+                      <option value="master">Perfil Base Maestro</option>
+                      {profiles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.targetRole || "Perfil"})
+                        </option>
+                      ))}
+                      <option value="uploaded">Subir archivo PDF externo...</option>
+                    </select>
+
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setCustomPdfFile(file);
+                          handleRunEvaluation();
+                        }
+                      }}
+                    />
+
+                    {customPdfFile && (
+                      <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                        <Upload className="w-3 h-3" /> {customPdfFile.name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Pestañas de la Auditoría ATS */}
+                <div className="space-y-4 pt-1">
+                  <div className="flex items-center gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/60 rounded-2xl border border-zinc-200/60 dark:border-zinc-700/60 w-fit flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => setActiveAtsTab("checklist")}
+                      className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeAtsTab === "checklist"
+                          ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                      }`}
+                    >
+                      <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Checklist de Normas ATS ({report?.auditRules?.length || 10})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveAtsTab("match")}
+                      className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeAtsTab === "match"
+                          ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                      }`}
+                    >
+                      <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                      <span>Match y Competencias ({report?.requirements?.length || 0})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveAtsTab("simulation")}
+                      className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                        activeAtsTab === "simulation"
+                          ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                          : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                      }`}
+                    >
+                      <Terminal className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400" />
+                      <span>Así te lee el Robot ATS</span>
+                    </button>
+                  </div>
+
+                  {/* ─── TAB 1: CHECKLIST DE NORMAS ATS (10 Reglas) ─── */}
+                  {activeAtsTab === "checklist" && (
+                    <div className="space-y-4">
+                      {/* Filtros por estado */}
+                      <div className="flex items-center gap-2 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => setFilterRuleStatus("all")}
+                          className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                            filterRuleStatus === "all"
+                              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-2xs"
+                              : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400"
+                          }`}
+                        >
+                          Todas ({report?.auditRules?.length || 10})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFilterRuleStatus("fail")}
+                          className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                            filterRuleStatus === "fail"
+                              ? "bg-red-600 text-white shadow-2xs"
+                              : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50"
+                          }`}
+                        >
+                          Fallas ({failedRulesCount})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFilterRuleStatus("warning")}
+                          className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                            filterRuleStatus === "warning"
+                              ? "bg-amber-600 text-white shadow-2xs"
+                              : "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50"
+                          }`}
+                        >
+                          Advertencias ({warningRulesCount})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFilterRuleStatus("pass")}
+                          className={`px-3 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                            filterRuleStatus === "pass"
+                              ? "bg-emerald-600 text-white shadow-2xs"
+                              : "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900/50"
+                          }`}
+                        >
+                          Aprobadas ({passedRulesCount})
+                        </button>
+                      </div>
+
+                      {/* Lista de Reglas ATS */}
+                      <div className="space-y-3">
+                        {filteredRules.map((rule) => {
+                          const isPass = rule.status === "pass";
+                          const isFail = rule.status === "fail";
+                          const isWarning = rule.status === "warning";
+                          const isExpanded = expandedRuleId === rule.id;
+
+                          return (
+                            <div
+                              key={rule.id}
+                              className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-zinc-50/40 dark:bg-zinc-950/30 p-4 transition-all space-y-2.5"
+                            >
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex items-start gap-2.5 min-w-0">
+                                  <div className="mt-0.5 shrink-0">
+                                    {isPass && <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />}
+                                    {isFail && <XCircle className="h-4 w-4 text-red-500" />}
+                                    {isWarning && <AlertTriangle className="h-4 w-4 text-amber-500" />}
+                                  </div>
+
+                                  <div className="space-y-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <h4 className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                                        {rule.name}
+                                      </h4>
+                                      <span
+                                        className={`text-[10px] font-bold px-2 py-0.2 rounded-md font-mono ${
+                                          isPass
+                                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                            : isFail
+                                            ? "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+                                            : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                                        }`}
+                                      >
+                                        {isPass ? "PASA" : isFail ? "FALLA" : "ADVERTENCIA"}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-snug">
+                                      {rule.message}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <span className="text-xs font-mono font-bold text-zinc-500">
+                                    {rule.scoreEarned} / {rule.scoreWeight} pts
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedRuleId(isExpanded ? null : rule.id)}
+                                    className="p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/50 dark:hover:bg-zinc-800 transition-colors"
+                                  >
+                                    <ChevronDown className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {isExpanded && rule.fixGuide && (
+                                <div className="pt-2 border-t border-zinc-200/60 dark:border-zinc-800/80 text-xs space-y-2 bg-white dark:bg-zinc-900 p-3 rounded-xl">
+                                  <div>
+                                    <span className="font-bold text-zinc-800 dark:text-zinc-200">¿Por qué importa? </span>
+                                    <span className="text-zinc-600 dark:text-zinc-400">{rule.fixGuide.whyItMatters}</span>
+                                  </div>
+                                  <div>
+                                    <span className="font-bold text-zinc-800 dark:text-zinc-200">Cómo solucionarlo: </span>
+                                    <span className="text-zinc-600 dark:text-zinc-400">{rule.fixGuide.howToFix}</span>
+                                  </div>
+                                  {rule.fixGuide.example && (
+                                    <div className="p-2 rounded-lg bg-zinc-50 dark:bg-zinc-950 font-mono text-[11px] text-zinc-700 dark:text-zinc-300 border border-zinc-200/60 dark:border-zinc-800">
+                                      Ejemplo: {rule.fixGuide.example}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── TAB 2: MATCH Y COMPETENCIAS ─── */}
+                  {activeAtsTab === "match" && (
+                    <div className="space-y-4">
+                      {report?.missingKeywords && report.missingKeywords.length > 0 && (
+                        <ScoreProjectorSimulator
+                          currentScore={report.matchScore}
+                          missingKeywords={report.missingKeywords}
+                        />
+                      )}
+
+                      <div className="space-y-2.5">
+                        <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                          Requisitos Detectados en la Oferta:
+                        </h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {report?.requirements.map((req) => (
+                            <div
+                              key={req.id}
+                              className="p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between text-xs"
+                            >
+                              <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate mr-2">
+                                {req.text}
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md font-mono shrink-0 ${
+                                  req.matched
+                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                    : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
+                                }`}
+                              >
+                                {req.matched ? "Presente" : "Falta en CV"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ─── TAB 3: SIMULACIÓN DE LECTURA DEL ROBOT ATS ─── */}
+                  {activeAtsTab === "simulation" && (
+                    <div className="space-y-3">
+                      <p className="text-xs text-zinc-500">
+                        Así es exactamente como el parser ATS procesa el documento en texto plano secuencial:
+                      </p>
+                      <pre className="p-4 rounded-2xl bg-zinc-950 text-emerald-400 font-mono text-xs overflow-x-auto max-h-96 leading-relaxed whitespace-pre-wrap">
+                        {report?.simulation.rawExtractedText || "No hay texto plano extraído aún. Haz clic en 'Re-evaluar'."}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* ═════════ COLUMNA DERECHA: PREPÁRATE PARA ESTE EMPLEO (4 de 12) ═════════ */}
@@ -614,11 +958,11 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   <div className="p-3 rounded-2xl bg-gradient-to-b from-amber-50/70 to-amber-100/40 dark:from-zinc-900 dark:to-zinc-800/80 border border-amber-200/70 dark:border-amber-900/30 space-y-2 shadow-2xs">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
-                        {currentResumeData.name ? currentResumeData.name.charAt(0) : "C"}
+                        {currentResumeData.name ? currentResumeData.name.charAt(0) : user?.name ? user.name.charAt(0) : "C"}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 truncate">
-                          {currentResumeData.name || "Tu Currículum"}
+                          {currentResumeData.name || user?.name || "Tu Currículum"}
                         </p>
                         <p className="text-[10px] text-zinc-500 truncate">{title} at {company}</p>
                       </div>
@@ -635,9 +979,11 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     </div>
                   </div>
 
-                  {/* Botón Principal Tailor Your Resume */}
+                  {/* Botón Principal Tailor Your Resume (Ejecuta y cambia al modo ATS) */}
                   <Button
-                    onClick={handleRunEvaluation}
+                    onClick={() => {
+                      handleRunEvaluation("ats_evaluation");
+                    }}
                     disabled={isEvaluating}
                     className="w-full h-9 rounded-xl font-bold text-xs bg-[#b45309] hover:bg-[#92400e] text-white shadow-2xs gap-1.5 cursor-pointer"
                   >
