@@ -49,7 +49,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
 
   return (
     <div
-      className={`bg-white text-zinc-900 font-sans leading-normal w-full min-h-full selection:bg-zinc-100 ${
+      className={`bg-white text-zinc-900 font-sans leading-normal w-full h-auto selection:bg-zinc-100 ${
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
@@ -125,10 +125,30 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
                   {projects.map((proj) => (
                     <div key={proj.id} className="page-break-avoid border-l border-zinc-200 pl-2.5 ml-0.5">
                       <div className="flex justify-between items-baseline">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-baseline gap-x-1.5">
                           <span className="font-bold text-[9pt] text-zinc-950">
                             {proj.name}
                           </span>
+                          {proj.github_url && (
+                            <a
+                              href={proj.github_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-mono text-[7.5pt] text-blue-700 hover:underline font-semibold"
+                            >
+                              [GitHub]
+                            </a>
+                          )}
+                          {proj.url && (
+                            <a
+                              href={proj.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="font-mono text-[7.5pt] text-blue-700 hover:underline font-semibold"
+                            >
+                              [Demo]
+                            </a>
+                          )}
                           {proj.technologies && proj.technologies.length > 0 && (
                             <span className="font-mono text-[8pt] text-zinc-500">
                               ({proj.technologies.join(", ")})

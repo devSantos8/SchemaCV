@@ -99,6 +99,7 @@ const PRESET_ROLES = [
 ];
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
+  chile_profesional: MapPin,
   harvard: GraduationCap,
   tech_minimalist: Terminal,
   modern_executive: Briefcase,

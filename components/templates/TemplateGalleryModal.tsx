@@ -34,9 +34,11 @@ import {
   Cpu,
   GitFork,
   Globe2,
+  MapPin,
 } from "lucide-react";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
+  chile_profesional: MapPin,
   harvard: GraduationCap,
   tech_minimalist: Terminal,
   modern_executive: Briefcase,
@@ -79,26 +81,46 @@ export const TemplateGalleryModal: React.FC = () => {
     setFullscreenTemplate(null);
   };
 
-  const templateKeys = Object.keys(TEMPLATE_METADATA) as TemplateId[];
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+
+  const CATEGORY_MAP: Record<string, TemplateId[]> = {
+    all: Object.keys(TEMPLATE_METADATA) as TemplateId[],
+    chile: ["chile_profesional"],
+    tech: ["tech_minimalist", "stanford_clean", "tech_compact"],
+    executive: ["harvard", "modern_executive", "executive_serif"],
+    one_page: ["compact_swiss", "tech_compact"],
+    builder: ["skills_first", "career_changer", "modern_minimal", "academic_international"],
+  };
+
+  const CATEGORY_TABS = [
+    { id: "all", label: "Todas las Plantillas", count: 12 },
+    { id: "chile", label: "🇨🇱 Chile & LatAm", count: 1 },
+    { id: "tech", label: "💻 Tech & Silicon Valley", count: 3 },
+    { id: "executive", label: "🏛️ Harvard & Corporativo", count: 3 },
+    { id: "one_page", label: "🇨🇭 1 Página Estricta", count: 2 },
+    { id: "builder", label: "🚀 Proyectos & AI", count: 4 },
+  ];
+
+  const filteredKeys = CATEGORY_MAP[selectedCategory] || CATEGORY_MAP.all;
 
   return (
     <Dialog open={isTemplateGalleryOpen} onOpenChange={setTemplateGalleryOpen}>
       <DialogContent className="max-w-6xl w-[95vw] max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border-border shadow-2xl">
         {/* Encabezado de la Galería */}
-        <DialogHeader className="p-4 sm:p-6 border-b border-border/80 bg-zinc-50/70 dark:bg-zinc-900/50 backdrop-blur-md shrink-0">
+        <DialogHeader className="p-4 sm:p-6 border-b border-border/80 bg-zinc-50/70 dark:bg-zinc-900/50 backdrop-blur-md shrink-0 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <DialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
                   <LayoutGrid className="h-5 w-5 text-emerald-500" />
-                  <span>Catálogo de Plantillas ATS</span>
+                  <span>Catálogo de Plantillas ATS 2026</span>
                 </DialogTitle>
                 <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px] font-mono">
-                  11 Plantillas ATS
+                  12 Diseños ATS 100%
                 </Badge>
               </div>
               <DialogDescription className="text-xs text-muted-foreground max-w-xl">
-                Diseños estructurados en una sola columna con jerarquía semántica y 100% de compatibilidad con filtros ATS.
+                Diseños estructurados en una sola columna con jerarquía semántica y 100% de compatibilidad con filtros ATS (Workday, GetOnBoard, Buk, Greenhouse).
               </DialogDescription>
             </div>
 
@@ -107,18 +129,18 @@ export const TemplateGalleryModal: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setUseSampleData(true)}
-                className={`px-3 py-1 rounded-lg transition-all ${
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                   useSampleData
                     ? "bg-white dark:bg-zinc-950 font-bold text-foreground shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Datos de Muestra (Predeterminado)
+                Datos de Muestra
               </button>
               <button
                 type="button"
                 onClick={() => setUseSampleData(false)}
-                className={`px-3 py-1 rounded-lg transition-all ${
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                   !useSampleData
                     ? "bg-white dark:bg-zinc-950 font-bold text-foreground shadow-xs"
                     : "text-muted-foreground hover:text-foreground"
@@ -127,6 +149,31 @@ export const TemplateGalleryModal: React.FC = () => {
                 Mis Datos Actuales
               </button>
             </div>
+          </div>
+
+          {/* Barra de Filtros por Categoría */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
+            {CATEGORY_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSelectedCategory(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                  selectedCategory === tab.id
+                    ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
+                    : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-300/60 dark:hover:bg-zinc-700/60"
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  selectedCategory === tab.id
+                    ? "bg-zinc-700 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-800"
+                    : "bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
           </div>
         </DialogHeader>
 
@@ -187,7 +234,7 @@ export const TemplateGalleryModal: React.FC = () => {
         ) : (
           /* Grid de Plantillas */
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 scrollbar-thin">
-            {templateKeys.map((tempId) => {
+            {filteredKeys.map((tempId) => {
               const meta = TEMPLATE_METADATA[tempId];
               const Icon = TEMPLATE_ICONS[tempId] || Terminal;
               const isSelected = tempId === activeTemplate;

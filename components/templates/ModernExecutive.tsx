@@ -49,7 +49,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
 
   return (
     <div
-      className={`bg-white text-zinc-900 font-sans leading-normal w-full min-h-full selection:bg-zinc-100 ${
+      className={`bg-white text-zinc-900 font-sans leading-normal w-full h-auto selection:bg-zinc-100 ${
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
@@ -160,15 +160,36 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                   {projects.map((proj) => (
                     <div key={proj.id} className="page-break-avoid">
                       <div className="flex justify-between items-baseline mb-0.5">
-                        <span className="font-bold text-[9pt] text-zinc-950">
-                          {proj.name}
+                        <div className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="font-bold text-[9pt] text-zinc-950">
+                            {proj.name}
+                          </span>
+                          {proj.github_url && (
+                            <a
+                              href={proj.github_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[7.5pt] font-mono text-indigo-700 hover:underline font-semibold"
+                            >
+                              [GitHub]
+                            </a>
+                          )}
+                          {proj.url && (
+                            <a
+                              href={proj.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[7.5pt] font-mono text-indigo-700 hover:underline font-semibold"
+                            >
+                              [Demo]
+                            </a>
+                          )}
                           {proj.technologies && proj.technologies.length > 0 && (
                             <span className="font-normal text-zinc-600 text-[8.5pt]">
-                              {" "}
                               ({proj.technologies.join(", ")})
                             </span>
                           )}
-                        </span>
+                        </div>
                         {(proj.start_date || proj.end_date) && (
                           <span className="text-[8pt] text-zinc-600">
                             {[proj.start_date, proj.end_date].filter(Boolean).join(" – ")}

@@ -6,7 +6,13 @@ export async function POST(req: NextRequest) {
   let browser = null;
   try {
     const body = await req.json();
-    const { html, resumeData, templateId = "tech_minimalist", paperSize = "letter" } = body;
+    const {
+      html,
+      resumeData,
+      title,
+      templateId = "tech_minimalist",
+      paperSize = "letter",
+    } = body;
 
     let documentHtml = html;
 
@@ -35,11 +41,22 @@ export async function POST(req: NextRequest) {
     const page = await browser.newPage();
     const isA4 = paperSize === "a4";
 
+    const candidateClean = (resumeData?.name || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9]/g, "_")
+      .replace(/_+/g, "_")
+      .trim();
+
+    const pdfDocumentTitle =
+      title || (candidateClean ? `CV_${candidateClean}` : "Curriculum_Vitae");
+
     const fullHtml = `<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pdfDocumentTitle}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -97,16 +114,16 @@ export async function POST(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="SchemaCV_Export.pdf"`,
+        "Content-Disposition": `attachment; filename="${pdfDocumentTitle}.pdf"`,
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     if (browser) {
-      await browser.close();
+      await browser.close().catch(() => {});
     }
-    console.error("Error generando PDF con Puppeteer:", error);
+    console.error("Error al compilar PDF vectorial en el servidor:", error);
     return NextResponse.json(
-      { error: error.message || "Error al compilar el PDF con Puppeteer." },
+      { error: "Error interno al generar el PDF vectorial con Puppeteer." },
       { status: 500 }
     );
   }

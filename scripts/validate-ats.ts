@@ -21,6 +21,7 @@ interface ValidationResult {
 }
 
 const TEMPLATES_TO_TEST: { id: TemplateId; name: string }[] = [
+  { id: "chile_profesional", name: "Chile & LatAm Profesional" },
   { id: "harvard", name: "Classic Dense (Harvard Style)" },
   { id: "tech_minimalist", name: "Engineering Clean (Tech Minimalist)" },
   { id: "modern_executive", name: "Modern Executive" },

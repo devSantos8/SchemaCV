@@ -106,6 +106,7 @@ import { toast } from "sonner";
 import { OverviewSkeleton, ResumesGridSkeleton, KanbanSkeleton } from "./DashboardSkeleton";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
+  chile_profesional: MapPin,
   harvard: GraduationCap,
   tech_minimalist: Terminal,
   modern_executive: Briefcase,
@@ -120,6 +121,11 @@ const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
 };
 
 const TEMPLATE_METADATA_CONST: Record<TemplateId, { name: string; tag: string; description: string }> = {
+  chile_profesional: {
+    name: "Chile & LatAm Profesional",
+    tag: "GetOnBoard & Buk Chile",
+    description: "Diseño optimizado para el mercado chileno y latinoamericano (titulación, +56 9 y GetOnBoard).",
+  },
   harvard: {
     name: "Harvard Classic",
     tag: "Académico & Corporativo",
@@ -178,6 +184,11 @@ const TEMPLATE_METADATA_CONST: Record<TemplateId, { name: string; tag: string; d
 };
 
 const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: string }> = {
+  chile_profesional: {
+    bg: "bg-blue-500/10 dark:bg-blue-400/10",
+    text: "text-blue-700 dark:text-blue-300",
+    border: "border-blue-300 dark:border-blue-700",
+  },
   harvard: {
     bg: "bg-slate-500/10 dark:bg-slate-400/10",
     text: "text-slate-700 dark:text-slate-300",

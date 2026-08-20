@@ -49,7 +49,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
 
   return (
     <div
-      className={`bg-white text-zinc-950 font-sans leading-normal w-full min-h-full selection:bg-zinc-100 ${
+      className={`bg-white text-zinc-950 font-sans leading-normal w-full h-auto selection:bg-zinc-100 ${
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
@@ -200,6 +200,26 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                             <span className="font-bold text-[9.5pt] text-zinc-950">
                               {proj.name}
                             </span>
+                            {proj.github_url && (
+                              <a
+                                href={proj.github_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[7.5pt] font-mono text-zinc-600 hover:text-zinc-950 underline font-semibold"
+                              >
+                                [GitHub]
+                              </a>
+                            )}
+                            {proj.url && (
+                              <a
+                                href={proj.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[7.5pt] font-mono text-zinc-600 hover:text-zinc-950 underline font-semibold"
+                              >
+                                [Demo]
+                              </a>
+                            )}
                             {proj.technologies && proj.technologies.length > 0 && (
                               <span className="text-[8.5pt] font-mono text-zinc-600">
                                 [{proj.technologies.join(", ")}]

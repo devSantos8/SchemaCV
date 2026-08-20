@@ -211,15 +211,53 @@ export function SupabaseSyncProvider({ children }: { children: React.ReactNode }
                 data: lp.data,
               }).catch(console.error);
             }
-          } else {
-            // Limpiar absolutamente cualquier rastro de datos mock en la cuenta nueva
-            const cleanData = { ...EMPTY_RESUME_DATA, name: user?.name || "", email: user?.email || "" };
-            useResumeStore.setState({
-              profiles: [],
-              activeProfileId: "",
-              resumeData: cleanData,
-              yamlContent: "",
-            });
+            // Verificar si el usuario ya estaba editando un CV en el estado local
+            const hasActiveEdits = Boolean(
+              currentStore.resumeData &&
+              !isMockResume(currentStore.resumeData) &&
+              (currentStore.resumeData.name ||
+                currentStore.resumeData.headline ||
+                (currentStore.resumeData.experience && currentStore.resumeData.experience.length > 0) ||
+                (currentStore.resumeData.skills && currentStore.resumeData.skills.length > 0) ||
+                (currentStore.resumeData.projects && currentStore.resumeData.projects.length > 0) ||
+                (currentStore.resumeData.education && currentStore.resumeData.education.length > 0))
+            );
+
+            if (hasActiveEdits) {
+              const newProfId = crypto.randomUUID();
+              const newProf: ResumeProfile = {
+                id: newProfId,
+                name: currentStore.resumeData.name ? `CV de ${currentStore.resumeData.name}` : "Mi Currículum",
+                targetRole: currentStore.resumeData.headline || "Profesional",
+                templateId: currentStore.activeTemplate || "harvard",
+                paperSize: "letter",
+                data: currentStore.resumeData,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+              };
+
+              useResumeStore.setState({
+                profiles: [newProf],
+                activeProfileId: newProf.id,
+              });
+
+              upsertResumeToSupabase(userId, {
+                id: newProf.id,
+                name: newProf.name,
+                targetRole: newProf.targetRole,
+                templateId: newProf.templateId,
+                isMaster: false,
+                data: newProf.data,
+              }).catch(console.error);
+            } else {
+              const cleanData = { ...EMPTY_RESUME_DATA, name: user?.name || "", email: user?.email || "" };
+              useResumeStore.setState({
+                profiles: [],
+                activeProfileId: "",
+                resumeData: cleanData,
+                yamlContent: "",
+              });
+            }
           }
         }
 

@@ -13,6 +13,7 @@ import {
 } from "@/types/resume";
 import { EMPTY_RESUME_DATA, INITIAL_PROFILES, SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
 import { resumeDataToYaml, yamlToResumeData } from "@/lib/exporters/yamlExporter";
+import { upsertResumeToSupabase } from "@/lib/supabase/db";
 
 const MAX_HISTORY_LENGTH = 50;
 
@@ -46,6 +47,7 @@ interface ResumeStoreState {
   isMasterProfileModalOpen: boolean;
   isExporting: boolean;
   isSaving: boolean;
+  lastSavedAt: string | null;
 
   // Acciones de Deshacer / Rehacer
   undo: () => void;
@@ -57,6 +59,7 @@ interface ResumeStoreState {
   setResumeData: (updater: Partial<ResumeData> | ((prev: ResumeData) => Partial<ResumeData>), syncYaml?: boolean, recordHistory?: boolean) => void;
   setYamlContent: (newYaml: string) => void;
   formatCurrentYaml: () => void;
+  saveCurrentResumeToSupabase: (userId: string) => Promise<boolean>;
 
   // Acciones de Perfiles
   setActiveProfile: (profileId: string) => void;
@@ -124,6 +127,7 @@ export const useResumeStore = create<ResumeStoreState>()(
       isMasterProfileModalOpen: false,
       isExporting: false,
       isSaving: false,
+      lastSavedAt: null,
 
       // Acción Deshacer (Undo)
       undo: () => {
@@ -183,7 +187,7 @@ export const useResumeStore = create<ResumeStoreState>()(
         });
       },
 
-      // Actualizar datos del CV con registro automático en el historial
+      // Actualizar datos del CV con registro automático en el historial y perfil activo asegurado
       setResumeData: (updater, syncYaml = true, recordHistory = true) => {
         set((state) => {
           const updatedPartial = typeof updater === "function" ? updater(state.resumeData) : updater;
@@ -199,16 +203,35 @@ export const useResumeStore = create<ResumeStoreState>()(
             newPast = [...state.historyPast, state.resumeData].slice(-MAX_HISTORY_LENGTH);
           }
 
-          const updatedProfiles = state.profiles.map((p) =>
-            p.id === state.activeProfileId
-              ? { ...p, data: updatedData, updatedAt: new Date().toISOString() }
-              : p
-          );
+          let activeId = state.activeProfileId;
+          let updatedProfiles = [...state.profiles];
+
+          if (updatedProfiles.length === 0 || !activeId || !updatedProfiles.some((p) => p.id === activeId)) {
+            activeId = activeId || crypto.randomUUID();
+            const newProf: ResumeProfile = {
+              id: activeId,
+              name: updatedData.name ? `CV de ${updatedData.name}` : "Mi Currículum",
+              targetRole: updatedData.headline || "Ingeniero de Software",
+              templateId: state.activeTemplate || "harvard",
+              paperSize: state.paperSize || "letter",
+              data: updatedData,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            updatedProfiles = [newProf];
+          } else {
+            updatedProfiles = updatedProfiles.map((p) =>
+              p.id === activeId
+                ? { ...p, data: updatedData, updatedAt: new Date().toISOString() }
+                : p
+            );
+          }
 
           return {
             resumeData: updatedData,
             yamlContent: newYaml,
             yamlError: null,
+            activeProfileId: activeId,
             historyPast: newPast,
             historyFuture: [],
             canUndo: newPast.length > 0,
@@ -226,11 +249,29 @@ export const useResumeStore = create<ResumeStoreState>()(
             return { yamlContent: newYaml, yamlError: error };
           }
 
-          const updatedProfiles = state.profiles.map((p) =>
-            p.id === state.activeProfileId
-              ? { ...p, data, updatedAt: new Date().toISOString() }
-              : p
-          );
+          let activeId = state.activeProfileId;
+          let updatedProfiles = [...state.profiles];
+
+          if (updatedProfiles.length === 0 || !activeId || !updatedProfiles.some((p) => p.id === activeId)) {
+            activeId = activeId || crypto.randomUUID();
+            const newProf: ResumeProfile = {
+              id: activeId,
+              name: data.name ? `CV de ${data.name}` : "Mi Currículum",
+              targetRole: data.headline || "Ingeniero de Software",
+              templateId: state.activeTemplate || "harvard",
+              paperSize: state.paperSize || "letter",
+              data,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            };
+            updatedProfiles = [newProf];
+          } else {
+            updatedProfiles = updatedProfiles.map((p) =>
+              p.id === activeId
+                ? { ...p, data, updatedAt: new Date().toISOString() }
+                : p
+            );
+          }
 
           const newPast = [...state.historyPast, state.resumeData].slice(-MAX_HISTORY_LENGTH);
 
@@ -238,6 +279,7 @@ export const useResumeStore = create<ResumeStoreState>()(
             yamlContent: newYaml,
             yamlError: null,
             resumeData: data,
+            activeProfileId: activeId,
             historyPast: newPast,
             historyFuture: [],
             canUndo: newPast.length > 0,
@@ -253,6 +295,59 @@ export const useResumeStore = create<ResumeStoreState>()(
           yamlContent: resumeDataToYaml(state.resumeData),
           yamlError: null,
         }));
+      },
+
+      // Guardar CV activo en Supabase (Nube)
+      saveCurrentResumeToSupabase: async (userId: string) => {
+        const state = get();
+        if (!userId) return false;
+
+        let activeProf = state.profiles.find((p) => p.id === state.activeProfileId);
+        if (!activeProf) {
+          activeProf = {
+            id: state.activeProfileId || crypto.randomUUID(),
+            name: state.resumeData.name ? `CV de ${state.resumeData.name}` : "Mi Currículum",
+            targetRole: state.resumeData.headline || "Ingeniero de Software",
+            templateId: state.activeTemplate || "harvard",
+            paperSize: state.paperSize || "letter",
+            data: state.resumeData,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+
+        set({ isSaving: true });
+        try {
+          const saved = await upsertResumeToSupabase(userId, {
+            id: activeProf.id,
+            name: activeProf.name,
+            targetRole: activeProf.targetRole,
+            templateId: activeProf.templateId,
+            isMaster: false,
+            data: state.resumeData,
+          });
+
+          const now = new Date().toISOString();
+          const finalId = saved?.id || activeProf.id;
+
+          const updatedProfiles = state.profiles.map((p) =>
+            p.id === activeProf.id
+              ? { ...p, id: finalId, data: state.resumeData, updatedAt: now }
+              : p
+          );
+
+          set({
+            profiles: updatedProfiles.length > 0 ? updatedProfiles : [{ ...activeProf, id: finalId, updatedAt: now }],
+            activeProfileId: finalId,
+            lastSavedAt: now,
+            isSaving: false,
+          });
+          return true;
+        } catch (err) {
+          console.error("Error al guardar currículum en Supabase:", err);
+          set({ isSaving: false });
+          return false;
+        }
       },
 
       // Gestión de Perfiles
