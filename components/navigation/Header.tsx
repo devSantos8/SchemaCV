@@ -134,6 +134,25 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     }
   };
 
+  // Nombre de archivo ATS estandarizado: "CV_NombreApellido_Puesto"
+  const candidateCleanName = (resumeData.name || user?.name || "Candidato")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+
+  const candidateCleanRole = (activeProfile?.targetRole || resumeData?.headline || "Curriculum")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join("");
+
+  const atsFileName = `CV_${candidateCleanName || "Candidato"}_${candidateCleanRole || "Profesional"}`;
+
   // Exportar Word .docx
   const handleExportDocx = async () => {
     try {
@@ -142,8 +161,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const safeName = (resumeData.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
-      a.download = `${safeName}_ATS_Resume.docx`;
+      a.download = `${atsFileName}.docx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -163,8 +181,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const safeName = (resumeData.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
-    a.download = `${safeName}_SchemaCV.yaml`;
+    a.download = `${atsFileName}.yaml`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -178,8 +195,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    const safeName = (resumeData.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
-    a.download = `${safeName}_SchemaCV.json`;
+    a.download = `${atsFileName}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -213,8 +229,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      const safeName = (resumeData.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
-      a.download = `${safeName}_ATS_${paperSize}.pdf`;
+      a.download = `${atsFileName}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -443,6 +458,18 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
               <Redo2 className="h-3 w-3" />
             </button>
           </div>
+        </div>
+
+        {/* Nombre de Archivo ATS generado automáticamente */}
+        <div
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground hover:text-foreground text-[11px] font-mono shadow-2xs backdrop-blur-md transition-all group select-all"
+          title="Nombre de archivo generado automáticamente según estándares ATS: CV_NombreApellido_Puesto"
+        >
+          <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+          <span className="text-foreground font-semibold max-w-[170px] xl:max-w-[240px] truncate">
+            {atsFileName}
+          </span>
+          <span className="text-[10px] text-muted-foreground font-sans shrink-0">(.pdf / .docx)</span>
         </div>
       </div>
 

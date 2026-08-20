@@ -42,6 +42,8 @@ import {
   FolderGit2,
   Search,
   SlidersHorizontal,
+  Pencil,
+  X,
   Eye,
   User,
   Mail,
@@ -50,7 +52,6 @@ import {
   Globe,
   Save,
   Menu,
-  X,
   Clock,
   Zap,
   Award,
@@ -292,6 +293,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setActiveProfile,
     duplicateProfile,
     deleteProfile,
+    updateProfileMeta,
     loadImportedResume,
     masterProfileData,
     updateMasterProfileData,
@@ -314,6 +316,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Estados de edición de nombre / rol de CV
+  const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [editingRole, setEditingRole] = useState("");
 
   // Estados de exportación
   const [downloadingDocxId, setDownloadingDocxId] = useState<string | null>(null);
@@ -452,6 +459,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     setIsSettingsSaved(true);
     toast.success("Ajustes de cuenta actualizados");
     setTimeout(() => setIsSettingsSaved(false), 2500);
+  };
+
+  const handleSaveProfileMeta = (profileId: string) => {
+    if (!editingName.trim()) {
+      toast.error("El nombre del currículum no puede estar vacío");
+      return;
+    }
+    updateProfileMeta(profileId, editingName.trim(), editingRole.trim());
+    toast.success("Nombre del currículum actualizado");
+    setEditingProfileId(null);
+  };
+
+  const handleCancelEditing = () => {
+    setEditingProfileId(null);
+    setEditingName("");
+    setEditingRole("");
   };
 
   const handleUpdatePassword = (e: React.FormEvent) => {
@@ -1363,22 +1386,88 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       </div>
 
                       <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                        <div className="space-y-1">
-                          <h3 className="font-bold text-sm text-foreground truncate">
-                            {profile.name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {profile.targetRole || "Rol no definido"}
-                          </p>
-
-                          <div className="pt-2 flex flex-wrap gap-1">
-                            {profile.data.skills?.[0]?.skills.slice(0, 3).map((sk, i) => (
-                              <Badge key={i} variant="secondary" className="text-[9px] font-mono py-0 px-1.5">
-                                {sk}
-                              </Badge>
-                            ))}
+                        {editingProfileId === profile.id ? (
+                          <div className="space-y-2 bg-zinc-50 dark:bg-zinc-900/80 p-2.5 rounded-xl border border-border">
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-semibold text-muted-foreground uppercase">Nombre de la versión</label>
+                              <Input
+                                value={editingName}
+                                onChange={(e) => setEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveProfileMeta(profile.id);
+                                  if (e.key === "Escape") handleCancelEditing();
+                                }}
+                                autoFocus
+                                placeholder="Ej. CV Software Engineer"
+                                className="h-7 text-xs rounded-lg"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-semibold text-muted-foreground uppercase">Puesto / Rol Objetivo</label>
+                              <Input
+                                value={editingRole}
+                                onChange={(e) => setEditingRole(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveProfileMeta(profile.id);
+                                  if (e.key === "Escape") handleCancelEditing();
+                                }}
+                                placeholder="Ej. Full Stack Engineer"
+                                className="h-7 text-xs rounded-lg"
+                              />
+                            </div>
+                            <div className="flex items-center justify-end gap-1.5 pt-1">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleCancelEditing}
+                                className="h-6 px-2 text-[11px]"
+                              >
+                                <X className="h-3 w-3 mr-1" />
+                                <span>Cancelar</span>
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSaveProfileMeta(profile.id)}
+                                className="h-6 px-2.5 text-[11px] bg-foreground text-background"
+                              >
+                                <Check className="h-3 w-3 mr-1" />
+                                <span>Guardar</span>
+                              </Button>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between group/title">
+                              <h3 className="font-bold text-sm text-foreground truncate flex-1">
+                                {profile.name}
+                              </h3>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingProfileId(profile.id);
+                                  setEditingName(profile.name);
+                                  setEditingRole(profile.targetRole || "");
+                                }}
+                                className="opacity-0 group-hover/title:opacity-100 p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md text-muted-foreground hover:text-foreground transition-all ml-1 cursor-pointer shrink-0"
+                                title="Editar nombre y rol del currículum"
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </button>
+                            </div>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {profile.targetRole || "Rol no definido"}
+                            </p>
+
+                            <div className="pt-2 flex flex-wrap gap-1">
+                              {profile.data.skills?.[0]?.skills.slice(0, 3).map((sk, i) => (
+                                <Badge key={i} variant="secondary" className="text-[9px] font-mono py-0 px-1.5">
+                                  {sk}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
                           <Button
@@ -1400,7 +1489,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                 <MoreVertical className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 text-xs">
+                            <DropdownMenuContent align="end" className="w-52 text-xs">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingProfileId(profile.id);
+                                  setEditingName(profile.name);
+                                  setEditingRole(profile.targetRole || "");
+                                }}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Pencil className="h-3.5 w-3.5 text-amber-500" />
+                                <span>Cambiar Nombre & Rol</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => handleDownloadPdf(profile)}
                                 className="cursor-pointer gap-2"
