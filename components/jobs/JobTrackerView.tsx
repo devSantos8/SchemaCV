@@ -20,6 +20,7 @@ import { JobApplicationCard } from "./JobApplicationCard";
 import { JobDetailPanel } from "./JobDetailPanel";
 import { JobDetailFullView } from "./JobDetailFullView";
 import { AddJobModal } from "./AddJobModal";
+import { toast } from "sonner";
 import type { ApplicationStatus, JobApplication } from "@/types/jobs";
 import { STATUS_LABELS } from "@/types/jobs";
 
@@ -191,6 +192,7 @@ export function JobTrackerView() {
       const currentApp = applications.find((a) => a.id === activeAppId);
       if (currentApp && currentApp.status !== targetStatus) {
         updateApplication(activeAppId, { status: targetStatus });
+        toast.success(`Postulación movida a "${STATUS_LABELS[targetStatus]}"`);
       }
       return;
     }
@@ -202,6 +204,7 @@ export function JobTrackerView() {
       const currentApp = applications.find((a) => a.id === activeAppId);
       if (currentApp && currentApp.status !== targetStatus) {
         updateApplication(activeAppId, { status: targetStatus });
+        toast.success(`Postulación movida a "${STATUS_LABELS[targetStatus]}"`);
       }
     }
   }

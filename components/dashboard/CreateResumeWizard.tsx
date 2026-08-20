@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { useResumeStore } from "@/store/useResumeStore";
 import { ResumeData, TemplateId } from "@/types/resume";
@@ -322,6 +323,10 @@ export const CreateResumeWizard: React.FC<CreateResumeWizardProps> = ({
     createProfile(profileName, targetRole, false);
     loadImportedResume(finalResumeData);
     setActiveTemplate(selectedTemplate);
+
+    toast.success("¡Currículum creado con éxito!", {
+      description: `"${profileName}" listo para editar.`,
+    });
 
     onOpenChange(false);
     onComplete();

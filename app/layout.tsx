@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, EB_Garamond } from "next/font/google";
 import "./globals.css";
 import { SupabaseSyncProvider } from "@/components/providers/SupabaseSyncProvider";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <SupabaseSyncProvider>{children}</SupabaseSyncProvider>
+        <Toaster />
       </body>
     </html>
   );

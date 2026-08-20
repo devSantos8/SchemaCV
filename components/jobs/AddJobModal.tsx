@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,6 +6,7 @@ import { X, Link as LinkIcon, FileText, Loader2, AlertCircle, Sparkles, ChevronR
 import { useJobsStore } from "@/store/useJobsStore";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAISettingsStore } from "@/store/useAISettingsStore";
+import { toast } from "sonner";
 import type { ScrapeResult } from "@/types/jobs";
 
 interface AddJobModalProps {
@@ -81,6 +82,10 @@ export function AddJobModal({ onClose }: AddJobModalProps) {
     if (description) {
       analyzeKeywords(app.id, resumeData);
     }
+
+    toast.success("Postulación agregada al tablero", {
+      description: `${title} en ${company}`,
+    });
 
     setIsAdding(false);
     onClose();

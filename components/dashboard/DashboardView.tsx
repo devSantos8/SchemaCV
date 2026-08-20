@@ -100,6 +100,8 @@ import {
 import { CreateResumeWizard } from "./CreateResumeWizard";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
+import { toast } from "sonner";
+import { OverviewSkeleton, ResumesGridSkeleton, KanbanSkeleton } from "./DashboardSkeleton";
 
 const TEMPLATE_ICONS: Record<TemplateId, React.ElementType> = {
   harvard: GraduationCap,
@@ -427,6 +429,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const handleSaveMasterProfile = () => {
     updateMasterProfileData(masterFormData);
     setIsMasterSaved(true);
+    toast.success("Perfil Base Maestro guardado", {
+      description: "Tus datos y proyectos se sincronizaron con éxito.",
+    });
     setTimeout(() => setIsMasterSaved(false), 2500);
   };
 
@@ -445,6 +450,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       websiteUrl: settingsWebsite,
     });
     setIsSettingsSaved(true);
+    toast.success("Ajustes de cuenta actualizados");
     setTimeout(() => setIsSettingsSaved(false), 2500);
   };
 
@@ -1428,7 +1434,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                onClick={() => duplicateProfile(profile.id)}
+                                onClick={() => {
+                                  duplicateProfile(profile.id);
+                                  toast.info(`Versión "${profile.name}" duplicada`);
+                                }}
                                 className="cursor-pointer gap-2"
                               >
                                 <Copy className="h-3.5 w-3.5" />
@@ -1436,7 +1445,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </DropdownMenuItem>
                               {profiles.length > 1 && (
                                 <DropdownMenuItem
-                                  onClick={() => deleteProfile(profile.id)}
+                                  onClick={() => {
+                                    deleteProfile(profile.id);
+                                    toast.error(`Versión "${profile.name}" eliminada`);
+                                  }}
                                   className="cursor-pointer gap-2 text-rose-500 hover:text-rose-600"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />

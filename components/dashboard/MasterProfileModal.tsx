@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 import {
   Database,
   User,
@@ -66,6 +67,9 @@ export const MasterProfileModal: React.FC = () => {
   const handleSaveMaster = () => {
     updateMasterProfileData(formData);
     setIsSaved(true);
+    toast.success("Perfil Base Maestro guardado", {
+      description: "Datos centrales actualizados y listos para generar CVs.",
+    });
     setTimeout(() => setIsSaved(false), 2500);
   };
 
@@ -73,6 +77,9 @@ export const MasterProfileModal: React.FC = () => {
     e.preventDefault();
     if (!newCvName.trim()) return;
     createProfileFromMaster(newCvName.trim(), newCvRole.trim() || formData.headline || "");
+    toast.success("¡Currículum creado desde Perfil Base!", {
+      description: `"${newCvName.trim()}" añadido a tus versiones.`,
+    });
     setShowCreateCvPrompt(false);
     setNewCvName("");
     setNewCvRole("");
