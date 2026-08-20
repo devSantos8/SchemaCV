@@ -23,6 +23,16 @@ import {
   Cpu,
   Layers,
   Award,
+  Heart,
+  Briefcase,
+  Globe,
+  FileText,
+  Send,
+  HelpCircle,
+  Pencil,
+  Bot,
+  UserCheck,
+  ShieldCheck,
 } from "lucide-react";
 import { useJobsStore } from "@/store/useJobsStore";
 import { useResumeStore } from "@/store/useResumeStore";
@@ -33,6 +43,9 @@ import type { EvaluationReport } from "@/types/evaluator";
 import { AIChat } from "@/components/jobs/AIChat";
 import { ScoreProjectorSimulator } from "@/components/jobs/evaluate/ScoreProjectorSimulator";
 import { runATSEvaluationPipeline } from "@/lib/ats";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface JobDetailFullViewProps {
   applicationId: string;
@@ -57,6 +70,55 @@ const STATUS_ACTIVE_COLORS: Record<ApplicationStatus, string> = {
   closed: "bg-zinc-600 text-white shadow-xs ring-1 ring-zinc-500/50",
 };
 
+// Parser inteligente de descripciones de empleo
+function parseJobDescription(text: string) {
+  if (!text || !text.trim()) {
+    return {
+      minimumQualifications: [],
+      preferredQualifications: [],
+      aboutTheJob: "",
+      hasStructure: false,
+    };
+  }
+
+  const minQualRegex = /(?:minimum qualifications|requisitos m[ií]nimos|requirements|requisitos obligatorios|lo que buscamos|perfil requerido)[\s:]*([\s\S]*?)(?=(?:preferred qualifications|requisitos deseados|requisitos valorados|deseables|nice to have|plus|about the job|acerca del empleo|responsabilidades|responsibilities|funciones|$))/i;
+  const prefQualRegex = /(?:preferred qualifications|requisitos deseados|requisitos valorados|deseables|nice to have|plus|valoramos)[\s:]*([\s\S]*?)(?=(?:about the job|acerca del empleo|acerca de la empresa|responsabilidades|responsibilities|funciones|$))/i;
+  const aboutRegex = /(?:about the job|acerca del empleo|descripci[oó]n del puesto|acerca de la empresa|overview|resumen del rol)[\s:]*([\s\S]*?)(?=(?:minimum qualifications|preferred qualifications|requisitos|$))/i;
+
+  const minMatch = text.match(minQualRegex);
+  const prefMatch = text.match(prefQualRegex);
+  const aboutMatch = text.match(aboutRegex);
+
+  const cleanBullets = (raw: string) => {
+    return raw
+      .split(/\n+/)
+      .map((line) => line.trim().replace(/^[-•*]\s*/, ""))
+      .filter((line) => line.length > 5);
+  };
+
+  const hasStructure = Boolean(minMatch || prefMatch);
+
+  // Si no hay encabezados explícitos, extraer bullets genéricos
+  const fallbackBullets = text
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter((l) => /^[-•*]\s*/.test(l) || (l.length > 20 && l.length < 160))
+    .map((l) => l.replace(/^[-•*]\s*/, ""));
+
+  return {
+    minimumQualifications: minMatch
+      ? cleanBullets(minMatch[1])
+      : fallbackBullets.slice(0, 4),
+    preferredQualifications: prefMatch
+      ? cleanBullets(prefMatch[1])
+      : fallbackBullets.slice(4, 8),
+    aboutTheJob: aboutMatch
+      ? aboutMatch[1].trim()
+      : text.trim(),
+    hasStructure,
+  };
+}
+
 export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewProps) {
   const {
     applications,
@@ -67,12 +129,14 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     getLatestEvaluation,
   } = useJobsStore();
 
-  const { profiles, resumeData, masterProfileData } = useResumeStore();
+  const { profiles, resumeData, masterProfileData, createProfileFromMaster } = useResumeStore();
   const { enabled: aiEnabled } = useAISettingsStore();
 
   const application = applications.find((a) => a.id === applicationId);
 
-  const [activeTab, setActiveTab] = useState<"requirements" | "ats" | "simulation" | "offer_text">("requirements");
+  const [activePrepSection, setActivePrepSection] = useState<"tailor" | "interview" | "cover_letter">("tailor");
+  const [showAdvancedAts, setShowAdvancedAts] = useState(false);
+  const [activeAtsTab, setActiveAtsTab] = useState<"requirements" | "ats" | "simulation" | "raw_text">("requirements");
   const [showChat, setShowChat] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string>("active");
   const [isEvaluating, setIsEvaluating] = useState(false);
@@ -81,7 +145,9 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
   const [notesInput, setNotesInput] = useState(application?.notes || "");
   const [descInput, setDescInput] = useState(application?.description || "");
   const [filterImportance, setFilterImportance] = useState<"all" | "must_have" | "nice_to_have">("all");
-  const [expandedRuleId, setExpandedRuleId] = useState<string | null>(null);
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [copiedCoverLetter, setCopiedCoverLetter] = useState(false);
+  const [expandedInterviewQuestion, setExpandedInterviewQuestion] = useState<number | null>(0);
 
   // Keyboard shortcut Esc
   useEffect(() => {
@@ -113,6 +179,9 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     return found ? found.data : resumeData;
   }, [selectedProfileId, masterProfileData, resumeData, profiles]);
 
+  // Parsear la descripción en secciones
+  const parsedJob = useMemo(() => parseJobDescription(descInput), [descInput]);
+
   if (!application) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -128,6 +197,24 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
   }
 
   const { title, company, status, location, salary, url, portal, activity } = application;
+
+  const isSaved = status === "bookmarked";
+
+  const handleToggleSave = () => {
+    const nextStatus: ApplicationStatus = isSaved ? "applied" : "bookmarked";
+    updateApplication(application.id, { status: nextStatus });
+    toast.success(isSaved ? "Movido a Postuladas" : "Guardado en Favoritos");
+  };
+
+  const handleSendApplication = () => {
+    if (url) {
+      window.open(url, "_blank");
+    }
+    if (status === "bookmarked") {
+      updateApplication(application.id, { status: "applied" });
+    }
+    toast.success("Abriendo portal de postulación...");
+  };
 
   async function handleRunEvaluation() {
     if (!application || !descInput.trim()) return;
@@ -178,657 +265,489 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
           generatedAt: new Date().toISOString(),
         },
       });
+      toast.success("Evaluación ATS completada", {
+        description: `Puntuación de match: ${newReport.matchScore}%`,
+      });
     } catch (err) {
       console.error("Error al evaluar:", err);
+      toast.error("Error al ejecutar la evaluación ATS");
     } finally {
       setIsEvaluating(false);
     }
   }
 
-  async function handleScrape() {
-    if (!url || !application) return;
-    setIsScrapingDesc(true);
-    try {
-      const res = await fetch("/api/jobs/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      const data = await res.json() as { description?: string };
-      if (data.description) {
-        setDescInput(data.description);
-        updateApplication(application.id, { description: data.description });
-      }
-    } catch {
-      // Silencioso
-    } finally {
-      setIsScrapingDesc(false);
-    }
-  }
-
-  function handleSaveNotes(val: string) {
-    if (!application) return;
-    setNotesInput(val);
-    updateApplication(application.id, { notes: val });
-  }
-
   function handleSaveDescription() {
     if (!application) return;
     updateApplication(application.id, { description: descInput });
+    setIsEditingDescription(false);
     handleRunEvaluation();
+    toast.success("Descripción actualizada y analizada");
   }
 
-  const filteredRequirements = useMemo(() => {
-    if (!report?.requirements) return [];
-    if (filterImportance === "all") return report.requirements;
-    return report.requirements.filter((r) => r.importance === filterImportance);
-  }, [report?.requirements, filterImportance]);
+  // Generador de Carta de Presentación
+  const generatedCoverLetter = useMemo(() => {
+    const candidateName = currentResumeData.name || "Candidato";
+    const candidateRole = currentResumeData.headline || "Profesional";
+    const candidateEmail = currentResumeData.email || "";
+    const candidatePhone = currentResumeData.phone || "";
 
-  const matchedCount = report?.requirements.filter((r) => r.matched).length || 0;
-  const totalCount = report?.requirements.length || 0;
+    return `Estimado equipo de contratación de ${company},\n\nLe escribo con gran entusiasmo para presentar mi candidatura al puesto de ${title}. Con mi sólida trayectoria como ${candidateRole} y mi experiencia comprobada en el desarrollo de soluciones escalables, considero que mi perfil se alinea estrechamente con las necesidades de ${company}.\n\nRevisando los requisitos del puesto, cuento con experiencia directa en las tecnologías clave requeridas para este rol. A lo largo de mi carrera me he caracterizado por entregar proyectos de alto impacto, optimizar procesos de ingeniería y colaborar eficazmente en equipos multidisciplinarios.\n\nMe entusiasma la posibilidad de aportar valor a ${company} y me encantaría tener la oportunidad de conversar más a fondo sobre cómo mi experiencia puede contribuir al éxito del equipo.\n\nQuedo a su entera disposición.\n\nAtentamente,\n${candidateName}\n${candidateEmail} | ${candidatePhone}`;
+  }, [company, title, currentResumeData]);
+
+  const handleCopyCoverLetter = () => {
+    navigator.clipboard.writeText(generatedCoverLetter);
+    setCopiedCoverLetter(true);
+    toast.success("Carta de presentación copiada al portapapeles");
+    setTimeout(() => setCopiedCoverLetter(false), 2500);
+  };
+
+  // Preguntas de entrevista simuladas
+  const interviewQuestions = [
+    {
+      question: `¿Por qué te interesa unirte a ${company} como ${title}?`,
+      tip: "Enfócate en la misión de la empresa, su impacto tecnológico y cómo tu experiencia previa resuelve sus retos actuales.",
+      starExample: "Situación: En mi rol anterior... Tarea: Debíamos escalar... Acción: Lideré la migración... Resultado: Redujimos la latencia un 40%.",
+    },
+    {
+      question: `Cuéntame sobre un desafío técnico complejo relacionado con ${parsedJob.minimumQualifications[0] || "desarrollo full stack"} y cómo lo resolviste.`,
+      tip: "Utiliza la metodología STAR (Situación, Tarea, Acción, Resultado) cuantificando el impacto.",
+      starExample: "Situación: Tuvimos un cuello de botella... Tarea: Optimizar la base de datos... Acción: Implementé índices y caché Redis... Resultado: 99.9% uptime.",
+    },
+    {
+      question: "¿Cómo manejas la priorización y el trabajo bajo metodologías ágiles en entornos de alta exigencia?",
+      tip: "Menciona comunicación proactiva con stakeholders y enfoque iterativo.",
+      starExample: "Situación: Requerimientos cambiantes... Tarea: Entregar sprint crítico... Acción: Repriorizamos el backlog... Resultado: Entrega a tiempo con cero bugs críticos.",
+    },
+  ];
 
   // Visual tokens de puntuación
-  const matchColor =
-    (report?.matchScore ?? 0) >= 70
-      ? "text-emerald-600 dark:text-emerald-400"
-      : (report?.matchScore ?? 0) >= 40
-      ? "text-amber-600 dark:text-amber-400"
-      : "text-red-500";
-
-  const matchBg =
-    (report?.matchScore ?? 0) >= 70
-      ? "bg-emerald-500/10 border-emerald-500/30"
-      : (report?.matchScore ?? 0) >= 40
-      ? "bg-amber-500/10 border-amber-500/30"
-      : "bg-red-500/10 border-red-500/30";
-
-  const atsColor =
-    (report?.atsScore ?? 0) >= 80
-      ? "text-emerald-600 dark:text-emerald-400"
-      : (report?.atsScore ?? 0) >= 60
-      ? "text-amber-600 dark:text-amber-400"
-      : "text-red-500";
-
-  const atsBg =
-    (report?.atsScore ?? 0) >= 80
-      ? "bg-emerald-500/10 border-emerald-500/30"
-      : (report?.atsScore ?? 0) >= 60
-      ? "bg-amber-500/10 border-amber-500/30"
-      : "bg-red-500/10 border-red-500/30";
+  const matchScore = report?.matchScore ?? (application.matchAnalysis?.score ?? 85);
+  const matchColor = matchScore >= 70 ? "text-emerald-600 dark:text-emerald-400" : matchScore >= 40 ? "text-amber-600" : "text-red-500";
+  const matchBg = matchScore >= 70 ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800" : "bg-amber-50 text-amber-700 border-amber-200";
 
   return (
-    <div className="flex flex-col h-full bg-zinc-50/50 dark:bg-zinc-950 overflow-hidden font-sans">
-      {/* ─── 1. TOP BAR COMPACTO ─── */}
-      <div className="px-6 py-3 border-b border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+    <div className="min-h-full bg-[#f8fafc] dark:bg-zinc-950 font-sans text-zinc-900 dark:text-zinc-100 pb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-8 space-y-6">
+        
+        {/* ─── 1. ENCABEZADO SUPERIOR TIPO GOOGLE / PROPEL ─── */}
+        <div className="space-y-3">
+          <h1 className="text-2xl sm:text-3xl font-serif text-zinc-900 dark:text-zinc-50 font-medium tracking-tight">
+            Información del puesto de {title}
+          </h1>
+
           <button
+            type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors shadow-2xs group cursor-pointer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors group cursor-pointer"
           >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Volver</span>
-            <span className="hidden sm:inline-block ml-1 px-1.5 py-0.2 rounded bg-zinc-100 dark:bg-zinc-800 text-[10px] font-mono text-zinc-400 border border-zinc-200 dark:border-zinc-700">
-              Esc
-            </span>
-          </button>
-
-          <div className="h-4 w-px bg-zinc-200 dark:border-zinc-800 hidden sm:block" />
-
-          {/* Breadcrumb con acento */}
-          <div className="flex items-center gap-2 text-xs text-zinc-500 truncate">
-            <span className="text-zinc-400">Postulaciones</span>
-            <span>/</span>
-            <span className="font-bold text-zinc-900 dark:text-zinc-100 truncate">{company}</span>
-          </div>
-        </div>
-
-        {/* Acciones con contraste */}
-        <div className="flex items-center gap-2">
-          {aiEnabled && (
-            <button
-              onClick={() => setShowChat(!showChat)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-violet-200 dark:border-violet-900/50 bg-violet-50 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 text-xs font-bold hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors cursor-pointer shadow-2xs"
-            >
-              <MessageSquare className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-              <span>Chat IA</span>
-            </button>
-          )}
-
-          <button
-            onClick={handleRunEvaluation}
-            disabled={isEvaluating || !descInput}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-2xs disabled:opacity-40 cursor-pointer"
-          >
-            {isEvaluating ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            )}
-            <span>Re-evaluar</span>
-          </button>
-
-          <button
-            onClick={() => {
-              duplicateApplication(application.id);
-              onBack();
-            }}
-            title="Duplicar"
-            className="p-2 rounded-lg text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-          >
-            <Copy className="w-3.5 h-3.5" />
-          </button>
-
-          <button
-            onClick={() => {
-              deleteApplication(application.id);
-              onBack();
-            }}
-            title="Eliminar"
-            className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
+            <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Volver a postulaciones</span>
           </button>
         </div>
-      </div>
 
-      {/* ─── 2. CONTENEDOR PRINCIPAL: 2 COLUMNAS ─── */}
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* ════ COLUMNA IZQUIERDA: DETALLE & REQUISITOS (7 de 12) ════ */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Header del Puesto */}
-            <div className="p-5 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3.5 shadow-2xs">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
-                <div className="space-y-1.5 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-xl font-black text-zinc-900 dark:text-zinc-100 leading-tight tracking-tight">
-                      {title}
-                    </h1>
-                    {portal && (
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60">
-                        {portal}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-3 text-xs text-zinc-500 flex-wrap">
-                    <span className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
-                      <Building2 className="w-3.5 h-3.5 text-zinc-400" />
-                      {company}
+        {/* ─── 2. CONTENEDOR PRINCIPAL 2 COLUMNAS (Exacto a la imagen) ─── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* ═════════ COLUMNA IZQUIERDA: DETALLES DE LA OFERTA (8 de 12) ═════════ */}
+          <div className="lg:col-span-8 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 p-6 sm:p-8 shadow-xs space-y-6">
+            
+            {/* Header del Puesto con Logo, Nombre y Botones de Acción */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-2">
+              <div className="flex items-start gap-4">
+                {/* Logo de Empresa (Google o Avatar personalizado) */}
+                <div className="w-12 h-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  {company.toLowerCase().includes("google") ? (
+                    <svg className="w-7 h-7" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                    </svg>
+                  ) : (
+                    <span className="text-base font-black text-zinc-800 dark:text-zinc-200">
+                      {company.charAt(0).toUpperCase()}
                     </span>
-                    {location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-                        {location}
-                      </span>
-                    )}
-                    {salary && (
-                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-900/50">
-                        <DollarSign className="w-3 h-3" />
-                        {salary}
-                      </span>
-                    )}
-                    {url && (
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline font-semibold"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Ver oferta
-                      </a>
-                    )}
-                  </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <h2 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100 leading-tight">
+                    {title}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 font-medium">
+                    {company}
+                  </p>
                 </div>
               </div>
 
-              {/* Selector de estado segmentado con colores de contraste */}
-              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
-                <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 flex-wrap">
-                  {ALL_STATUSES.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => updateApplication(application.id, { status: s })}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        status === s
-                          ? STATUS_ACTIVE_COLORS[s]
-                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50"
-                      }`}
-                    >
-                      {STATUS_LABELS[s]}
-                    </button>
-                  ))}
-                </div>
+              {/* Botones Guardar & Enviar Solicitud */}
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleToggleSave}
+                  className={`h-9 px-3.5 text-xs font-semibold rounded-xl gap-1.5 transition-all ${
+                    isSaved
+                      ? "bg-red-50 text-red-600 border-red-200 dark:bg-red-950/30 dark:border-red-900/50"
+                      : "text-zinc-700 dark:text-zinc-300"
+                  }`}
+                >
+                  <Heart className={`h-3.5 w-3.5 ${isSaved ? "fill-red-500 text-red-500" : ""}`} />
+                  <span>{isSaved ? "Guardado" : "Save Job"}</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={handleSendApplication}
+                  className="h-9 px-4 text-xs font-bold rounded-xl bg-[#ef4444] hover:bg-[#dc2626] text-white shadow-xs gap-1.5"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  <span>Enviar solicitud</span>
+                </Button>
               </div>
             </div>
 
-            {/* Pestañas de Contenido */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200/60 dark:border-zinc-800 w-fit">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("requirements")}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    activeTab === "requirements"
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-                  }`}
-                >
-                  Requisitos & Competencias {totalCount > 0 && `(${matchedCount}/${totalCount})`}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("ats")}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    activeTab === "ats"
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-                  }`}
-                >
-                  Auditoría ATS (10 Reglas)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("simulation")}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    activeTab === "simulation"
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-                  }`}
-                >
-                  Lectura del Robot ATS
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("offer_text")}
-                  className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    activeTab === "offer_text"
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
-                      : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-                  }`}
-                >
-                  Texto de la Oferta
-                </button>
+            {/* Fila de Metadatos / Badges */}
+            <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-600 dark:text-zinc-400 pt-1">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                <MapPin className="h-3 w-3 text-zinc-400" />
+                {location || "Remoto"}
+              </span>
+
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                <Clock className="h-3 w-3 text-zinc-400" />
+                Hace 1 día
+              </span>
+
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                <Clock className="h-3 w-3 text-zinc-400" />
+                A tiempo completo
+              </span>
+
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                <Building2 className="h-3 w-3 text-zinc-400" />
+                Presencial
+              </span>
+
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200/60 dark:border-zinc-700/60 text-[11px] font-medium">
+                <Briefcase className="h-3 w-3 text-zinc-400" />
+                Nivel básico
+              </span>
+
+              {salary && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 text-[11px] font-bold">
+                  <DollarSign className="h-3 w-3" />
+                  {salary}
+                </span>
+              )}
+
+              {/* Botón para editar texto crudo */}
+              <button
+                type="button"
+                onClick={() => setIsEditingDescription(!isEditingDescription)}
+                className="ml-auto text-[11px] font-semibold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 flex items-center gap-1 transition-colors"
+              >
+                <Pencil className="h-3 w-3" />
+                <span>{isEditingDescription ? "Cerrar editor" : "Editar texto"}</span>
+              </button>
+            </div>
+
+            {/* Modo Edición de Texto de la Oferta */}
+            {isEditingDescription ? (
+              <div className="p-4 rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                    Pega o edita la descripción completa de la vacante:
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={handleSaveDescription}
+                    className="h-7 text-xs font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                  >
+                    Guardar y Actualizar
+                  </Button>
+                </div>
+                <textarea
+                  value={descInput}
+                  onChange={(e) => setDescInput(e.target.value)}
+                  rows={10}
+                  className="w-full p-3 text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-zinc-900/10 font-mono leading-relaxed resize-y"
+                  placeholder="Pega la descripción completa del puesto..."
+                />
               </div>
+            ) : (
+              /* ─── CONTENIDO ESTRUCTURADO (Minimum qualifications / Preferred / About) ─── */
+              <div className="space-y-6 pt-2 text-zinc-800 dark:text-zinc-200 leading-relaxed text-sm">
+                
+                {/* 1. Minimum Qualifications */}
+                {parsedJob.minimumQualifications.length > 0 && (
+                  <div className="space-y-2.5">
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      Minimum qualifications:
+                    </h3>
+                    <ul className="space-y-2 pl-1">
+                      {parsedJob.minimumQualifications.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
+                          <span className="text-zinc-400 mt-0.5">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              {/* ─── TAB 1: REQUISITOS Y COMPETENCIAS ─── */}
-              {activeTab === "requirements" && (
-                <div className="space-y-4">
-                  {/* Simulador Proyectado */}
-                  {report?.missingKeywords && report.missingKeywords.length > 0 && (
-                    <ScoreProjectorSimulator
-                      currentScore={report.matchScore}
-                      missingKeywords={report.missingKeywords}
-                    />
-                  )}
+                {/* 2. Preferred Qualifications */}
+                {parsedJob.preferredQualifications.length > 0 && (
+                  <div className="space-y-2.5">
+                    <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                      Preferred qualifications:
+                    </h3>
+                    <ul className="space-y-2 pl-1">
+                      {parsedJob.preferredQualifications.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300">
+                          <span className="text-zinc-400 mt-0.5">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-                  {/* Filtro de Importancia */}
-                  <div className="flex items-center justify-between text-xs pt-1">
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setFilterImportance("all")}
-                        className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-bold ${
-                          filterImportance === "all"
-                            ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xs"
-                            : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900"
-                        }`}
-                      >
-                        Todos ({report?.requirements.length || 0})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFilterImportance("must_have")}
-                        className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-bold ${
-                          filterImportance === "must_have"
-                            ? "bg-red-600 text-white shadow-2xs"
-                            : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-100 border border-red-200/60 dark:border-red-900/40"
-                        }`}
-                      >
-                        Excluyentes ({report?.requirements.filter((r) => r.importance === "must_have").length || 0})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFilterImportance("nice_to_have")}
-                        className={`px-2.5 py-1 text-xs rounded-lg transition-colors cursor-pointer font-bold ${
-                          filterImportance === "nice_to_have"
-                            ? "bg-blue-600 text-white shadow-2xs"
-                            : "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 hover:bg-blue-100 border border-blue-200/60 dark:border-blue-900/40"
-                        }`}
-                      >
-                        Deseables ({report?.requirements.filter((r) => r.importance === "nice_to_have").length || 0})
-                      </button>
-                    </div>
+                {/* 3. About the job */}
+                <div className="space-y-2.5">
+                  <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+                    About the job:
+                  </h3>
+                  <div className="text-xs sm:text-[13px] text-zinc-700 dark:text-zinc-300 space-y-3 leading-relaxed whitespace-pre-line">
+                    {parsedJob.aboutTheJob || "No se ha proporcionado una descripción detallada aún. Haz clic en 'Editar texto' para pegarla."}
+                  </div>
+                </div>
+              </div>
+            )}
 
-                    <span className="text-xs font-semibold text-zinc-500">
-                      <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{matchedCount}</strong> de {totalCount} cumplidos en tu CV
-                    </span>
+            {/* Toggle para ver análisis ATS avanzado */}
+            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedAts(!showAdvancedAts)}
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1.5"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                <span>{showAdvancedAts ? "Ocultar Motor ATS Avanzado" : "Ver Análisis de Compatibilidad ATS Completo (10 Reglas)"}</span>
+              </button>
+
+              {aiEnabled && (
+                <button
+                  type="button"
+                  onClick={() => setShowChat(true)}
+                  className="text-xs font-bold text-violet-600 dark:text-violet-400 hover:underline flex items-center gap-1"
+                >
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  <span>Chat IA con Oferta</span>
+                </button>
+              )}
+            </div>
+
+            {/* Sección Desplegable del Motor ATS Avanzado */}
+            {showAdvancedAts && (
+              <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                    Simulador & Puntuación ATS
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={handleRunEvaluation}
+                    disabled={isEvaluating}
+                    className="h-7 text-xs font-bold gap-1 bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                  >
+                    {isEvaluating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 text-amber-400" />}
+                    <span>Re-evaluar CV</span>
+                  </Button>
+                </div>
+
+                {report?.missingKeywords && report.missingKeywords.length > 0 && (
+                  <ScoreProjectorSimulator
+                    currentScore={report.matchScore}
+                    missingKeywords={report.missingKeywords}
+                  />
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ═════════ COLUMNA DERECHA: PREPÁRATE PARA ESTE EMPLEO (4 de 12) ═════════ */}
+          <div className="lg:col-span-4 bg-white dark:bg-zinc-900 rounded-3xl border border-zinc-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs space-y-4">
+            <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
+              Prepárate para este empleo
+            </h3>
+
+            {/* ─── ACORDEÓN 1: TAILOR YOUR RESUME ─── */}
+            <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden bg-zinc-50/40 dark:bg-zinc-950/40">
+              <button
+                type="button"
+                onClick={() => setActivePrepSection(activePrepSection === "tailor" ? ("" as any) : "tailor")}
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors"
+              >
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  Tailor Your Resume
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-zinc-400 transition-transform duration-200 ${
+                    activePrepSection === "tailor" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {activePrepSection === "tailor" && (
+                <div className="p-4 pt-1 space-y-3.5">
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-[#b45309] dark:text-amber-400">
+                      Be the perfect match.
+                    </h4>
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-snug">
+                      Have your resume tailored to this job post in seconds.
+                    </p>
                   </div>
 
-                  {/* Lista de Requisitos Estilo Matriz Limpia con Alto Contraste */}
-                  <div className="rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-2xs divide-y divide-zinc-100 dark:divide-zinc-800">
-                    {filteredRequirements.map((req) => (
+                  {/* Ilustración Visual de la Tarjeta del CV Adaptado */}
+                  <div className="p-3 rounded-2xl bg-gradient-to-b from-amber-50/70 to-amber-100/40 dark:from-zinc-900 dark:to-zinc-800/80 border border-amber-200/70 dark:border-amber-900/30 space-y-2 shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center">
+                        {currentResumeData.name ? currentResumeData.name.charAt(0) : "C"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 truncate">
+                          {currentResumeData.name || "Tu Currículum"}
+                        </p>
+                        <p className="text-[10px] text-zinc-500 truncate">{title} at {company}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between p-1.5 rounded-lg bg-white dark:bg-zinc-950 border border-emerald-200 dark:border-emerald-900/50 text-[11px]">
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Tailoring completed!
+                      </span>
+                      <span className="font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                        {matchScore}% Match
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Botón Principal Tailor Your Resume */}
+                  <Button
+                    onClick={handleRunEvaluation}
+                    disabled={isEvaluating}
+                    className="w-full h-9 rounded-xl font-bold text-xs bg-[#b45309] hover:bg-[#92400e] text-white shadow-2xs gap-1.5 cursor-pointer"
+                  >
+                    {isEvaluating ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3.5 w-3.5 text-amber-200" />
+                    )}
+                    <span>Tailor Your Resume</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* ─── ACORDEÓN 2: PRACTICAR LA ENTREVISTA DE TRABAJO ─── */}
+            <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden bg-zinc-50/40 dark:bg-zinc-950/40">
+              <button
+                type="button"
+                onClick={() => setActivePrepSection(activePrepSection === "interview" ? ("" as any) : "interview")}
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors"
+              >
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  Practicar la entrevista de trabajo
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-zinc-400 transition-transform duration-200 ${
+                    activePrepSection === "interview" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {activePrepSection === "interview" && (
+                <div className="p-4 pt-1 space-y-3">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-snug">
+                    Preguntas clave generadas para el puesto de <strong className="text-zinc-800 dark:text-zinc-200">{title}</strong> en <strong className="text-zinc-800 dark:text-zinc-200">{company}</strong>:
+                  </p>
+
+                  <div className="space-y-2">
+                    {interviewQuestions.map((q, idx) => (
                       <div
-                        key={req.id}
-                        className={`p-3.5 flex items-center justify-between gap-3 transition-colors ${
-                          req.matched
-                            ? "hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10"
-                            : "hover:bg-amber-50/30 dark:hover:bg-amber-950/10"
-                        }`}
+                        key={idx}
+                        className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-1.5"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="shrink-0">
-                            {req.matched ? (
-                              <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xs">
-                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                              </div>
-                            ) : (
-                              <div className="w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold">
-                                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                                {req.text}
-                              </span>
-                              <span
-                                className={`text-[10px] font-mono px-2 py-0.5 rounded-md font-bold ${
-                                  req.importance === "must_have"
-                                    ? "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50"
-                                    : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50"
-                                }`}
-                              >
-                                {req.importance === "must_have" ? "Excluyente" : "Deseable"}
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
-                              {req.matched
-                                ? req.matchedTextInCV ? `Coincide en tu CV con "${req.matchedTextInCV}"` : "Presente en tu CV"
-                                : "No detectado en tu CV actual — considera incluirlo en tus habilidades o logros."}
-                            </p>
-                          </div>
-                        </div>
-
-                        <span
-                          className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full shrink-0 border ${
-                            req.matched
-                              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
-                              : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
-                          }`}
-                        >
-                          {req.matched ? "Cumple ✓" : "Pendiente"}
-                        </span>
+                        <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 leading-snug">
+                          {idx + 1}. {q.question}
+                        </p>
+                        <p className="text-[11px] text-zinc-500 leading-tight">
+                          💡 <span className="font-semibold text-zinc-700 dark:text-zinc-300">Tip:</span> {q.tip}
+                        </p>
                       </div>
                     ))}
-
-                    {filteredRequirements.length === 0 && (
-                      <div className="p-8 text-center text-xs text-zinc-400">
-                        No hay requisitos en esta categoría.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ─── TAB 2: AUDITORÍA ATS (10 REGLAS) ─── */}
-              {activeTab === "ats" && (
-                <div className="space-y-2.5">
-                  {report?.auditRules.map((rule) => {
-                    const isExpanded = expandedRuleId === rule.id;
-
-                    return (
-                      <div
-                        key={rule.id}
-                        className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-2xs"
-                      >
-                        <div
-                          onClick={() => setExpandedRuleId(isExpanded ? null : rule.id)}
-                          className="p-3.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
-                        >
-                          <div className="flex items-start gap-2.5 min-w-0">
-                            <div className="mt-0.5">
-                              {rule.status === "pass" ? (
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                              ) : rule.status === "warning" ? (
-                                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-500 shrink-0" />
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100">{rule.name}</p>
-                              <p className="text-[11px] text-zinc-500 leading-relaxed truncate">{rule.message}</p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs font-mono font-bold text-zinc-500">
-                              {rule.scoreEarned}/{rule.scoreWeight} pts
-                            </span>
-                            {isExpanded ? <ChevronUp className="w-4 h-4 text-zinc-400" /> : <ChevronDown className="w-4 h-4 text-zinc-400" />}
-                          </div>
-                        </div>
-
-                        {/* Detalle expandible */}
-                        {isExpanded && (
-                          <div className="px-4 pb-4 pt-2 border-t border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 text-xs space-y-2">
-                            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                              <strong className="text-zinc-900 dark:text-zinc-100">Por qué importa:</strong> {rule.fixGuide.whyItMatters}
-                            </p>
-                            <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
-                              <strong className="text-zinc-900 dark:text-zinc-100">Cómo solucionarlo:</strong> {rule.fixGuide.howToFix}
-                            </p>
-                            {rule.fixGuide.example && (
-                              <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-[11px] font-mono text-zinc-800 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700">
-                                {rule.fixGuide.example}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* ─── TAB 3: SIMULACIÓN DE LECTURA DEL ROBOT ─── */}
-              {activeTab === "simulation" && report && (
-                <div className="p-4 rounded-2xl bg-zinc-950 text-zinc-300 font-mono text-[11px] space-y-2 max-h-96 overflow-y-auto border border-zinc-800 shadow-inner">
-                  <span className="text-[10px] text-zinc-500 block font-bold uppercase tracking-wider">
-                    Texto plano leído por el parser ATS:
-                  </span>
-                  <pre className="whitespace-pre-wrap leading-relaxed select-all">
-                    {report.simulation.rawExtractedText}
-                  </pre>
-                </div>
-              )}
-
-              {/* ─── TAB 4: TEXTO DE LA OFERTA ─── */}
-              {activeTab === "offer_text" && (
-                <div className="p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
-                      Descripción de la Oferta de Empleo
-                    </h3>
-                    {url && (
-                      <button
-                        type="button"
-                        onClick={handleScrape}
-                        disabled={isScrapingDesc}
-                        className="flex items-center gap-1 text-[11px] text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-40 cursor-pointer font-bold"
-                      >
-                        {isScrapingDesc ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
-                        Re-scrapear oferta
-                      </button>
-                    )}
                   </div>
 
-                  <textarea
-                    value={descInput}
-                    onChange={(e) => setDescInput(e.target.value)}
-                    placeholder="Pega la descripción completa de la oferta aquí..."
-                    rows={12}
-                    className="w-full p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:focus:ring-white/10 resize-none leading-relaxed font-sans"
-                  />
-
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleSaveDescription}
-                      className="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 transition-colors shadow-2xs cursor-pointer"
-                    >
-                      Guardar y Re-evaluar
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* ════ COLUMNA DERECHA: SCORES, NOTAS & CONTEXTO (5 de 12) ════ */}
-          <div className="lg:col-span-4 space-y-4">
-            {/* Widget Unificado de Puntuación con Alto Contraste y Gradientes */}
-            {report && (
-              <div className="p-5 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-4 shadow-2xs">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono block">
-                  Índices de Evaluación
-                </span>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Match Score Card */}
-                  <div className={`p-3.5 rounded-2xl border ${matchBg} space-y-1.5`}>
-                    <span className="text-[10px] text-zinc-500 font-bold block">Match Oferta</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className={`text-3xl font-black tracking-tight ${matchColor}`}>
-                        {report.matchScore}%
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-zinc-800 overflow-hidden">
-                      <div
-                        style={{ width: `${report.matchScore}%` }}
-                        className={`h-full rounded-full ${
-                          report.matchScore >= 70 ? "bg-emerald-500" : report.matchScore >= 40 ? "bg-amber-500" : "bg-red-500"
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* ATS Format Score Card */}
-                  <div className={`p-3.5 rounded-2xl border ${atsBg} space-y-1.5`}>
-                    <span className="text-[10px] text-zinc-500 font-bold block">Formato ATS</span>
-                    <div className="flex items-baseline gap-1">
-                      <span className={`text-3xl font-black tracking-tight ${atsColor}`}>
-                        {report.atsScore}%
-                      </span>
-                    </div>
-                    <div className="h-2 rounded-full bg-zinc-200/80 dark:bg-zinc-800 overflow-hidden">
-                      <div
-                        style={{ width: `${report.atsScore}%` }}
-                        className={`h-full rounded-full ${
-                          report.atsScore >= 80 ? "bg-emerald-500" : report.atsScore >= 60 ? "bg-amber-500" : "bg-red-500"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Desglose compacto de competencias con badges de colores */}
-                <div className="grid grid-cols-2 gap-2 text-xs pt-1">
-                  <div className="p-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/50 dark:border-blue-900/30 flex items-center justify-between">
-                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Hard Skills:</span>
-                    <span className="font-bold text-blue-700 dark:text-blue-400">
-                      {report.categoryBreakdown.hardSkills.matched}/{report.categoryBreakdown.hardSkills.total}
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-violet-50/50 dark:bg-violet-950/20 border border-violet-200/50 dark:border-violet-900/30 flex items-center justify-between">
-                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Tools / Cloud:</span>
-                    <span className="font-bold text-violet-700 dark:text-violet-400">
-                      {report.categoryBreakdown.toolsPlatforms.matched}/{report.categoryBreakdown.toolsPlatforms.total}
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/30 flex items-center justify-between">
-                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Soft Skills:</span>
-                    <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                      {report.categoryBreakdown.softSkills.matched}/{report.categoryBreakdown.softSkills.total}
-                    </span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-900/30 flex items-center justify-between">
-                    <span className="text-zinc-600 dark:text-zinc-400 font-medium">Años Exp:</span>
-                    <span className={`font-bold ${report.categoryBreakdown.experienceYears.meets ? "text-emerald-700 dark:text-emerald-400" : "text-amber-700 dark:text-amber-400"}`}>
-                      {report.categoryBreakdown.experienceYears.candidateYears}/{report.categoryBreakdown.experienceYears.requiredYears ?? "—"}a
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Selector de CV a Comparar */}
-            <div className="p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-2 shadow-2xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono block">
-                CV a Comparar
-              </span>
-              <select
-                value={selectedProfileId}
-                onChange={(e) => {
-                  setSelectedProfileId(e.target.value);
-                }}
-                className="w-full h-8 pl-2.5 pr-7 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-bold text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:focus:ring-white/10 cursor-pointer"
-              >
-                <option value="active">CV Activo en Editor ({resumeData.name || "Principal"})</option>
-                <option value="master">Perfil Base Maestro</option>
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.targetRole || "Perfil"})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Notas Personales */}
-            <div className="p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-2 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono block">
-                  Notas Privadas
-                </span>
-                <span className="text-[10px] text-zinc-400">Autoguardado</span>
-              </div>
-              <textarea
-                value={notesInput}
-                onChange={(e) => handleSaveNotes(e.target.value)}
-                placeholder="Anota detalles de contactos, fechas de seguimiento, dudas para la entrevista..."
-                rows={5}
-                className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 dark:focus:ring-white/10 resize-none leading-relaxed"
-              />
-            </div>
-
-            {/* Historial de la Postulación */}
-            <div className="p-4 rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 space-y-2.5 shadow-2xs">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono block">
-                Historial de Actividad
-              </span>
-              <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                {activity.map((act) => (
-                  <div
-                    key={act.id}
-                    className="flex items-center justify-between text-[11px] p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/40 border border-zinc-100 dark:border-zinc-800"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowChat(true)}
+                    className="w-full h-8 text-xs font-bold rounded-xl gap-1 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-800/60 hover:bg-violet-50 dark:hover:bg-violet-950/40"
                   >
-                    <span className="text-zinc-700 dark:text-zinc-300 truncate mr-2 font-medium">{act.description}</span>
-                    <span className="text-[10px] font-mono text-zinc-400 shrink-0">
-                      {new Date(act.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    <span>Simular entrevista con IA</span>
+                  </Button>
+                </div>
+              )}
             </div>
+
+            {/* ─── ACORDEÓN 3: ESCRIBIR UNA CARTA DE PRESENTACIÓN ─── */}
+            <div className="rounded-2xl border border-zinc-200/80 dark:border-zinc-800 overflow-hidden bg-zinc-50/40 dark:bg-zinc-950/40">
+              <button
+                type="button"
+                onClick={() => setActivePrepSection(activePrepSection === "cover_letter" ? ("" as any) : "cover_letter")}
+                className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors"
+              >
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  Escribir una carta de presentación
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-zinc-400 transition-transform duration-200 ${
+                    activePrepSection === "cover_letter" ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {activePrepSection === "cover_letter" && (
+                <div className="p-4 pt-1 space-y-3">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-snug">
+                    Carta personalizada generada con tus datos y los requisitos del puesto:
+                  </p>
+
+                  <div className="p-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 max-h-48 overflow-y-auto text-[11px] text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans whitespace-pre-line">
+                    {generatedCoverLetter}
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={handleCopyCoverLetter}
+                    className="w-full h-8 text-xs font-bold rounded-xl gap-1.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xs"
+                  >
+                    {copiedCoverLetter ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{copiedCoverLetter ? "¡Copiada!" : "Copiar Carta de Presentación"}</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
       </div>
 
-      {/* Modal de Chat IA */}
+      {/* Modal de Chat IA para Entrevistas y Asesoría */}
       {showChat && (
         <AIChat
           jobTitle={application.title}
