@@ -1,4 +1,4 @@
-﻿import type { ResumeData } from '@/types/resume';
+import type { ResumeData } from '@/types/resume';
 import type {
   EvaluatedRequirement,
   CategoryScoreBreakdown,
@@ -71,11 +71,10 @@ function analyzeExperienceYears(
   // 2. Calcular años del candidato
   let candidateYears = 0;
   if (resumeData?.experience && resumeData.experience.length > 0) {
-    // Sumar duración estimada de empleos
     let totalMonths = 0;
     for (const exp of resumeData.experience) {
       if (exp.hidden) continue;
-      const startYear = parseInt(exp.start_date.slice(0, 4), 10);
+      const startYear = parseInt((exp.start_date || '').slice(0, 4), 10);
       let endYear = new Date().getFullYear();
       if (exp.end_date && exp.end_date !== 'Presente' && exp.end_date !== 'Present') {
         const parsed = parseInt(exp.end_date.slice(0, 4), 10);
@@ -85,9 +84,8 @@ function analyzeExperienceYears(
         totalMonths += (endYear - startYear) * 12 + 6;
       }
     }
-    candidateYears = Math.max(1, Math.round(totalMonths / 12));
+    candidateYears = Math.max(0, Math.round(totalMonths / 12));
   } else if (cvText) {
-    // Estimación por mención de años en el CV
     const cvYearsMatch = cvText.match(/\b(\d+)\+?\s*(?:a[ñn]os|years)\s+de\s+experiencia/i);
     if (cvYearsMatch) {
       candidateYears = parseInt(cvYearsMatch[1], 10);
@@ -102,13 +100,19 @@ function analyzeExperienceYears(
     if (candidateYears >= requiredYears) {
       meets = true;
       score = 100;
-    } else if (candidateYears >= requiredYears - 1) {
+    } else if (candidateYears > 0 && candidateYears >= requiredYears - 1) {
       meets = true;
-      score = 80;
+      score = 75;
+    } else if (candidateYears > 0) {
+      meets = false;
+      score = Math.max(10, Math.round((candidateYears / requiredYears) * 80));
     } else {
       meets = false;
-      score = Math.max(20, Math.round((candidateYears / requiredYears) * 100));
+      score = 0;
     }
+  } else if (candidateYears === 0 && (!resumeData?.experience || resumeData.experience.length === 0)) {
+    meets = false;
+    score = 0;
   }
 
   return { requiredYears, candidateYears, meets, score };
@@ -125,21 +129,21 @@ function buildCVCorpus(resumeData?: ResumeData, rawCvText?: string): string {
     resumeData.name,
     resumeData.headline,
     resumeData.summary,
-    ...(resumeData.skills || []).flatMap((s) => [s.category, ...s.skills]),
-    ...(resumeData.experience || []).flatMap((e) => [
+    ...(resumeData.skills || []).flatMap((s) => (s.hidden ? [] : [s.category, ...s.skills])),
+    ...(resumeData.experience || []).flatMap((e) => (e.hidden ? [] : [
       e.position,
       e.company,
       e.summary || '',
       ...(e.highlights || []),
-    ]),
-    ...(resumeData.projects || []).flatMap((p) => [
+    ])),
+    ...(resumeData.projects || []).flatMap((p) => (p.hidden ? [] : [
       p.name,
       p.description || '',
       ...(p.technologies || []),
       ...(p.highlights || []),
-    ]),
-    ...(resumeData.education || []).flatMap((ed) => [ed.degree, ed.institution, ed.area || '']),
-    ...(resumeData.certifications || []).flatMap((c) => [c.name, c.issuer]),
+    ])),
+    ...(resumeData.education || []).flatMap((ed) => (ed.hidden ? [] : [ed.degree, ed.institution, ed.area || ''])),
+    ...(resumeData.certifications || []).flatMap((c) => (c.hidden ? [] : [c.name, c.issuer])),
   ]
     .filter(Boolean)
     .join(' ')
@@ -161,7 +165,8 @@ export function analyzeJobMatch(input: {
 } {
   const { jobDescription, resumeData, rawCvText } = input;
   const cvCorpus = buildCVCorpus(resumeData, rawCvText);
-  const jobTextLower = jobDescription.toLowerCase();
+  const isCvBlank = cvCorpus.trim().length < 25;
+  const jobTextLower = (jobDescription || '').toLowerCase();
   const paragraphs = jobDescription.split(/\n+/);
 
   const requirements: EvaluatedRequirement[] = [];
@@ -177,7 +182,6 @@ export function analyzeJobMatch(input: {
   for (const skill of COMMON_SKILLS_TAXONOMY) {
     const skillNameLower = skill.name.toLowerCase();
     
-    // Comprobar si la oferta menciona esta habilidad (nombre o alias)
     let foundInJob = false;
     let freq = 0;
 
@@ -201,7 +205,7 @@ export function analyzeJobMatch(input: {
 
     if (!foundInJob) continue;
 
-    // Determinar si en la oferta está marcada como Must Have o Nice to Have
+    // Determinar importancia
     let importance: RequirementImportance = 'must_have';
     for (const p of paragraphs) {
       if (p.toLowerCase().includes(skillNameLower)) {
@@ -216,9 +220,11 @@ export function analyzeJobMatch(input: {
       }
     }
 
-    // Comprobar si el CV tiene la habilidad
-    const cvHasSkill = cvCorpus.includes(skillNameLower) ||
-      (skill.aliases && skill.aliases.some((a) => cvCorpus.includes(a.toLowerCase())));
+    // Comprobar si el CV tiene la habilidad (nunca si el CV está vacío)
+    const cvHasSkill = !isCvBlank && (
+      cvCorpus.includes(skillNameLower) ||
+      (skill.aliases && skill.aliases.some((a) => cvCorpus.includes(a.toLowerCase())))
+    );
 
     const reqItem: EvaluatedRequirement = {
       id: `req-${skill.name.toLowerCase().replace(/\s+/g, '-')}`,
@@ -251,21 +257,52 @@ export function analyzeJobMatch(input: {
     }
   }
 
-  // 2. Ordenar keywords faltantes por ganancia potencial e importancia
+  // Si la oferta era muy breve y no se encontraron habilidades, extraer al menos 2 términos técnicos clave
+  if (requirements.length === 0) {
+    const genericTerms = [
+      { name: 'Desarrollo de Software', cat: 'Languages' as SkillCategoryKey },
+      { name: 'Control de Versiones (Git)', cat: 'Tools & Platforms' as SkillCategoryKey },
+    ];
+    for (const gt of genericTerms) {
+      const cvHas = !isCvBlank && cvCorpus.includes(gt.name.toLowerCase().split(' ')[0]);
+      const req: EvaluatedRequirement = {
+        id: `req-gen-${gt.name.toLowerCase().replace(/\s+/g, '-')}`,
+        text: gt.name,
+        category: mapCategoryToRequirementType(gt.cat),
+        importance: 'must_have',
+        matched: cvHas,
+      };
+      requirements.push(req);
+      if (req.category === 'hard_skill') hardSkillsList.push(req);
+      else toolsList.push(req);
+      if (!cvHas) {
+        missingKeywords.push({
+          text: gt.name,
+          category: gt.cat,
+          importance: 'must_have',
+          frequency: 1,
+          estimatedScoreGain: 10,
+        });
+      }
+    }
+  }
+
+  // 2. Ordenar keywords faltantes
   missingKeywords.sort((a, b) => b.estimatedScoreGain - a.estimatedScoreGain || b.frequency - a.frequency);
 
   // 3. Desglose de scores por categoría
-  function computeGroupScore(items: EvaluatedRequirement[], weightMultiplier = 1) {
-    if (items.length === 0) return { score: 100, total: 0, matched: 0 };
+  function computeGroupScore(items: EvaluatedRequirement[]) {
+    if (items.length === 0) return { score: 0, total: 0, matched: 0 };
+    if (isCvBlank) return { score: 0, total: items.length, matched: 0 };
     const matched = items.filter((i) => i.matched).length;
     const score = Math.round((matched / items.length) * 100);
     return { score, total: items.length, matched };
   }
 
-  const hardSkillsGroup = computeGroupScore(hardSkillsList, 2);
-  const toolsGroup = computeGroupScore(toolsList, 1);
-  const softSkillsGroup = computeGroupScore(softSkillsList, 1);
-  const certsGroup = computeGroupScore(certsList, 1);
+  const hardSkillsGroup = computeGroupScore(hardSkillsList);
+  const toolsGroup = computeGroupScore(toolsList);
+  const softSkillsGroup = computeGroupScore(softSkillsList);
+  const certsGroup = computeGroupScore(certsList);
   const expYears = analyzeExperienceYears(jobDescription, resumeData, rawCvText);
 
   const categoryBreakdown: CategoryScoreBreakdown = {
@@ -274,14 +311,23 @@ export function analyzeJobMatch(input: {
     softSkills: softSkillsGroup,
     certifications: certsGroup,
     experienceYears: {
-      score: expYears.score,
+      score: isCvBlank ? 0 : expYears.score,
       requiredYears: expYears.requiredYears,
       candidateYears: expYears.candidateYears,
-      meets: expYears.meets,
+      meets: isCvBlank ? false : expYears.meets,
     },
   };
 
-  // 4. Score Global de Match Ponderado (Hard skills x2)
+  // 4. Score Global de Match Ponderado
+  if (isCvBlank) {
+    return {
+      requirements,
+      categoryBreakdown,
+      missingKeywords,
+      matchScore: 0,
+    };
+  }
+
   let weightedPoints = 0;
   let totalWeights = 0;
 
@@ -302,7 +348,7 @@ export function analyzeJobMatch(input: {
     totalWeights += 1.0;
   }
 
-  const matchScore = totalWeights > 0 ? Math.round(weightedPoints / totalWeights) : 75;
+  const matchScore = totalWeights > 0 ? Math.round(weightedPoints / totalWeights) : 0;
 
   return {
     requirements,
