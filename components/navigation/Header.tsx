@@ -272,7 +272,12 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       const res = await fetch("/api/export/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html: htmlContent, paperSize }),
+        body: JSON.stringify({
+          html: htmlContent,
+          paperSize,
+          resumeData,
+          title: atsFileName,
+        }),
       });
 
       if (!res.ok) {

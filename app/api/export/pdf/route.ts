@@ -6,7 +6,13 @@ export async function POST(req: NextRequest) {
   let browser = null;
   try {
     const body = await req.json();
-    const { html, resumeData, templateId = "tech_minimalist", paperSize = "letter" } = body;
+    const {
+      html,
+      resumeData,
+      title,
+      templateId = "tech_minimalist",
+      paperSize = "letter",
+    } = body;
 
     let documentHtml = html;
 
@@ -35,14 +41,15 @@ export async function POST(req: NextRequest) {
     const page = await browser.newPage();
     const isA4 = paperSize === "a4";
 
-    const candidateClean = (resumeData?.name || "Candidato")
+    const candidateClean = (resumeData?.name || "")
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-zA-Z0-9]/g, "_")
       .replace(/_+/g, "_")
       .trim();
 
-    const pdfDocumentTitle = `CV_${candidateClean || "Curriculum_Vitae"}`;
+    const pdfDocumentTitle =
+      title || (candidateClean ? `CV_${candidateClean}` : "Curriculum_Vitae");
 
     const fullHtml = `<!DOCTYPE html>
 <html lang="es">
