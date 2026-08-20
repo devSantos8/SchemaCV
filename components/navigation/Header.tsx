@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FileCode2,
   Download,
@@ -27,6 +27,9 @@ import {
   CheckCircle2,
   Settings,
   LayoutDashboard,
+  Cloud,
+  Loader2,
+  Pencil,
 } from "lucide-react";
 import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
 import { useResumeStore } from "@/store/useResumeStore";
@@ -37,6 +40,16 @@ import { generateResumeDocx } from "@/lib/exporters/docxExporter";
 import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +58,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 import { LayoutGrid, Database, BookOpen, Cpu, Minimize2, GitFork, Globe2, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -80,6 +94,10 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     canRedo,
     undo,
     redo,
+    isSaving,
+    lastSavedAt,
+    saveCurrentResumeToSupabase,
+    updateProfileMeta,
     setActiveProfile,
     setActiveTemplate,
     setPaperSize,
@@ -96,7 +114,52 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
   const [isCopied, setIsCopied] = useState(false);
   const [isAtsAuditOpen, setIsAtsAuditOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [tempProfileName, setTempProfileName] = useState("");
+  const [tempTargetRole, setTempTargetRole] = useState("");
   const router = useRouter();
+
+  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0] || {
+    id: "default",
+    name: "Mi Currículum",
+    targetRole: "Rol no definido",
+    templateId: activeTemplate,
+    paperSize: paperSize,
+    data: resumeData,
+    updatedAt: new Date().toISOString(),
+  };
+
+  const handleOpenRename = () => {
+    setTempProfileName(activeProfile.name);
+    setTempTargetRole(activeProfile.targetRole || "");
+    setIsRenameOpen(true);
+  };
+
+  const handleSaveRename = async () => {
+    if (!tempProfileName.trim()) {
+      toast.error("El nombre del perfil no puede estar vacío.");
+      return;
+    }
+    updateProfileMeta(activeProfile.id, tempProfileName.trim(), tempTargetRole.trim());
+    if (user?.id && !user.isDemoUser) {
+      await saveCurrentResumeToSupabase(user.id);
+    }
+    toast.success("¡Perfil actualizado con éxito!");
+    setIsRenameOpen(false);
+  };
+
+  const handleSaveResume = async () => {
+    if (user?.id && !user.isDemoUser) {
+      const success = await saveCurrentResumeToSupabase(user.id);
+      if (success) {
+        toast.success("¡Currículum guardado en Supabase con éxito!");
+      } else {
+        toast.error("Hubo un error al guardar en la nube.");
+      }
+    } else {
+      toast.success("Guardado localmente. Inicia sesión para respaldar en la nube.");
+    }
+  };
 
   const handleBackToDashboard = () => {
     if (onBackToDashboard) {
@@ -114,15 +177,6 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     }
   };
 
-  const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0] || {
-    id: "default",
-    name: "Mi Currículum",
-    targetRole: "Rol no definido",
-    templateId: activeTemplate,
-    paperSize: paperSize,
-    data: resumeData,
-    updatedAt: new Date().toISOString(),
-  };
 
   const toggleDarkMode = () => {
     const root = document.documentElement;
@@ -264,81 +318,100 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
         <div className="h-4 w-[1px] bg-border/80 hidden sm:block" />
 
         {/* Selector de Perfil estilo Workspace */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900/80 transition-colors text-left group cursor-pointer"
-            >
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <div className="h-6 w-6 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold text-[10px]">
-                    <FileCode2 className="h-3.5 w-3.5" />
-                  </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-background" />
-                </div>
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold text-foreground max-w-[140px] sm:max-w-[190px] truncate">
-                      {activeProfile.name}
-                    </span>
-                    <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground -mt-0.5 hidden sm:block max-w-[150px] truncate">
-                    {activeProfile.targetRole || "Rol no definido"}
-                  </span>
-                </div>
-              </div>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64 bg-card/95 backdrop-blur-md border-border">
-            <DropdownMenuItem
-              onClick={handleBackToDashboard}
-              className="text-xs font-semibold text-foreground cursor-pointer gap-2 py-2"
-            >
-              <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Ir al Dashboard (Mis CVs)</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
-              <span>Versiones de CV</span>
-              <Badge variant="outline" className="text-[10px] font-mono">
-                {profiles.length} perfiles
-              </Badge>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {profiles.map((p) => (
-              <DropdownMenuItem
-                key={p.id}
-                onClick={() => setActiveProfile(p.id)}
-                className="flex items-center justify-between text-xs py-2 cursor-pointer"
+        <div className="flex items-center gap-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-2 px-2.5 py-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900/80 transition-colors text-left group cursor-pointer"
               >
-                <div>
-                  <div className="font-semibold text-foreground">{p.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{p.targetRole}</div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <div className="h-6 w-6 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950 flex items-center justify-center font-bold text-[10px]">
+                      <FileCode2 className="h-3.5 w-3.5" />
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-background" />
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs font-bold text-foreground max-w-[140px] sm:max-w-[190px] truncate">
+                        {activeProfile.name}
+                      </span>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground -mt-0.5 hidden sm:block max-w-[150px] truncate">
+                      {activeProfile.targetRole || "Rol no definido"}
+                    </span>
+                  </div>
                 </div>
-                {p.id === activeProfileId && (
-                  <Check className="h-3.5 w-3.5 text-emerald-500" />
-                )}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-64 bg-card/95 backdrop-blur-md border-border">
+              <DropdownMenuItem
+                onClick={handleBackToDashboard}
+                className="text-xs font-semibold text-foreground cursor-pointer gap-2 py-2"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Ir al Dashboard (Mis CVs)</span>
               </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setMasterProfileModalOpen(true)}
-              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer gap-2"
-            >
-              <Database className="h-3.5 w-3.5" />
-              <span>Base de Información Completa...</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setProfileModalOpen(true)}
-              className="text-xs font-semibold text-foreground cursor-pointer gap-2"
-            >
-              <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-              <span>Gestionar Perfiles...</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem
+                onClick={handleOpenRename}
+                className="text-xs font-semibold text-foreground cursor-pointer gap-2 py-2"
+              >
+                <Pencil className="h-3.5 w-3.5 text-amber-500" />
+                <span>Renombrar versión y rol...</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-muted-foreground flex items-center justify-between">
+                <span>Versiones de CV</span>
+                <Badge variant="outline" className="text-[10px] font-mono">
+                  {profiles.length} perfiles
+                </Badge>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {profiles.map((p) => (
+                <DropdownMenuItem
+                  key={p.id}
+                  onClick={() => setActiveProfile(p.id)}
+                  className="flex items-center justify-between text-xs py-2 cursor-pointer"
+                >
+                  <div>
+                    <div className="font-semibold text-foreground">{p.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{p.targetRole}</div>
+                  </div>
+                  {p.id === activeProfileId && (
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  )}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setMasterProfileModalOpen(true)}
+                className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 cursor-pointer gap-2"
+              >
+                <Database className="h-3.5 w-3.5" />
+                <span>Base de Información Completa...</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setProfileModalOpen(true)}
+                className="text-xs font-semibold text-foreground cursor-pointer gap-2"
+              >
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                <span>Gestionar Perfiles...</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Botón rápido para renombrar perfil y rol */}
+          <button
+            type="button"
+            onClick={handleOpenRename}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors cursor-pointer"
+            title="Editar nombre de la versión y rol objetivo"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* 2. ZONA CENTRAL: CÁPSULA FLOTANTE DE PLANTILLA, TAMAÑO & HISTORIAL */}
@@ -498,12 +571,47 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           <span className="hidden sm:inline">Importar CV</span>
         </button>
 
+        {/* Botón de Guardar en Supabase / Nube */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSaveResume}
+          disabled={isSaving}
+          className={`h-8 px-3 text-xs gap-1.5 font-medium transition-all cursor-pointer ${
+            lastSavedAt
+              ? "text-emerald-700 dark:text-emerald-300 border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20"
+              : "border-border hover:bg-zinc-100 dark:hover:bg-zinc-900 text-foreground"
+          }`}
+          title={
+            isAuthenticated
+              ? "Guardar cambios y sincronizar en la nube (Supabase)"
+              : "Guardar localmente (Inicia sesión para guardar en la nube)"
+          }
+        >
+          {isSaving ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Guardando...</span>
+            </>
+          ) : lastSavedAt ? (
+            <>
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span className="hidden sm:inline font-semibold">Guardado</span>
+            </>
+          ) : (
+            <>
+              <Cloud className="h-3.5 w-3.5 text-blue-500" />
+              <span>Guardar</span>
+            </>
+          )}
+        </Button>
+
         {/* Dropdown de Exportación */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               size="sm"
-              className="h-8 px-3 text-xs gap-1.5 bg-foreground text-background font-semibold rounded-lg shadow-sm hover:opacity-90 transition-all"
+              className="h-8 px-3 text-xs gap-1.5 bg-foreground text-background font-semibold rounded-lg shadow-sm hover:opacity-90 transition-all cursor-pointer"
             >
               <Download className="h-3.5 w-3.5" />
               <span>Exportar</span>
@@ -621,6 +729,67 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
         onClose={() => setIsAtsAuditOpen(false)}
         resumeData={resumeData}
       />
+
+      {/* Diálogo para Renombrar Perfil y Asignar Rol Objetivo */}
+      <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+        <DialogContent className="max-w-md bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <Pencil className="h-4 w-4 text-amber-500" />
+              <span>Personalizar Versión del CV</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Asigna un nombre descriptivo a esta versión de tu currículum y define el rol o puesto hacia el que está enfocado.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3.5 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Nombre de la Versión *</Label>
+              <Input
+                value={tempProfileName}
+                onChange={(e) => setTempProfileName(e.target.value)}
+                placeholder="ej: CV Frontend Senior, CV para Buk Chile, etc."
+                className="h-8 text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Te ayuda a identificar este CV en tu Dashboard y listado de versiones.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Rol Objetivo / Especialidad *</Label>
+              <Input
+                value={tempTargetRole}
+                onChange={(e) => setTempTargetRole(e.target.value)}
+                placeholder="ej: Ingeniero de Software Full Stack, Tech Lead, etc."
+                className="h-8 text-xs"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Define el puesto principal que los reclutadores y sistemas ATS buscarán.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex justify-end gap-2 pt-2 border-t border-border">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsRenameOpen(false)}
+              className="h-8 text-xs cursor-pointer"
+            >
+              Cancelar
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSaveRename}
+              className="h-8 text-xs bg-foreground text-background font-semibold cursor-pointer"
+            >
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 };

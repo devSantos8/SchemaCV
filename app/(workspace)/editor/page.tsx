@@ -14,13 +14,33 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
 
 export default function EditorPage() {
-  const { undo, redo, canUndo, canRedo } = useResumeStore();
-  const { isAuthenticated, initSession } = useAuthStore();
+  const {
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    resumeData,
+    saveCurrentResumeToSupabase,
+  } = useResumeStore();
+  const { user, isAuthenticated, initSession } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
     initSession();
   }, [initSession]);
+
+  // Autoguardado silencioso debounced en Supabase (cada 2 segundos de inactividad)
+  useEffect(() => {
+    if (!user || user.isDemoUser || !user.id) return;
+    const isSupabaseUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+    if (!isSupabaseUuid) return;
+
+    const timer = setTimeout(() => {
+      saveCurrentResumeToSupabase(user.id).catch(console.error);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [resumeData, user, saveCurrentResumeToSupabase]);
 
   // Atajos de teclado globales para Deshacer (Ctrl+Z) y Rehacer (Ctrl+Y / Ctrl+Shift+Z)
   useEffect(() => {
