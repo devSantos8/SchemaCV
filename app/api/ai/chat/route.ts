@@ -38,7 +38,7 @@ ${resumeSummary}`;
   let model;
   if (provider === "google") {
     const google = createGoogleGenerativeAI({ apiKey: apiKey.trim() });
-    model = google("gemini-1.5-flash");
+    model = google("gemini-3.6-flash");
   } else if (provider === "anthropic") {
     const anthropic = createAnthropic({ apiKey });
     model = anthropic("claude-3-5-haiku-20241022");

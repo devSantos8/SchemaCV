@@ -68,7 +68,7 @@ function getModel(provider: AIProvider, apiKey: string) {
   switch (provider) {
     case "google": {
       const google = createGoogleGenerativeAI({ apiKey: cleanKey });
-      return google("gemini-1.5-flash");
+      return google("gemini-3.6-flash");
     }
     case "openai": {
       const openai = createOpenAI({ apiKey: cleanKey });
@@ -205,6 +205,12 @@ export async function testAIConnection(
         .map((m) => m.name.replace(/^models\//, ""));
 
       const preferenceOrder = [
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3-flash",
+        "gemini-3.6",
+        "gemini-3.5",
+        "gemini-3.0-flash",
         "gemini-2.5-flash",
         "gemini-2.0-flash",
         "gemini-1.5-flash",
@@ -217,26 +223,56 @@ export async function testAIConnection(
         "gemini-pro",
       ];
 
-      let selectedModel = "gemini-1.5-flash";
-      for (const pref of preferenceOrder) {
-        if (validModels.includes(pref)) {
-          selectedModel = pref;
-          break;
+      const candidateModels = [
+        ...preferenceOrder.filter((m) => validModels.includes(m)),
+        ...validModels,
+      ];
+
+      // Fallback si no hay lista
+      if (candidateModels.length === 0) {
+        candidateModels.push("gemini-3.6-flash", "gemini-2.5-flash", "gemini-1.5-flash");
+      }
+
+      const google = createGoogleGenerativeAI({ apiKey: cleanKey });
+      let lastGenError: unknown = null;
+
+      for (const cand of candidateModels) {
+        try {
+          const { text } = await generateText({
+            model: google(cand),
+            prompt: "Responde: OK",
+            maxOutputTokens: 5,
+          });
+          if (text.trim().length > 0) {
+            return { ok: true, model: cand };
+          }
+        } catch (genErr) {
+          lastGenError = genErr;
+          const msg = String((genErr as Record<string, unknown>)?.message || genErr);
+          const match = msg.match(/use models\/([\w.-]+)/i) || msg.match(/models\/(gemini-[\w.-]+)/i);
+          if (match && match[1]) {
+            const suggested = match[1];
+            try {
+              const { text } = await generateText({
+                model: google(suggested),
+                prompt: "Responde: OK",
+                maxOutputTokens: 5,
+              });
+              if (text.trim().length > 0) {
+                return { ok: true, model: suggested };
+              }
+            } catch (suggestErr) {
+              lastGenError = suggestErr;
+            }
+          }
         }
       }
-      if (!validModels.includes(selectedModel) && validModels.length > 0) {
-        selectedModel = validModels[0];
+
+      if (lastGenError) {
+        throw lastGenError;
       }
 
-      // 2. Realizar prueba rápida de generación con el modelo disponible
-      const google = createGoogleGenerativeAI({ apiKey: cleanKey });
-      const { text } = await generateText({
-        model: google(selectedModel),
-        prompt: "Responde: OK",
-        maxOutputTokens: 5,
-      });
-
-      return { ok: text.trim().length > 0, model: selectedModel };
+      return { ok: true, model: candidateModels[0] };
     } catch (err) {
       throw mapError(err);
     }
@@ -250,7 +286,7 @@ export async function testAIConnection(
       maxOutputTokens: 5,
     });
     const modelMap: Record<AIProvider, string> = {
-      google: "gemini-1.5-flash",
+      google: "gemini-3.6-flash",
       openai: "gpt-4o-mini",
       anthropic: "claude-3-5-haiku",
     };
