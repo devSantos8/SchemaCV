@@ -11,7 +11,7 @@ import {
   ProjectEntry,
   CertificationEntry,
 } from "@/types/resume";
-import { INITIAL_PROFILES, SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
+import { EMPTY_RESUME_DATA, INITIAL_PROFILES, SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
 import { resumeDataToYaml, yamlToResumeData } from "@/lib/exporters/yamlExporter";
 
 const MAX_HISTORY_LENGTH = 50;
@@ -90,18 +90,19 @@ interface ResumeStoreState {
   // Carga e Importación completa
   loadImportedResume: (data: ResumeData) => void;
   resetToSampleData: () => void;
+  clearUserData: (userName?: string, userEmail?: string) => void;
 }
 
-const initialProfile = INITIAL_PROFILES[0];
-const initialYaml = resumeDataToYaml(initialProfile.data);
+const defaultEmptyData: ResumeData = { ...EMPTY_RESUME_DATA };
+const defaultEmptyYaml = resumeDataToYaml(defaultEmptyData);
 
 export const useResumeStore = create<ResumeStoreState>()(
   persist(
     (set, get) => ({
-      profiles: INITIAL_PROFILES,
-      activeProfileId: initialProfile.id,
-      resumeData: initialProfile.data,
-      yamlContent: initialYaml,
+      profiles: [],
+      activeProfileId: "",
+      resumeData: defaultEmptyData,
+      yamlContent: defaultEmptyYaml,
       yamlError: null,
 
       // Pila de historial
@@ -111,11 +112,11 @@ export const useResumeStore = create<ResumeStoreState>()(
       canRedo: false,
 
       activeTab: "visual",
-      activeTemplate: initialProfile.templateId,
-      paperSize: initialProfile.paperSize,
+      activeTemplate: "harvard",
+      paperSize: "letter",
       zoom: 100,
 
-      masterProfileData: SAMPLE_RESUME_FULLSTACK,
+      masterProfileData: defaultEmptyData,
 
       isImportModalOpen: false,
       isProfileModalOpen: false,
@@ -193,7 +194,6 @@ export const useResumeStore = create<ResumeStoreState>()(
 
           const newYaml = syncYaml ? resumeDataToYaml(updatedData) : state.yamlContent;
 
-          // Registrar en la pila de historial si hubo cambio
           let newPast = state.historyPast;
           if (recordHistory) {
             newPast = [...state.historyPast, state.resumeData].slice(-MAX_HISTORY_LENGTH);
@@ -201,13 +201,7 @@ export const useResumeStore = create<ResumeStoreState>()(
 
           const updatedProfiles = state.profiles.map((p) =>
             p.id === state.activeProfileId
-              ? {
-                  ...p,
-                  data: updatedData,
-                  templateId: state.activeTemplate,
-                  paperSize: state.paperSize,
-                  updatedAt: new Date().toISOString(),
-                }
+              ? { ...p, data: updatedData, updatedAt: new Date().toISOString() }
               : p
           );
 
@@ -216,74 +210,64 @@ export const useResumeStore = create<ResumeStoreState>()(
             yamlContent: newYaml,
             yamlError: null,
             historyPast: newPast,
-            historyFuture: recordHistory ? [] : state.historyFuture,
+            historyFuture: [],
             canUndo: newPast.length > 0,
-            canRedo: recordHistory ? false : state.historyFuture.length > 0,
+            canRedo: false,
             profiles: updatedProfiles,
           };
         });
       },
 
-      // Actualizar contenido YAML desde el Editor CodeMirror
-      setYamlContent: (newYaml: string) => {
+      // Actualizar YAML directamente y sincronizar bidireccionalmente
+      setYamlContent: (newYaml) => {
+        const { data, error } = yamlToResumeData(newYaml);
         set((state) => {
-          const parseResult = yamlToResumeData(newYaml);
-
-          if (parseResult.success && parseResult.data) {
-            const updatedData = parseResult.data;
-            const newPast = [...state.historyPast, state.resumeData].slice(-MAX_HISTORY_LENGTH);
-            const updatedProfiles = state.profiles.map((p) =>
-              p.id === state.activeProfileId
-                ? {
-                    ...p,
-                    data: updatedData,
-                    updatedAt: new Date().toISOString(),
-                  }
-                : p
-            );
-
-            return {
-              yamlContent: newYaml,
-              resumeData: updatedData,
-              yamlError: null,
-              historyPast: newPast,
-              historyFuture: [],
-              canUndo: newPast.length > 0,
-              canRedo: false,
-              profiles: updatedProfiles,
-            };
-          } else {
-            return {
-              yamlContent: newYaml,
-              yamlError: parseResult.error || "Error de sintaxis YAML",
-            };
+          if (error || !data) {
+            return { yamlContent: newYaml, yamlError: error };
           }
+
+          const updatedProfiles = state.profiles.map((p) =>
+            p.id === state.activeProfileId
+              ? { ...p, data, updatedAt: new Date().toISOString() }
+              : p
+          );
+
+          const newPast = [...state.historyPast, state.resumeData].slice(-MAX_HISTORY_LENGTH);
+
+          return {
+            yamlContent: newYaml,
+            yamlError: null,
+            resumeData: data,
+            historyPast: newPast,
+            historyFuture: [],
+            canUndo: newPast.length > 0,
+            canRedo: false,
+            profiles: updatedProfiles,
+          };
         });
       },
 
-      // Re-formatear el YAML actual
+      // Formatear YAML
       formatCurrentYaml: () => {
-        const { resumeData } = get();
-        const formatted = resumeDataToYaml(resumeData);
-        set({
-          yamlContent: formatted,
+        set((state) => ({
+          yamlContent: resumeDataToYaml(state.resumeData),
           yamlError: null,
-        });
+        }));
       },
 
-      // Cambiar de perfil activo
-      setActiveProfile: (profileId: string) => {
-        const { profiles } = get();
-        const found = profiles.find((p) => p.id === profileId);
-        if (found) {
-          const yaml = resumeDataToYaml(found.data);
+      // Gestión de Perfiles
+      setActiveProfile: (profileId) => {
+        const state = get();
+        const profile = state.profiles.find((p) => p.id === profileId);
+        if (profile) {
+          const yaml = resumeDataToYaml(profile.data);
           set({
-            activeProfileId: found.id,
-            resumeData: found.data,
+            activeProfileId: profile.id,
+            resumeData: profile.data,
             yamlContent: yaml,
             yamlError: null,
-            activeTemplate: found.templateId,
-            paperSize: found.paperSize,
+            activeTemplate: profile.templateId,
+            paperSize: profile.paperSize,
             historyPast: [],
             historyFuture: [],
             canUndo: false,
@@ -292,36 +276,26 @@ export const useResumeStore = create<ResumeStoreState>()(
         }
       },
 
-      // Crear nuevo perfil
-      createProfile: (name: string, targetRole: string, cloneCurrent = true) => {
-        const { resumeData, activeTemplate, paperSize, profiles } = get();
-        const newId = `profile-${Date.now()}`;
-        const newProfileData: ResumeData = cloneCurrent
-          ? JSON.parse(JSON.stringify(resumeData))
-          : {
-              ...SAMPLE_RESUME_FULLSTACK,
-              headline: targetRole,
-            };
-
+      createProfile: (name, targetRole, cloneCurrent = false) => {
+        const state = get();
+        const baseData: ResumeData = cloneCurrent ? { ...state.resumeData } : { ...EMPTY_RESUME_DATA };
         const newProfile: ResumeProfile = {
-          id: newId,
+          id: crypto.randomUUID(),
           name,
           targetRole,
-          templateId: activeTemplate,
-          paperSize,
-          data: newProfileData,
+          templateId: state.activeTemplate || "harvard",
+          paperSize: state.paperSize || "letter",
+          data: baseData,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
-        const updatedProfiles = [...profiles, newProfile];
-        const yaml = resumeDataToYaml(newProfileData);
-
+        const updatedProfiles = [...state.profiles, newProfile];
         set({
           profiles: updatedProfiles,
-          activeProfileId: newId,
-          resumeData: newProfileData,
-          yamlContent: yaml,
+          activeProfileId: newProfile.id,
+          resumeData: newProfile.data,
+          yamlContent: resumeDataToYaml(newProfile.data),
           yamlError: null,
           historyPast: [],
           historyFuture: [],
@@ -330,110 +304,93 @@ export const useResumeStore = create<ResumeStoreState>()(
         });
       },
 
-      // Duplicar perfil existente
-      duplicateProfile: (profileId: string) => {
-        const { profiles } = get();
-        const target = profiles.find((p) => p.id === profileId);
-        if (!target) return;
+      duplicateProfile: (profileId) => {
+        const state = get();
+        const original = state.profiles.find((p) => p.id === profileId);
+        if (!original) return;
 
-        const newId = `profile-${Date.now()}`;
-        const cloned: ResumeProfile = {
-          ...target,
-          id: newId,
-          name: `${target.name} (Copia)`,
+        const duplicated: ResumeProfile = {
+          ...original,
+          id: crypto.randomUUID(),
+          name: `${original.name} (Copia)`,
+          data: JSON.parse(JSON.stringify(original.data)),
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
         set({
-          profiles: [...profiles, cloned],
-          activeProfileId: newId,
-          resumeData: cloned.data,
-          yamlContent: resumeDataToYaml(cloned.data),
-          yamlError: null,
-          historyPast: [],
-          historyFuture: [],
-          canUndo: false,
-          canRedo: false,
+          profiles: [...state.profiles, duplicated],
+          activeProfileId: duplicated.id,
+          resumeData: duplicated.data,
+          yamlContent: resumeDataToYaml(duplicated.data),
+          activeTemplate: duplicated.templateId,
+          paperSize: duplicated.paperSize,
         });
       },
 
-      // Eliminar perfil
-      deleteProfile: (profileId: string) => {
-        const { profiles, activeProfileId } = get();
-        if (profiles.length <= 1) return;
+      deleteProfile: (profileId) => {
+        const state = get();
+        if (state.profiles.length <= 1) return;
 
-        const remaining = profiles.filter((p) => p.id !== profileId);
-        let nextActive = remaining[0];
-        if (activeProfileId === profileId) {
+        const filtered = state.profiles.filter((p) => p.id !== profileId);
+        let nextActive = state.activeProfileId;
+
+        if (state.activeProfileId === profileId) {
+          nextActive = filtered[0].id;
+          const nextProfile = filtered[0];
           set({
-            profiles: remaining,
-            activeProfileId: nextActive.id,
-            resumeData: nextActive.data,
-            yamlContent: resumeDataToYaml(nextActive.data),
-            yamlError: null,
-            activeTemplate: nextActive.templateId,
-            paperSize: nextActive.paperSize,
+            profiles: filtered,
+            activeProfileId: nextActive,
+            resumeData: nextProfile.data,
+            yamlContent: resumeDataToYaml(nextProfile.data),
+            activeTemplate: nextProfile.templateId,
+            paperSize: nextProfile.paperSize,
             historyPast: [],
             historyFuture: [],
             canUndo: false,
             canRedo: false,
           });
         } else {
-          set({ profiles: remaining });
+          set({ profiles: filtered });
         }
       },
 
-      // Actualizar metadatos de un perfil
-      updateProfileMeta: (profileId: string, name: string, targetRole: string) => {
+      updateProfileMeta: (profileId, name, targetRole) => {
         set((state) => ({
           profiles: state.profiles.map((p) =>
             p.id === profileId
-              ? {
-                  ...p,
-                  name,
-                  targetRole,
-                  updatedAt: new Date().toISOString(),
-                }
+              ? { ...p, name, targetRole, updatedAt: new Date().toISOString() }
               : p
           ),
         }));
       },
 
-      // Selección de plantilla
-      setActiveTemplate: (templateId: TemplateId) => {
-        set((state) => ({
-          activeTemplate: templateId,
-          profiles: state.profiles.map((p) =>
+      setActiveTemplate: (templateId) => {
+        set((state) => {
+          const updatedProfiles = state.profiles.map((p) =>
             p.id === state.activeProfileId ? { ...p, templateId } : p
-          ),
-        }));
+          );
+          return { activeTemplate: templateId, profiles: updatedProfiles };
+        });
       },
 
-      // Tamaño de papel
-      setPaperSize: (paperSize: PaperSize) => {
-        set((state) => ({
-          paperSize,
-          profiles: state.profiles.map((p) =>
+      setPaperSize: (paperSize) => {
+        set((state) => {
+          const updatedProfiles = state.profiles.map((p) =>
             p.id === state.activeProfileId ? { ...p, paperSize } : p
-          ),
-        }));
+          );
+          return { paperSize, profiles: updatedProfiles };
+        });
       },
 
-      // Zoom de la vista previa
-      setZoom: (zoom: number) => {
-        set({ zoom: Math.min(150, Math.max(50, zoom)) });
-      },
-
-      // Pestaña activa (Visual / YAML)
+      setZoom: (zoom) => set({ zoom }),
       setActiveTab: (activeTab) => set({ activeTab }),
 
-      // Reordenar secciones
-      setSectionOrder: (newOrder: string[]) => {
+      setSectionOrder: (newOrder) => {
         get().setResumeData({ section_order: newOrder });
       },
 
-      // Acciones de Perfil Base Maestro
+      // Perfil Base Maestro
       updateMasterProfileData: (updater) => {
         set((state) => {
           const updatedPartial = typeof updater === "function" ? updater(state.masterProfileData) : updater;
@@ -447,59 +404,46 @@ export const useResumeStore = create<ResumeStoreState>()(
       },
 
       syncActiveCvWithMaster: () => {
-        const { masterProfileData, resumeData } = get();
-        const yaml = resumeDataToYaml(masterProfileData);
-        set((state) => ({
-          resumeData: JSON.parse(JSON.stringify(masterProfileData)),
-          yamlContent: yaml,
-          yamlError: null,
-          historyPast: [...state.historyPast, resumeData].slice(-MAX_HISTORY_LENGTH),
-          historyFuture: [],
-          canUndo: true,
-          canRedo: false,
-          profiles: state.profiles.map((p) =>
-            p.id === state.activeProfileId
-              ? { ...p, data: masterProfileData, updatedAt: new Date().toISOString() }
-              : p
-          ),
-        }));
+        const { masterProfileData, setResumeData } = get();
+        setResumeData({
+          name: masterProfileData.name,
+          email: masterProfileData.email,
+          phone: masterProfileData.phone,
+          location: masterProfileData.location,
+          website: masterProfileData.website,
+          social_networks: masterProfileData.social_networks,
+        });
       },
 
       saveActiveCvAsMaster: () => {
         const { resumeData } = get();
-        set({
-          masterProfileData: JSON.parse(JSON.stringify(resumeData)),
-        });
+        set({ masterProfileData: { ...resumeData } });
       },
 
-      createProfileFromMaster: (name, targetRole, templateId) => {
-        const { masterProfileData, activeTemplate, paperSize, profiles } = get();
-        const newId = `profile-${Date.now()}`;
-        const newProfileData: ResumeData = {
-          ...JSON.parse(JSON.stringify(masterProfileData)),
-          headline: targetRole || masterProfileData.headline,
-        };
-
-        const chosenTemplate = templateId || activeTemplate;
-
+      createProfileFromMaster: (name, targetRole, templateId = "harvard") => {
+        const state = get();
         const newProfile: ResumeProfile = {
-          id: newId,
+          id: crypto.randomUUID(),
           name,
           targetRole,
-          templateId: chosenTemplate,
-          paperSize,
-          data: newProfileData,
+          templateId,
+          paperSize: "letter",
+          data: {
+            ...state.masterProfileData,
+            headline: targetRole,
+          },
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
 
+        const updatedProfiles = [...state.profiles, newProfile];
         set({
-          profiles: [...profiles, newProfile],
-          activeProfileId: newId,
-          resumeData: newProfileData,
-          yamlContent: resumeDataToYaml(newProfileData),
+          profiles: updatedProfiles,
+          activeProfileId: newProfile.id,
+          resumeData: newProfile.data,
+          yamlContent: resumeDataToYaml(newProfile.data),
           yamlError: null,
-          activeTemplate: chosenTemplate,
+          activeTemplate: templateId,
           historyPast: [],
           historyFuture: [],
           canUndo: false,
@@ -507,64 +451,74 @@ export const useResumeStore = create<ResumeStoreState>()(
         });
       },
 
-      // Modales y estados
-      setImportModalOpen: (open: boolean) => set({ isImportModalOpen: open }),
-      setProfileModalOpen: (open: boolean) => set({ isProfileModalOpen: open }),
-      setTemplateGalleryOpen: (open: boolean) => set({ isTemplateGalleryOpen: open }),
-      setMasterProfileModalOpen: (open: boolean) => set({ isMasterProfileModalOpen: open }),
-      setIsExporting: (exporting: boolean) => set({ isExporting: exporting }),
+      setImportModalOpen: (isImportModalOpen) => set({ isImportModalOpen }),
+      setProfileModalOpen: (isProfileModalOpen) => set({ isProfileModalOpen }),
+      setTemplateGalleryOpen: (isTemplateGalleryOpen) => set({ isTemplateGalleryOpen }),
+      setMasterProfileModalOpen: (isMasterProfileModalOpen) => set({ isMasterProfileModalOpen }),
+      setIsExporting: (isExporting) => set({ isExporting }),
 
-      // Cargar CV importado
-      loadImportedResume: (data: ResumeData) => {
-        const { resumeData } = get();
-        const yaml = resumeDataToYaml(data);
-        set((state) => ({
+      loadImportedResume: (data) => {
+        const state = get();
+        const newProfile: ResumeProfile = {
+          id: crypto.randomUUID(),
+          name: data.headline ? `Perfil ${data.headline}` : "CV Importado",
+          targetRole: data.headline || "Profesional",
+          templateId: "harvard",
+          paperSize: "letter",
+          data,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+
+        set({
+          profiles: [...state.profiles, newProfile],
+          activeProfileId: newProfile.id,
           resumeData: data,
-          yamlContent: yaml,
+          yamlContent: resumeDataToYaml(data),
           yamlError: null,
-          historyPast: [...state.historyPast, resumeData].slice(-MAX_HISTORY_LENGTH),
+          activeTemplate: "harvard",
+          historyPast: [],
           historyFuture: [],
-          canUndo: true,
+          canUndo: false,
           canRedo: false,
-          profiles: state.profiles.map((p) =>
-            p.id === state.activeProfileId
-              ? { ...p, data, updatedAt: new Date().toISOString() }
-              : p
-          ),
-        }));
+        });
       },
 
-      // Restaurar datos de muestra con guardado en historial
       resetToSampleData: () => {
-        const { resumeData } = get();
-        const yaml = resumeDataToYaml(SAMPLE_RESUME_FULLSTACK);
-        set((state) => ({
-          resumeData: SAMPLE_RESUME_FULLSTACK,
-          yamlContent: yaml,
+        const initial = INITIAL_PROFILES[0];
+        set({
+          profiles: INITIAL_PROFILES,
+          activeProfileId: initial.id,
+          resumeData: initial.data,
+          yamlContent: resumeDataToYaml(initial.data),
+          masterProfileData: SAMPLE_RESUME_FULLSTACK,
+          activeTemplate: initial.templateId,
+        });
+      },
+
+      clearUserData: (userName = "", userEmail = "") => {
+        const cleanData: ResumeData = {
+          ...EMPTY_RESUME_DATA,
+          name: userName,
+          email: userEmail,
+        };
+        set({
+          profiles: [],
+          activeProfileId: "",
+          resumeData: cleanData,
+          yamlContent: resumeDataToYaml(cleanData),
           yamlError: null,
-          historyPast: [...state.historyPast, resumeData].slice(-MAX_HISTORY_LENGTH),
+          masterProfileData: cleanData,
+          historyPast: [],
           historyFuture: [],
-          canUndo: true,
+          canUndo: false,
           canRedo: false,
-          profiles: state.profiles.map((p) =>
-            p.id === state.activeProfileId
-              ? { ...p, data: SAMPLE_RESUME_FULLSTACK, updatedAt: new Date().toISOString() }
-              : p
-          ),
-        }));
+        });
       },
     }),
     {
-      name: "schemacv-storage-v1",
+      name: "schemacv-resume-storage-v2",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        profiles: state.profiles,
-        activeProfileId: state.activeProfileId,
-        masterProfileData: state.masterProfileData,
-        activeTemplate: state.activeTemplate,
-        paperSize: state.paperSize,
-        zoom: state.zoom,
-      }),
     }
   )
 );
