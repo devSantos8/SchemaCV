@@ -10,7 +10,6 @@ import {
   Sparkles,
   Moon,
   Sun,
-  ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
@@ -83,61 +82,51 @@ export const AuthView: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-zinc-50 dark:bg-zinc-950 text-foreground flex flex-col justify-between relative overflow-hidden transition-colors duration-300 select-none">
-      {/* Fondo Ambiental Sutil con Gradiente Radial Minimalista */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-zinc-200/50 via-zinc-100/20 to-transparent dark:from-zinc-800/20 dark:via-zinc-900/10 dark:to-transparent rounded-full blur-3xl pointer-events-none" />
+    <div className="h-screen w-screen overflow-hidden bg-zinc-50 dark:bg-zinc-950 text-foreground flex flex-col items-center justify-center relative select-none">
+      {/* Fondo Ambiental Sutil */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-tr from-zinc-200/40 via-zinc-100/10 to-transparent dark:from-zinc-800/20 dark:via-zinc-900/10 dark:to-transparent rounded-full blur-3xl pointer-events-none" />
 
-      {/* Header Superior Minimalista (Theme toggle a la derecha) */}
-      <header className="h-16 px-6 sm:px-10 flex items-center justify-end z-10">
-        <button
-          type="button"
-          onClick={toggleDarkMode}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 transition-all duration-200"
-          title="Alternar tema claro/oscuro"
-        >
-          {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </button>
-      </header>
+      {/* Theme toggle en esquina superior derecha */}
+      <button
+        type="button"
+        onClick={toggleDarkMode}
+        className="absolute top-4 right-4 h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 transition-all duration-200 z-20 cursor-pointer"
+        title="Alternar tema claro/oscuro"
+      >
+        {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </button>
 
-      {/* Tarjeta de Autenticación Centrada con Título Encima */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 z-10 -mt-6">
-        {/* Título & Logo Central Encima de la Tarjeta */}
-        <div className="flex flex-col items-center justify-center gap-2 mb-6 text-center select-none animate-in fade-in-50 slide-in-from-top-3 duration-300">
-          <div className="h-12 w-12 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-xl ring-1 ring-zinc-900/10 dark:ring-white/20">
-            <FileCode2 className="h-6 w-6" />
+      {/* Tarjeta de Autenticación Centrada */}
+      <main className="w-full max-w-md px-4 z-10 flex flex-col items-center">
+        {/* Título & Logo Central Encima de la Tarjeta (Sin subtítulo) */}
+        <div className="flex flex-col items-center justify-center gap-1.5 mb-5 text-center select-none animate-in fade-in-50 slide-in-from-top-3 duration-300">
+          <div className="h-11 w-11 rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 flex items-center justify-center shadow-lg ring-1 ring-zinc-900/10 dark:ring-white/20">
+            <FileCode2 className="h-5 w-5" />
           </div>
-          <div className="flex items-baseline gap-1.5 justify-center">
-            <span className="text-2xl sm:text-3xl font-black tracking-tight text-foreground font-sans">
+          <div className="flex items-baseline gap-1.5 justify-center mt-1">
+            <span className="text-2xl font-black tracking-tight text-foreground font-sans">
               Schema<span className="font-bold text-zinc-400 dark:text-zinc-500">CV</span>
             </span>
-            <span className="h-2 w-2 rounded-full bg-emerald-500 mb-1 inline-block animate-pulse" />
+            <span className="h-2 w-2 rounded-full bg-emerald-500 mb-0.5 inline-block animate-pulse" />
           </div>
-          <p className="text-xs text-muted-foreground font-medium max-w-sm">
-            Ingeniería de currículums ATS y sincronización bidireccional YAML
-          </p>
         </div>
 
-        <div className="w-full max-w-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-7 sm:p-9 rounded-3xl shadow-2xl space-y-5 animate-in fade-in-50 zoom-in-95 duration-300">
+        <div className="w-full bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl border border-zinc-200/80 dark:border-zinc-800/80 p-6 sm:p-7 rounded-3xl shadow-xl space-y-4 animate-in fade-in-50 zoom-in-95 duration-300">
           {/* Encabezado */}
-          <div className="text-center space-y-1">
-            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-              {mode === "login" ? "Bienvenido de nuevo" : "Crear tu cuenta"}
+          <div className="text-center">
+            <h1 className="text-xl font-extrabold tracking-tight text-foreground">
+              {mode === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
             </h1>
-            <p className="text-xs text-muted-foreground">
-              {mode === "login"
-                ? "Ingresa tus datos para acceder a tus currículums"
-                : "Comienza a diseñar tu CV optimizado para ATS"}
-            </p>
           </div>
 
           {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
-          <div className="space-y-2 pt-1">
+          <div className="space-y-2">
             <div className="grid grid-cols-3 gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => loginWithProvider("google")}
-                className="h-9.5 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-xs"
+                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                 title="Continuar con Google"
               >
                 <GoogleIcon />
@@ -148,7 +137,7 @@ export const AuthView: React.FC = () => {
                 type="button"
                 variant="outline"
                 onClick={() => loginWithProvider("linkedin")}
-                className="h-9.5 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-xs"
+                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                 title="Continuar con LinkedIn"
               >
                 <LinkedinIcon />
@@ -159,7 +148,7 @@ export const AuthView: React.FC = () => {
                 type="button"
                 variant="outline"
                 onClick={() => loginWithProvider("github")}
-                className="h-9.5 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-2 shadow-xs"
+                className="h-9 text-xs font-semibold rounded-xl border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                 title="Continuar con GitHub"
               >
                 <GithubIcon />
@@ -180,12 +169,12 @@ export const AuthView: React.FC = () => {
             </div>
           </div>
 
-          {/* Selector de Modo (Tabs con Píldora Animada) */}
+          {/* Selector de Modo (Tabs) */}
           <div className="p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 flex items-center relative border border-border/40">
             <button
               type="button"
               onClick={() => setMode("login")}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-center ${
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-center cursor-pointer ${
                 mode === "login"
                   ? "bg-white dark:bg-zinc-900 text-foreground shadow-xs font-bold"
                   : "text-muted-foreground hover:text-foreground"
@@ -196,7 +185,7 @@ export const AuthView: React.FC = () => {
             <button
               type="button"
               onClick={() => setMode("register")}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-center ${
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-center cursor-pointer ${
                 mode === "register"
                   ? "bg-white dark:bg-zinc-900 text-foreground shadow-xs font-bold"
                   : "text-muted-foreground hover:text-foreground"
@@ -206,15 +195,15 @@ export const AuthView: React.FC = () => {
             </button>
           </div>
 
-          {/* Formulario Dinámico con Transición Suave */}
-          <div className="space-y-4">
+          {/* Formulario */}
+          <div className="space-y-3">
             {mode === "login" ? (
               <form
                 key="login-form"
                 onSubmit={handleLoginSubmit}
-                className="space-y-3.5 animate-in fade-in-50 slide-in-from-left-2 duration-200"
+                className="space-y-3 animate-in fade-in-50 slide-in-from-left-2 duration-200"
               >
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium text-foreground">
                     Correo Electrónico
                   </Label>
@@ -231,7 +220,7 @@ export const AuthView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium text-foreground">
                     Contraseña
                   </Label>
@@ -250,7 +239,7 @@ export const AuthView: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-2"
+                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
                 >
                   <span>Ingresar a mi Cuenta</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -260,9 +249,9 @@ export const AuthView: React.FC = () => {
               <form
                 key="register-form"
                 onSubmit={handleRegisterSubmit}
-                className="space-y-3.5 animate-in fade-in-50 slide-in-from-right-2 duration-200"
+                className="space-y-3 animate-in fade-in-50 slide-in-from-right-2 duration-200"
               >
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium text-foreground">
                     Nombre Completo
                   </Label>
@@ -278,7 +267,7 @@ export const AuthView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium text-foreground">
                     Correo Electrónico
                   </Label>
@@ -295,7 +284,7 @@ export const AuthView: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs font-medium text-foreground">
                     Contraseña
                   </Label>
@@ -314,7 +303,7 @@ export const AuthView: React.FC = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-2"
+                  className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
                 >
                   <span>Crear Cuenta Gratuita</span>
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -323,7 +312,7 @@ export const AuthView: React.FC = () => {
             )}
 
             {/* Separador Sutil */}
-            <div className="relative pt-2">
+            <div className="relative pt-1">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t border-border/60" />
               </div>
@@ -339,7 +328,7 @@ export const AuthView: React.FC = () => {
               type="button"
               variant="outline"
               onClick={loginAsGuest}
-              className="w-full h-9 text-xs gap-2 rounded-xl bg-zinc-50/60 dark:bg-zinc-950/40 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 border-border/80 transition-all duration-200"
+              className="w-full h-8.5 text-xs gap-2 rounded-xl bg-zinc-50/60 dark:bg-zinc-950/40 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 border-border/80 transition-all duration-200 cursor-pointer"
             >
               <Sparkles className="h-3.5 w-3.5 text-amber-500" />
               <span className="font-medium">Continuar como Invitado (Modo Demo)</span>
@@ -347,11 +336,6 @@ export const AuthView: React.FC = () => {
           </div>
         </div>
       </main>
-
-      {/* Footer Minimalista */}
-      <footer className="h-14 px-6 flex items-center justify-center text-[11px] text-muted-foreground z-10">
-        SchemaCV — Plataforma ATS y Sincronización YAML
-      </footer>
     </div>
   );
 };

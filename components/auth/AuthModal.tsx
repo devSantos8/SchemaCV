@@ -6,12 +6,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   FileCode2,
@@ -20,7 +18,6 @@ import {
   User,
   ArrowRight,
   Sparkles,
-  ShieldCheck,
 } from "lucide-react";
 
 import { GoogleIcon, LinkedinIcon, GithubIcon } from "@/components/auth/AuthView";
@@ -67,9 +64,6 @@ export const AuthModal: React.FC = () => {
           <DialogTitle className="text-base font-bold text-foreground">
             {currentTab === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
           </DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
-            Plataforma de ingeniería de currículums optimizados para ATS y sincronización YAML.
-          </DialogDescription>
         </DialogHeader>
 
         {/* Botones OAuth Sociales (Google, LinkedIn, GitHub) */}
@@ -79,7 +73,7 @@ export const AuthModal: React.FC = () => {
               type="button"
               variant="outline"
               onClick={() => loginWithProvider("google")}
-              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs"
+              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
               title="Continuar con Google"
             >
               <GoogleIcon />
@@ -90,7 +84,7 @@ export const AuthModal: React.FC = () => {
               type="button"
               variant="outline"
               onClick={() => loginWithProvider("linkedin")}
-              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs"
+              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
               title="Continuar con LinkedIn"
             >
               <LinkedinIcon />
@@ -101,7 +95,7 @@ export const AuthModal: React.FC = () => {
               type="button"
               variant="outline"
               onClick={() => loginWithProvider("github")}
-              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs"
+              className="h-9 text-xs font-semibold rounded-xl border-border bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
               title="Continuar con GitHub"
             >
               <GithubIcon />
@@ -122,128 +116,149 @@ export const AuthModal: React.FC = () => {
           </div>
         </div>
 
-        <Tabs
-          value={currentTab}
-          onValueChange={(v) => setCurrentTab(v as "login" | "register")}
-          className="w-full mt-1"
-        >
-          <TabsList className="grid grid-cols-2 w-full h-8 bg-zinc-100 dark:bg-zinc-800 mb-4">
-            <TabsTrigger value="login" className="text-xs">
-              Iniciar Sesión
-            </TabsTrigger>
-            <TabsTrigger value="register" className="text-xs">
-              Registrarse
-            </TabsTrigger>
-          </TabsList>
+        {/* Selector de Modo (Tabs) */}
+        <div className="p-1 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 flex items-center relative border border-border/40">
+          <button
+            type="button"
+            onClick={() => setCurrentTab("login")}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-center cursor-pointer ${
+              currentTab === "login"
+                ? "bg-white dark:bg-zinc-900 text-foreground shadow-xs font-bold"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Iniciar Sesión
+          </button>
+          <button
+            type="button"
+            onClick={() => setCurrentTab("register")}
+            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 text-center cursor-pointer ${
+              currentTab === "register"
+                ? "bg-white dark:bg-zinc-900 text-foreground shadow-xs font-bold"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Registrarse
+          </button>
+        </div>
 
-          {/* Formulario de Login */}
-          <TabsContent value="login" className="space-y-3.5 m-0">
-            <form onSubmit={handleLoginSubmit} className="space-y-3">
+        {/* Formulario Dinámico */}
+        <div className="space-y-3">
+          {currentTab === "login" ? (
+            <form onSubmit={handleLoginSubmit} className="space-y-3 animate-in fade-in-50 duration-200">
               <div className="space-y-1">
-                <Label className="text-xs">Correo Electrónico</Label>
+                <Label className="text-xs font-medium text-foreground">Correo Electrónico</Label>
                 <div className="relative">
-                  <Mail className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="email"
-                    placeholder="tu.correo@ejemplo.com"
+                    placeholder="nombre@ejemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="h-8 text-xs pl-8"
+                    className="h-9 text-xs pl-9 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-foreground transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Contraseña</Label>
+                <Label className="text-xs font-medium text-foreground">Contraseña</Label>
                 <div className="relative">
-                  <Lock className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="h-8 text-xs pl-8"
+                    className="h-9 text-xs pl-9 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-foreground transition-all"
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full h-8 text-xs gap-1.5 font-semibold mt-2">
+              <Button
+                type="submit"
+                className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
+              >
                 <span>Ingresar a mi Cuenta</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </form>
-          </TabsContent>
-
-          {/* Formulario de Registro */}
-          <TabsContent value="register" className="space-y-3.5 m-0">
-            <form onSubmit={handleRegisterSubmit} className="space-y-3">
+          ) : (
+            <form onSubmit={handleRegisterSubmit} className="space-y-3 animate-in fade-in-50 duration-200">
               <div className="space-y-1">
-                <Label className="text-xs">Nombre Completo</Label>
+                <Label className="text-xs font-medium text-foreground">Nombre Completo</Label>
                 <div className="relative">
-                  <User className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="ej. Carlos Mendoza Rivera"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="h-8 text-xs pl-8"
+                    className="h-9 text-xs pl-9 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-foreground transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Correo Electrónico</Label>
+                <Label className="text-xs font-medium text-foreground">Correo Electrónico</Label>
                 <div className="relative">
-                  <Mail className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="email"
-                    placeholder="tu.correo@ejemplo.com"
+                    placeholder="nombre@ejemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="h-8 text-xs pl-8"
+                    className="h-9 text-xs pl-9 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-foreground transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <Label className="text-xs">Contraseña</Label>
+                <Label className="text-xs font-medium text-foreground">Contraseña</Label>
                 <div className="relative">
-                  <Lock className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="password"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="h-8 text-xs pl-8"
+                    className="h-9 text-xs pl-9 rounded-xl bg-zinc-50 dark:bg-zinc-950/60 border-zinc-200 dark:border-zinc-800 focus-visible:ring-1 focus-visible:ring-foreground transition-all"
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full h-8 text-xs gap-1.5 font-semibold mt-2">
+              <Button
+                type="submit"
+                className="w-full h-9 text-xs gap-2 font-semibold rounded-xl bg-foreground text-background shadow-md hover:opacity-90 active:scale-[0.99] transition-all duration-200 mt-1 cursor-pointer"
+              >
                 <span>Crear Cuenta Gratuita</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </form>
-          </TabsContent>
-        </Tabs>
+          )}
 
-        {/* Separador y Acceso Rápido Invitado / Demo */}
-        <div className="pt-3 border-t border-border space-y-2">
-          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-            <span>¿Quieres probar la herramienta primero?</span>
+          {/* Separador Sutil */}
+          <div className="relative pt-1">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border/60" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-card px-2 text-muted-foreground">o también</span>
+            </div>
           </div>
+
+          {/* Acceso Rápido Invitado / Demo */}
           <Button
             type="button"
             variant="outline"
             onClick={loginAsGuest}
-            className="w-full h-8 text-xs gap-1.5 bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            className="w-full h-8.5 text-xs gap-2 rounded-xl bg-zinc-50/60 dark:bg-zinc-950/40 hover:bg-zinc-100 dark:hover:bg-zinc-800/80 border-border/80 transition-all duration-200 cursor-pointer"
           >
             <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-            <span>Continuar como Invitado / Cuenta Demo</span>
+            <span className="font-medium">Continuar como Invitado (Modo Demo)</span>
           </Button>
         </div>
       </DialogContent>

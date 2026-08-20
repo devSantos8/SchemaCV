@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { JobTrackerView } from "@/components/jobs/JobTrackerView";
+import { AISettingsCard } from "@/components/settings/AISettingsCard";
+import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
 import {
   Home,
   Plus,
@@ -168,7 +171,7 @@ const TEMPLATE_ACCENTS: Record<TemplateId, { bg: string; text: string; border: s
   },
 };
 
-type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "ai_import" | "settings";
+type DashboardSection = "home" | "resumes" | "master_profile" | "templates" | "ai_import" | "job_tracker" | "settings";
 type SettingsSubTab = "account" | "security" | "workspace" | "notifications" | "support" | "terms";
 
 interface DashboardViewProps {
@@ -236,6 +239,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [settingsLinkedin, setSettingsLinkedin] = useState(user?.linkedinUrl || "https://linkedin.com/in/jmonroys17");
   const [settingsWebsite, setSettingsWebsite] = useState(user?.websiteUrl || "https://jmonroys.dev");
   const [isSettingsSaved, setIsSettingsSaved] = useState(false);
+
+  // Estados de Auditoría ATS
+  const [auditResumeData, setAuditResumeData] = useState<ResumeData | null>(null);
+  const [auditModalTitle, setAuditModalTitle] = useState<string>("Auditor de Formato ATS");
 
   // Estados de Contraseña y Seguridad
   const [currentPassword, setCurrentPassword] = useState("");
@@ -593,7 +600,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <Badge
                     variant="outline"
                     className={`text-[10px] font-mono px-1.5 py-0 ${
-                      activeSection === "resumes" ? "border-background/30 text-background" : "border-border text-muted-foreground"
+                      activeSection === "resumes" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
                     }`}
                   >
                     {profiles.length}
@@ -601,7 +608,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 )}
               </button>
 
-              {/* Botón Perfil Base Maestro */}
+              {/* Botón Perfil Base */}
               <button
                 type="button"
                 onClick={() => {
@@ -621,16 +628,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                       }`
                 }`}
-                title="Perfil Base Maestro"
+                title="Perfil Base"
               >
                 <div className="flex items-center gap-2.5">
-                  <Database className="h-4 w-4 text-emerald-500 shrink-0" />
-                  {!isSidebarCollapsed && <span>Perfil Base Maestro</span>}
+                  <Database className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Perfil Base</span>}
                 </div>
                 {!isSidebarCollapsed && (
-                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-mono px-1.5 py-0 ${
+                      activeSection === "master_profile" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
                     Base
-                  </span>
+                  </Badge>
                 )}
               </button>
 
@@ -657,15 +669,22 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 title="Catálogo de Plantillas ATS"
               >
                 <div className="flex items-center gap-2.5">
-                  <LayoutGrid className="h-4 w-4 text-amber-500 shrink-0" />
+                  <LayoutGrid className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Plantillas ATS</span>}
                 </div>
                 {!isSidebarCollapsed && (
-                  <span className="text-[10px] font-mono opacity-80">6</span>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-mono px-1.5 py-0 ${
+                      activeSection === "templates" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
+                    11
+                  </Badge>
                 )}
               </button>
 
-              {/* Botón Ingesta IA */}
+              {/* Botón Importar CV */}
               <button
                 type="button"
                 onClick={() => {
@@ -685,15 +704,58 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
                       }`
                 }`}
-                title="Ingesta Asistida por IA"
+                title="Importar CV desde PDF o Texto"
               >
                 <div className="flex items-center gap-2.5">
-                  <Sparkles className="h-4 w-4 text-cyan-500 shrink-0" />
-                  {!isSidebarCollapsed && <span>Ingesta con IA</span>}
+                  <Sparkles className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Importar CV</span>}
                 </div>
                 {!isSidebarCollapsed && (
-                  <Badge variant="outline" className="text-[9px] font-mono">
-                    PDF
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] font-mono px-1.5 py-0 ${
+                      activeSection === "ai_import" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
+                    IA
+                  </Badge>
+                )}
+              </button>
+
+              {/* Botón Job Tracker */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("job_tracker");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        activeSection === "job_tracker"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        activeSection === "job_tracker"
+                          ? "bg-foreground text-background shadow-xs"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900"
+                      }`
+                }`}
+                title="Job Tracker & Match Analyzer"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Briefcase className="h-4 w-4 shrink-0" />
+                  {!isSidebarCollapsed && <span>Job Tracker</span>}
+                </div>
+                {!isSidebarCollapsed && (
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] font-mono px-1.5 py-0 ${
+                      activeSection === "job_tracker" ? "border-background/30 text-background bg-background/20" : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
+                    Nuevo
                   </Badge>
                 )}
               </button>
@@ -832,9 +894,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <h1 className="text-sm font-bold text-foreground capitalize">
                 {activeSection === "home" && "Panel Principal"}
                 {activeSection === "resumes" && "Mis Currículums"}
-                {activeSection === "master_profile" && "Perfil Base Maestro"}
+                {activeSection === "master_profile" && "Perfil Base"}
                 {activeSection === "templates" && "Catálogo de Plantillas ATS"}
-                {activeSection === "ai_import" && "Ingesta Asistida por IA"}
+                {activeSection === "ai_import" && "Importar CV con IA"}
+                {activeSection === "job_tracker" && "Job Tracker & Match Analyzer"}
                 {activeSection === "settings" && "Configuración"}
               </h1>
               {activeSection === "home" && (
@@ -859,18 +922,49 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
 
             {activeSection === "resumes" && (
-              <Button
-                size="sm"
-                onClick={() => setIsWizardOpen(true)}
-                className="h-8 px-3 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Nuevo Currículum</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const activeProf = profiles.find((p) => p.id === activeProfileId) || profiles[0];
+                    if (activeProf) {
+                      setAuditResumeData(activeProf.data);
+                      setAuditModalTitle(`Auditor ATS — ${activeProf.name}`);
+                    }
+                  }}
+                  className="h-8 px-3 text-xs font-semibold rounded-xl border-border hover:bg-zinc-100 dark:hover:bg-zinc-800 gap-1.5 cursor-pointer"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Auditar Formato ATS</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  onClick={() => setIsWizardOpen(true)}
+                  className="h-8 px-3 text-xs font-semibold gap-1.5 bg-foreground text-background rounded-xl shadow-xs hover:opacity-90 cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Nuevo Currículum</span>
+                </Button>
+              </div>
             )}
 
             {activeSection === "master_profile" && (
               <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setAuditResumeData(masterFormData);
+                    setAuditModalTitle("Auditor ATS — Perfil Base");
+                  }}
+                  className="h-8 px-3 text-xs font-semibold rounded-xl border-border hover:bg-zinc-100 dark:hover:bg-zinc-800 gap-1.5 cursor-pointer"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Auditar Formato ATS</span>
+                </Button>
+
                 <Button
                   size="sm"
                   variant="outline"
@@ -1159,6 +1253,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               >
                                 <FileDown className="h-3.5 w-3.5 text-rose-500" />
                                 <span>Exportar PDF Vectorial</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setAuditResumeData(profile.data);
+                                  setAuditModalTitle(`Auditor ATS — ${profile.name}`);
+                                }}
+                                className="cursor-pointer gap-2"
+                              >
+                                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                                <span>Auditar Formato ATS</span>
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleDownloadDocx(profile)}
@@ -3098,6 +3202,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           )}
 
+          {/* APARTADO: JOB TRACKER */}
+          {activeSection === "job_tracker" && (
+            <div className="h-full -m-6">
+              <JobTrackerView />
+            </div>
+          )}
+
           {/* APARTADO 5: CONFIGURACIÓN EN ESPAÑOL ESTILO PROPEL CON STICKY SIDEBAR */}
           {activeSection === "settings" && (
             <div className="max-w-6xl mx-auto space-y-6">
@@ -3108,6 +3219,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   Administra tu información personal, preferencias del espacio de trabajo, cuenta de Gmail y seguridad.
                 </p>
               </div>
+
 
               {/* Layout 2 Columnas Estilo Propel con Sticky Sidebar en la Izquierda */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -3196,6 +3308,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <div className="lg:col-span-9 p-6 sm:p-8 rounded-3xl border border-border bg-card shadow-xs space-y-6">
                   {/* TAB 1: INFORMACIÓN DE LA CUENTA */}
                   {settingsSubTab === "account" && (
+                    <div className="space-y-6">
                     <form onSubmit={handleSaveSettings} className="space-y-6">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
                         <div>
@@ -3413,6 +3526,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         </div>
                       </div>
                     </form>
+
+                    {/* Integracion IA — BYOK */}
+                    <div className="mt-6">
+                      <div className="pb-4 border-b border-border/80 mb-4">
+                        <h3 className="text-base font-bold text-foreground">Integracion IA</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Conecta tu propia API key para analizar ofertas con IA en el Job Tracker.
+                        </p>
+                      </div>
+                      <AISettingsCard />
+                    </div>
+                    </div>
                   )}
 
                   {/* TAB 2: SEGURIDAD, CONTRASEÑA & GMAIL */}
@@ -3787,6 +3912,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           )}
         </div>
       </main>
+
+      {/* Modal de Auditoría de Formato ATS */}
+      {auditResumeData && (
+        <ATSAuditModal
+          isOpen={Boolean(auditResumeData)}
+          onClose={() => setAuditResumeData(null)}
+          resumeData={auditResumeData}
+          title={auditModalTitle}
+        />
+      )}
 
       {/* Asistente de Creación de CV */}
       <CreateResumeWizard
