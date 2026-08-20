@@ -198,44 +198,57 @@ export const useAuthStore = create<AuthState>()(
       },
 
       loginWithProvider: async (provider: "google" | "linkedin" | "github") => {
-        if (isSupabaseConfigured()) {
-          await signInWithOAuth(provider);
-          return;
+        set({ isLoading: true, error: null });
+        try {
+          if (isSupabaseConfigured()) {
+            const { error } = await signInWithOAuth(provider);
+            if (error) {
+              const providerName = provider === "google" ? "Google" : provider === "github" ? "GitHub" : "LinkedIn";
+              set({
+                error: `El acceso con ${providerName} aún no está habilitado en tu panel de Supabase (Authentication → Providers). Puedes usar Correo y Contraseña o Modo Invitado.`,
+                isLoading: false,
+              });
+              return;
+            }
+            return;
+          }
+
+          // Simulación local si no está configurado Supabase
+          let name = "Joain Matías Monroy";
+          let email = "matiasmonroy483@gmail.com";
+          let githubUrl = "https://github.com/devSantos8";
+          let linkedinUrl = "https://linkedin.com/in/joain-monroy";
+
+          if (provider === "google") {
+            name = "Joain Monroy (Google)";
+            email = "matiasmonroy483@gmail.com";
+          } else if (provider === "github") {
+            name = "devSantos8 (GitHub)";
+            email = "devsantos8@users.noreply.github.com";
+            githubUrl = "https://github.com/devSantos8";
+          } else if (provider === "linkedin") {
+            name = "Joain Monroy Santos (LinkedIn)";
+            email = "jmonroys@linkedin.com";
+            linkedinUrl = "https://linkedin.com/in/joain-monroy";
+          }
+
+          const user: UserProfile = {
+            ...DEFAULT_DEMO_USER,
+            id: `user-${provider}-${Date.now()}`,
+            name,
+            email,
+            githubUrl,
+            linkedinUrl,
+            joinedDate: new Date().toLocaleDateString("es-ES", {
+              month: "long",
+              year: "numeric",
+            }),
+            isDemoUser: false,
+          };
+          set({ user, isAuthenticated: true, isAuthModalOpen: false, isLoading: false });
+        } catch (err: any) {
+          set({ error: err.message || "Error al conectar con proveedor", isLoading: false });
         }
-
-        // Simulación local si no está configurado Supabase
-        let name = "Joain Matías Monroy";
-        let email = "matiasmonroy483@gmail.com";
-        let githubUrl = "https://github.com/devSantos8";
-        let linkedinUrl = "https://linkedin.com/in/joain-monroy";
-
-        if (provider === "google") {
-          name = "Joain Monroy (Google)";
-          email = "matiasmonroy483@gmail.com";
-        } else if (provider === "github") {
-          name = "devSantos8 (GitHub)";
-          email = "devsantos8@users.noreply.github.com";
-          githubUrl = "https://github.com/devSantos8";
-        } else if (provider === "linkedin") {
-          name = "Joain Monroy Santos (LinkedIn)";
-          email = "jmonroys@linkedin.com";
-          linkedinUrl = "https://linkedin.com/in/joain-monroy";
-        }
-
-        const user: UserProfile = {
-          ...DEFAULT_DEMO_USER,
-          id: `user-${provider}-${Date.now()}`,
-          name,
-          email,
-          githubUrl,
-          linkedinUrl,
-          joinedDate: new Date().toLocaleDateString("es-ES", {
-            month: "long",
-            year: "numeric",
-          }),
-          isDemoUser: false,
-        };
-        set({ user, isAuthenticated: true, isAuthModalOpen: false });
       },
 
       loginAsGuest: () => {

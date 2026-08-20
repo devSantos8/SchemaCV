@@ -11,9 +11,12 @@ export async function getSupabaseProfile(userId: string) {
     .from("profiles")
     .select("*")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
-  if (error) return null;
+  if (error) {
+    console.warn("Aviso al consultar perfil en Supabase:", error.message || error);
+    return null;
+  }
   return data;
 }
 
@@ -25,9 +28,12 @@ export async function updateSupabaseProfile(userId: string, updates: Record<stri
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq("id", userId)
     .select()
-    .single();
+    .maybeSingle();
 
-  if (error) throw error;
+  if (error) {
+    console.error("Error al actualizar perfil en Supabase:", error.message || error);
+    return null;
+  }
   return data;
 }
 
@@ -42,10 +48,10 @@ export async function fetchUserResumes(userId: string) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error al cargar currículums de Supabase:", error);
+    console.error("Error al cargar currículums de Supabase:", error.message || error);
     return [];
   }
-  return data;
+  return data || [];
 }
 
 export async function upsertResumeToSupabase(
@@ -64,26 +70,33 @@ export async function upsertResumeToSupabase(
 
   const payload: any = {
     user_id: userId,
-    name: resume.name,
-    target_role: resume.targetRole,
-    template_id: resume.templateId,
-    is_master: resume.isMaster,
-    data: resume.data,
+    name: resume.name || "Mi Currículum",
+    target_role: resume.targetRole || null,
+    template_id: resume.templateId || "harvard",
+    is_master: Boolean(resume.isMaster),
+    data: resume.data || {},
     updated_at: new Date().toISOString(),
   };
 
-  if (resume.id && !resume.id.startsWith("local-") && !resume.id.startsWith("prof-")) {
+  // Solo incluir ID si es un UUID válido de Supabase
+  const isUuid = resume.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(resume.id);
+  if (isUuid) {
     payload.id = resume.id;
   }
 
-  const { data, error } = await supabase
-    .from("resumes")
-    .upsert(payload)
-    .select()
-    .single();
+  const query = payload.id
+    ? supabase.from("resumes").upsert(payload, { onConflict: "id" })
+    : supabase.from("resumes").insert(payload);
+
+  const { data, error } = await query.select().maybeSingle();
 
   if (error) {
-    console.error("Error al guardar currículum en Supabase:", error);
+    console.error("Error al guardar currículum en Supabase:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
     return null;
   }
   return data;
@@ -106,10 +119,10 @@ export async function fetchUserJobs(userId: string) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Error al cargar postulaciones de Supabase:", error);
+    console.error("Error al cargar postulaciones de Supabase:", error.message || error);
     return [];
   }
-  return data;
+  return data || [];
 }
 
 export async function upsertJobToSupabase(userId: string, job: JobApplication) {
@@ -120,31 +133,37 @@ export async function upsertJobToSupabase(userId: string, job: JobApplication) {
     user_id: userId,
     title: job.title,
     company: job.company,
-    status: job.status,
-    location: job.location,
-    salary: job.salary,
-    url: job.url,
-    portal: job.portal,
-    description: job.description,
-    notes: job.notes,
-    keywords: job.keywords,
-    match_analysis: job.matchAnalysis,
-    activity: job.activity,
+    status: job.status || "bookmarked",
+    location: job.location || null,
+    salary: job.salary || null,
+    url: job.url || null,
+    portal: job.portal || null,
+    description: job.description || "",
+    notes: job.notes || "",
+    keywords: job.keywords || [],
+    match_analysis: job.matchAnalysis || null,
+    activity: job.activity || [],
     updated_at: new Date().toISOString(),
   };
 
-  if (job.id && !job.id.startsWith("job-")) {
+  const isUuid = job.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(job.id);
+  if (isUuid) {
     payload.id = job.id;
   }
 
-  const { data, error } = await supabase
-    .from("job_applications")
-    .upsert(payload)
-    .select()
-    .single();
+  const query = payload.id
+    ? supabase.from("job_applications").upsert(payload, { onConflict: "id" })
+    : supabase.from("job_applications").insert(payload);
+
+  const { data, error } = await query.select().maybeSingle();
 
   if (error) {
-    console.error("Error al guardar postulación en Supabase:", error);
+    console.error("Error al guardar postulación en Supabase:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
     return null;
   }
   return data;
@@ -161,9 +180,11 @@ export async function saveATSEvaluationToSupabase(userId: string, report: Evalua
   if (!isSupabaseConfigured()) return null;
   const supabase = createClient();
 
+  const isJobUuid = report.jobId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.jobId);
+
   const payload: any = {
     user_id: userId,
-    job_id: report.jobId && !report.jobId.startsWith("job-") ? report.jobId : null,
+    job_id: isJobUuid ? report.jobId : null,
     job_title: report.jobTitle,
     company: report.company,
     ats_score: report.atsScore,
@@ -176,10 +197,15 @@ export async function saveATSEvaluationToSupabase(userId: string, report: Evalua
     .from("ats_evaluations")
     .insert(payload)
     .select()
-    .single();
+    .maybeSingle();
 
   if (error) {
-    console.error("Error al guardar evaluación ATS en Supabase:", error);
+    console.error("Error al guardar evaluación ATS en Supabase:", {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
     return null;
   }
   return data;

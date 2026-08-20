@@ -60,8 +60,12 @@ export function SupabaseSyncProvider({ children }: { children: React.ReactNode }
   // 2. Sincronización de datos al iniciar sesión con usuario real
   useEffect(() => {
     if (!user || user.isDemoUser || !isSupabaseConfigured()) return;
-    if (syncedUserIdRef.current === user.id) return;
+    
+    // Validar que el user.id sea un UUID real de Supabase auth.users
+    const isSupabaseUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+    if (!isSupabaseUuid) return;
 
+    if (syncedUserIdRef.current === user.id) return;
     syncedUserIdRef.current = user.id;
 
     async function syncUserData(userId: string) {
