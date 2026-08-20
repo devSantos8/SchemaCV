@@ -1,4 +1,4 @@
-﻿import { create } from "zustand";
+import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { AIProvider } from "@/types/jobs";
 
@@ -24,7 +24,7 @@ interface AISettingsState {
 export const useAISettingsStore = create<AISettingsState>()(
   persist(
     (set, get) => ({
-      provider: "openai",
+      provider: "google",
       apiKey: "",
       enabled: false,
       connectionStatus: "idle",
@@ -36,7 +36,7 @@ export const useAISettingsStore = create<AISettingsState>()(
       },
 
       setApiKey(key) {
-        set({ apiKey: key, connectionStatus: "idle", lastError: null, testedModel: null });
+        set({ apiKey: key.trim(), connectionStatus: "idle", lastError: null, testedModel: null });
       },
 
       setEnabled(enabled) {
@@ -49,7 +49,8 @@ export const useAISettingsStore = create<AISettingsState>()(
 
       async testConnection() {
         const { provider, apiKey } = get();
-        if (!apiKey) {
+        const cleanKey = (apiKey || "").trim();
+        if (!cleanKey) {
           set({ connectionStatus: "error", lastError: "Ingresa tu API key primero." });
           return;
         }
@@ -59,7 +60,7 @@ export const useAISettingsStore = create<AISettingsState>()(
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              "X-AI-Key": apiKey,
+              "X-AI-Key": cleanKey,
               "X-AI-Provider": provider,
             },
           });

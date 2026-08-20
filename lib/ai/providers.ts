@@ -20,27 +20,36 @@ export class AIProviderError extends Error {
 
 function mapError(err: unknown): AIProviderError {
   const msg = err instanceof Error ? err.message : String(err);
+  const errObj = err as Record<string, unknown> | null | undefined;
+  const fullDetails = JSON.stringify(errObj?.data || errObj?.responseBody || "") + " " + msg;
+
   if (
-    msg.includes("401") ||
-    msg.includes("invalid_api_key") ||
-    msg.includes("API_KEY_INVALID") ||
-    msg.includes("API_KEY_NOT_FOUND") ||
-    msg.includes("Unauthorized")
+    fullDetails.includes("401") ||
+    fullDetails.includes("invalid_api_key") ||
+    fullDetails.includes("API_KEY_INVALID") ||
+    fullDetails.includes("API_KEY_NOT_FOUND") ||
+    fullDetails.includes("API key not valid") ||
+    fullDetails.includes("Unauthorized") ||
+    fullDetails.includes("API_KEY_SERVICE_BLOCKED")
   ) {
     return new AIProviderError("API key invalida o sin permisos.", "invalid_key");
   }
   if (
-    msg.includes("429") ||
-    msg.includes("rate_limit") ||
-    msg.includes("Rate limit") ||
-    msg.includes("RESOURCE_EXHAUSTED")
+    fullDetails.includes("429") ||
+    fullDetails.includes("rate_limit") ||
+    fullDetails.includes("Rate limit") ||
+    fullDetails.includes("RESOURCE_EXHAUSTED") ||
+    fullDetails.includes("Quota exceeded")
   ) {
-    return new AIProviderError("Rate limit alcanzado. Espera un momento.", "rate_limit");
+    return new AIProviderError("Limite de cuota o rate limit alcanzado. Espera un momento.", "rate_limit");
   }
-  if (msg.includes("insufficient_quota") || msg.includes("402") || msg.includes("no credits")) {
+  if (fullDetails.includes("insufficient_quota") || fullDetails.includes("402") || fullDetails.includes("no credits")) {
     return new AIProviderError("Sin creditos disponibles en tu cuenta.", "no_credits");
   }
-  return new AIProviderError(`Error desconocido: ${msg}`, "unknown");
+  if (fullDetails.includes("User location is not supported") || fullDetails.includes("location is not supported")) {
+    return new AIProviderError("La API no esta disponible en tu region actual.", "unknown");
+  }
+  return new AIProviderError(`Error de conexion: ${msg.slice(0, 120)}`, "unknown");
 }
 
 // ─── Schema de keywords ───────────────────────────────────────────────────────
@@ -55,17 +64,18 @@ const KeywordsOutputSchema = z.object({
 
 // ─── Factory de modelos ───────────────────────────────────────────────────────
 function getModel(provider: AIProvider, apiKey: string) {
+  const cleanKey = (apiKey || "").trim();
   switch (provider) {
     case "google": {
-      const google = createGoogleGenerativeAI({ apiKey });
+      const google = createGoogleGenerativeAI({ apiKey: cleanKey });
       return google("gemini-2.0-flash");
     }
     case "openai": {
-      const openai = createOpenAI({ apiKey });
+      const openai = createOpenAI({ apiKey: cleanKey });
       return openai("gpt-4o-mini");
     }
     case "anthropic": {
-      const anthropic = createAnthropic({ apiKey });
+      const anthropic = createAnthropic({ apiKey: cleanKey });
       return anthropic("claude-3-5-haiku-20241022");
     }
   }
@@ -175,16 +185,49 @@ export async function testAIConnection(
   provider: AIProvider,
   apiKey: string
 ): Promise<{ ok: boolean; model: string }> {
-  const model = getModel(provider, apiKey);
-  const { text } = await generateText({
-    model,
-    prompt: "Responde solo: OK",
-    maxOutputTokens: 5,
-  });
-  const modelMap: Record<AIProvider, string> = {
-    google: "gemini-2.0-flash",
-    openai: "gpt-4o-mini",
-    anthropic: "claude-3-5-haiku",
-  };
-  return { ok: text.trim().length > 0, model: modelMap[provider] };
+  const cleanKey = (apiKey || "").trim();
+
+  if (provider === "google") {
+    const google = createGoogleGenerativeAI({ apiKey: cleanKey });
+    try {
+      const { text } = await generateText({
+        model: google("gemini-2.0-flash"),
+        prompt: "Responde: OK",
+        maxOutputTokens: 5,
+      });
+      return { ok: text.trim().length > 0, model: "gemini-2.0-flash" };
+    } catch (err: unknown) {
+      const errStr = String(err);
+      if (errStr.includes("404") || errStr.includes("not found")) {
+        try {
+          const { text } = await generateText({
+            model: google("gemini-1.5-flash"),
+            prompt: "Responde: OK",
+            maxOutputTokens: 5,
+          });
+          return { ok: text.trim().length > 0, model: "gemini-1.5-flash" };
+        } catch (innerErr) {
+          throw mapError(innerErr);
+        }
+      }
+      throw mapError(err);
+    }
+  }
+
+  try {
+    const model = getModel(provider, cleanKey);
+    const { text } = await generateText({
+      model,
+      prompt: "Responde: OK",
+      maxOutputTokens: 5,
+    });
+    const modelMap: Record<AIProvider, string> = {
+      google: "gemini-2.0-flash",
+      openai: "gpt-4o-mini",
+      anthropic: "claude-3-5-haiku",
+    };
+    return { ok: text.trim().length > 0, model: modelMap[provider] };
+  } catch (err) {
+    throw mapError(err);
+  }
 }
