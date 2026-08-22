@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay, getSectionLabels } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -23,16 +23,15 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
     certifications = [],
     section_order = [
       "summary",
-      "skills",
       "experience",
-      "education",
       "projects",
+      "skills",
+      "education",
       "certifications",
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -50,25 +49,25 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
-        padding: "0.6in 0.7in",
-        fontSize: "9.5pt",
+        padding: "0.4in 0.5in",
+        fontSize: "9pt",
         fontFamily: "var(--font-geist-sans), Arial, Helvetica, sans-serif",
       }}
     >
-      {/* Header Minimalista con mucho espacio en blanco */}
-      <header className="pb-4 mb-4">
-        <h1 className="text-[22pt] font-black tracking-tight text-zinc-950">
+      {/* Header Minimalista */}
+      <header className="pb-1.5 mb-2">
+        <h1 className="text-[18pt] font-black tracking-tight text-zinc-950">
           {name || "Nombre Completo"}
         </h1>
         {headline && (
-          <p className="text-[10pt] font-medium text-zinc-600 mt-1">
+          <p className="text-[9pt] font-medium text-zinc-600 mt-0.5">
             {headline}
           </p>
         )}
 
         {/* Contacto espaciado */}
         {contactItems.length > 0 && (
-          <div className="text-[8.5pt] text-zinc-500 flex flex-wrap gap-x-3 gap-y-1 mt-2">
+          <div className="text-[8.5pt] text-zinc-500 flex flex-wrap gap-x-2.5 gap-y-0.5 mt-1">
             {contactItems.map((item, idx) => (
               <React.Fragment key={idx}>
                 {item.url ? (
@@ -76,32 +75,32 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
                     href={item.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="hover:text-zinc-950 underline underline-offset-2"
+                    className="hover:text-zinc-950 transition-colors"
                   >
                     {item.label}
                   </a>
                 ) : (
                   <span>{item.label}</span>
                 )}
-                {idx < contactItems.length - 1 && <span className="text-zinc-300">•</span>}
+                {idx < contactItems.length - 1 && <span>/</span>}
               </React.Fragment>
             ))}
           </div>
         )}
       </header>
 
-      {/* Secciones sin líneas divisorias decorativas (puro espaciado tipográfico) */}
-      <div className="space-y-4">
+      {/* Secciones con separación sutil */}
+      <div className="space-y-2">
         {section_order.map((sectionKey) => {
           switch (sectionKey) {
             case "summary":
               if (!summary) return null;
               return (
                 <section key="summary" className="page-break-avoid">
-                  <h2 className="text-[10.5pt] font-extrabold uppercase tracking-wider text-zinc-950 mb-1.5">
+                  <h2 className="text-[9.5pt] font-bold text-zinc-950 uppercase tracking-wider mb-1">
                     {labels.summary}
                   </h2>
-                  <p className="text-[9.5pt] text-zinc-700 leading-relaxed text-justify">
+                  <p className="text-[9pt] text-zinc-700 leading-normal text-justify">
                     {summary}
                   </p>
                 </section>
@@ -260,13 +259,8 @@ export const ModernMinimal: React.FC<TemplateProps> = ({ data, paperSize = "lett
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <div>
                           <span className="font-semibold text-zinc-900">{cert.name}</span>
-                          <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
+                          <span className="text-zinc-600"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                         </div>
-                        {cert.date && (
-                          <span className="text-[8.5pt] font-mono text-zinc-500">
-                            {cert.date}
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>

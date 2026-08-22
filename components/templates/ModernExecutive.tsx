@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay, getSectionLabels } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -31,8 +31,7 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -280,9 +279,8 @@ export const ModernExecutive: React.FC<TemplateProps> = ({ data, paperSize = "le
                     <div key={cert.id} className="flex justify-between items-baseline">
                       <span>
                         <strong className="text-zinc-900">{cert.name}</strong>
-                        <span className="text-zinc-600"> — {cert.issuer}{" "}</span>
+                        <span className="text-zinc-600"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                       </span>
-                      {cert.date && <span className="text-[8pt] text-zinc-500">{cert.date}</span>}
                     </div>
                   ))}
                 </div>

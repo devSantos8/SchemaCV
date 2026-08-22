@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay, getSectionLabels } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -23,16 +23,15 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
     certifications = [],
     section_order = [
       "summary",
-      "skills",
       "experience",
-      "projects",
       "education",
+      "projects",
+      "skills",
       "certifications",
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -332,13 +331,8 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                       {certifications.map((cert) => (
                         <div key={cert.id} className="flex justify-between items-baseline">
                           <span className="font-semibold text-zinc-900">
-                            {cert.name}{cert.issuer ? ` — ${cert.issuer}` : ""}{" "}
+                            {cert.name}{cert.issuer ? ` — ${cert.issuer}` : ""}{cert.date ? ` (${cert.date})` : ""}
                           </span>
-                          {cert.date && (
-                            <span className="text-zinc-500 font-mono text-[7.5pt] ml-1">
-                              {cert.date}
-                            </span>
-                          )}
                         </div>
                       ))}
                     </div>

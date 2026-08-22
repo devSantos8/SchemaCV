@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, getSectionLabels, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -24,16 +24,15 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
     custom_sections = [],
     section_order = [
       "summary",
-      "skills",
       "experience",
       "education",
+      "skills",
       "projects",
       "certifications",
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   // Formatear items de contacto estándar Chile
   const contactItems: { label: string; url?: string }[] = [];
@@ -288,13 +287,8 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                     {certifications.map((cert) => (
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <span className="font-semibold text-zinc-900">
-                          {cert.name}{cert.issuer ? ` — ${cert.issuer}` : ""}{" "}
+                          {cert.name}{cert.issuer ? ` — ${cert.issuer}` : ""}{cert.date ? ` (${cert.date})` : ""}
                         </span>
-                        {cert.date && (
-                          <span className="text-[8.5pt] text-zinc-600 font-mono">
-                            {cert.date}
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>

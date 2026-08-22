@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, getSectionLabels, formatSocialDisplay } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -24,15 +24,14 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
     section_order = [
       "summary",
       "experience",
-      "skills",
-      "projects",
       "education",
+      "projects",
+      "skills",
       "certifications",
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -50,27 +49,27 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
-        padding: "0.5in 0.6in",
-        fontSize: "9.5pt",
+        padding: "0.4in 0.5in",
+        fontSize: "9pt",
         fontFamily: "var(--font-geist-sans), system-ui, -apple-system, sans-serif",
       }}
     >
       {/* Header Stanford / Silicon Valley */}
-      <header className="pb-2 mb-2.5">
+      <header className="pb-1 mb-1.5">
         <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-zinc-950 uppercase">
+            <h1 className="text-lg font-black tracking-tight text-zinc-950 uppercase">
               {name || "Nombre Completo"}
             </h1>
             {headline && (
-              <p className="text-xs font-semibold text-zinc-700 tracking-wide mt-0.5">
+              <p className="text-[9pt] font-semibold text-zinc-700 tracking-wide mt-0.5">
                 {headline}
               </p>
             )}
           </div>
 
           {/* Contacto compacto alineado a la derecha en pantallas grandes */}
-          <div className="text-[9pt] text-zinc-600 flex flex-wrap gap-x-2.5 gap-y-0.5 sm:justify-end">
+          <div className="text-[8.5pt] text-zinc-600 flex flex-wrap gap-x-2 gap-y-0.5 sm:justify-end">
             {contactItems.map((item, idx) => (
               <React.Fragment key={idx}>
                 {item.url ? (
@@ -95,17 +94,17 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
       </header>
 
       {/* Secciones dinámicas según section_order */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {section_order.map((sectionKey) => {
           switch (sectionKey) {
             case "summary":
               if (!summary) return null;
               return (
                 <section key="summary" className="break-inside-avoid">
-                  <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
+                  <h2 className="text-[9.5pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 flex items-center justify-between">
                     <span>{labels.summary}</span>
                   </h2>
-                  <p className="text-[9.5pt] text-zinc-800 leading-relaxed text-justify">
+                  <p className="text-[9pt] text-zinc-800 leading-relaxed text-justify">
                     {summary}
                   </p>
                 </section>
@@ -114,12 +113,12 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
             case "experience":
               if (!experience || experience.length === 0) return null;
               return (
-                <section key="experience" className="space-y-2.5">
-                  <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
+                <section key="experience" className="space-y-1.5">
+                  <h2 className="text-[9.5pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 flex items-center justify-between">
                     <span>{labels.experience}</span>
                   </h2>
 
-                  <div className="space-y-2.5">
+                  <div className="space-y-1.5">
                     {experience.map((exp) => (
                       <div key={exp.id} className="break-inside-avoid">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline">
@@ -309,13 +308,8 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <div>
                           <span className="font-semibold text-zinc-900">{cert.name}</span>
-                          <span className="text-zinc-600 text-[8.5pt]"> — {cert.issuer}{" "}</span>
+                          <span className="text-zinc-600 text-[8.5pt]"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                         </div>
-                        {cert.date && (
-                          <span className="text-[8pt] text-zinc-500 font-mono ml-2 shrink-0">
-                            {cert.date}
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>
