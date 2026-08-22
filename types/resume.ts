@@ -197,9 +197,39 @@ export const ResumeSchema = z.object({
     "education",
     "certifications"
   ]),
+  section_titles: z.record(z.string(), z.string()).default({}).optional().describe("Títulos personalizados para las secciones"),
 });
 
 export type ResumeData = z.infer<typeof ResumeSchema>;
+
+/**
+ * Obtiene los títulos de las secciones considerando el idioma activo y cualquier personalización del usuario.
+ */
+export function getSectionLabels(data: ResumeData): {
+  summary: string;
+  skills: string;
+  experience: string;
+  projects: string;
+  education: string;
+  certifications: string;
+  present: string;
+  [key: string]: string;
+} {
+  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
+  const defaultLabels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const custom: Record<string, string> = (data.section_titles as Record<string, string>) || {};
+
+  return {
+    summary: custom.summary?.trim() || defaultLabels.summary,
+    skills: custom.skills?.trim() || defaultLabels.skills,
+    experience: custom.experience?.trim() || defaultLabels.experience,
+    projects: custom.projects?.trim() || defaultLabels.projects,
+    education: custom.education?.trim() || defaultLabels.education,
+    certifications: custom.certifications?.trim() || defaultLabels.certifications,
+    present: defaultLabels.present,
+    ...custom,
+  };
+}
 
 /**
  * Normaliza URLs de redes de contacto (LinkedIn, GitHub, Web personal).
@@ -315,6 +345,7 @@ export function getVisibleResumeData(data: ResumeData): ResumeData {
       };
     }),
     certifications: (data.certifications || []).filter((item) => !item.hidden),
+    section_titles: data.section_titles || {},
     custom_sections: (data.custom_sections || [])
       .filter((sec) => !sec.hidden)
       .map((sec) => ({

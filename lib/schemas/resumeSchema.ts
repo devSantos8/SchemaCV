@@ -195,7 +195,9 @@ export function mapRenderCvToSchemaCv(renderCvData: any): Partial<ResumeData> {
     projects,
     education,
     certifications,
-    section_order: [
+    section_titles: renderCvData?.meta?.section_titles || {},
+    hidden_sections: renderCvData?.meta?.hidden_sections || [],
+    section_order: renderCvData?.meta?.section_order || [
       "summary",
       "skills",
       "experience",
