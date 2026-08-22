@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+function sanitizeSupabaseUrl(url?: string): string {
+  if (!url) return "https://placeholder.supabase.co";
+  return url.trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
+}
+
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -19,8 +24,9 @@ export function isSupabaseConfigured(): boolean {
 export async function createClient() {
   const cookieStore = await cookies();
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = sanitizeSupabaseUrl(rawUrl);
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "placeholder-key";
 
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {

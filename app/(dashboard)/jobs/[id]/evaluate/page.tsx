@@ -37,6 +37,8 @@ import {
 import { useJobsStore } from "@/store/useJobsStore";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAISettingsStore } from "@/store/useAISettingsStore";
+import { useAuthStore } from "@/store/useAuthStore";
+import { AuthView } from "@/components/auth/AuthView";
 import type { EvaluationReport, ATSAuditRule } from "@/types/evaluator";
 import type { ApplicationStatus, Keyword } from "@/types/jobs";
 import { ScoreProjectorSimulator } from "@/components/jobs/evaluate/ScoreProjectorSimulator";
@@ -92,9 +94,20 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
   const { id } = use(params);
   const router = useRouter();
 
+  const { isAuthenticated, initSession } = useAuthStore();
   const { applications, updateApplication, saveEvaluation, getLatestEvaluation } = useJobsStore();
   const { profiles, resumeData, masterProfileData } = useResumeStore();
   const { enabled: aiEnabled, provider: aiProvider, apiKey: aiApiKey } = useAISettingsStore();
+
+  useEffect(() => {
+    initSession();
+  }, [initSession]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isAuthenticated, router]);
 
   const application = applications.find((a) => a.id === id);
 
@@ -143,6 +156,10 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
       handleRunEvaluation();
     }
   }, [application?.id, manualDescInput, selectedProfileId]);
+
+  if (!isAuthenticated) {
+    return <AuthView initialMode="login" />;
+  }
 
   if (!application) {
     return (

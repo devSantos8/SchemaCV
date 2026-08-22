@@ -1,5 +1,10 @@
 import { createBrowserClient } from "@supabase/ssr";
 
+function sanitizeSupabaseUrl(url?: string): string {
+  if (!url) return "https://placeholder.supabase.co";
+  return url.trim().replace(/\/rest\/v1\/?$/, "").replace(/\/+$/, "");
+}
+
 export function isSupabaseConfigured(): boolean {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -16,8 +21,9 @@ export function isSupabaseConfigured(): boolean {
 }
 
 export function createClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseUrl = sanitizeSupabaseUrl(rawUrl);
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || "placeholder-key";
 
   return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }

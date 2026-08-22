@@ -71,8 +71,8 @@ const DEFAULT_DEMO_USER: UserProfile = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      user: DEFAULT_DEMO_USER,
-      isAuthenticated: true,
+      user: null,
+      isAuthenticated: false,
       isAuthModalOpen: false,
       isSettingsModalOpen: false,
       authMode: "login",
@@ -333,7 +333,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: "schemacv-auth-v1",
+      name: "schemacv-auth-v2",
       storage: createJSONStorage(() => localStorage),
     }
   )
