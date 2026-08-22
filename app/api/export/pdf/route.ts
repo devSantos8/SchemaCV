@@ -17,11 +17,16 @@ export async function POST(req: NextRequest) {
 
     let documentHtml = "";
 
-    // Priorizar el HTML renderizado del cliente para fidelidad 1:1 o compilar con el exportador semántico
+    // Priorizar el HTML directo renderizado en el navegador para fidelidad visual 1:1 exacta,
+    // o compilar con el exportador semántico como fallback
     if (html && typeof html === "string" && html.trim().length > 50) {
       documentHtml = html;
     } else if (resumeData) {
-      documentHtml = generateTemplateHtml(resumeData as ResumeData, templateId as TemplateId, paperSize as PaperSize);
+      documentHtml = generateTemplateHtml(
+        resumeData as ResumeData,
+        templateId as TemplateId,
+        paperSize as PaperSize
+      );
     }
 
     if (!documentHtml) {
@@ -97,6 +102,18 @@ export async function POST(req: NextRequest) {
         background-color: white !important;
         color: #09090b !important;
         font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      ul.list-disc, .list-disc, .entry-bullets, ul {
+        list-style-type: disc !important;
+      }
+      li {
+        display: list-item !important;
+      }
+      .list-inside {
+        list-style-position: inside !important;
+      }
+      .list-outside {
+        list-style-position: outside !important;
       }
       .page-break-avoid {
         break-inside: avoid !important;

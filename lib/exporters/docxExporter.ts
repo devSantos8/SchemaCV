@@ -11,13 +11,14 @@ import {
   convertInchesToTwip,
   ExternalHyperlink,
 } from "docx";
-import { ResumeData, getVisibleResumeData } from "@/types/resume";
+import { ResumeData, getVisibleResumeData, getSectionLabels } from "@/types/resume";
 
 /**
  * Genera un documento Microsoft Word (.docx) nativo, 100% optimizado para ATS.
  */
 export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
   const resume = getVisibleResumeData(rawResume);
+  const labels = getSectionLabels(resume);
   const children: (Paragraph | ExternalHyperlink)[] = [];
 
   // 1. Encabezado / Nombre
@@ -124,7 +125,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
     switch (sectionKey) {
       case "summary":
         if (resume.summary) {
-          children.push(createSectionHeader("Resumen Profesional"));
+          children.push(createSectionHeader(labels.summary));
           children.push(
             new Paragraph({
               spacing: { after: 160 },
@@ -142,7 +143,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
 
       case "skills":
         if (resume.skills && resume.skills.length > 0) {
-          children.push(createSectionHeader("Competencias Técnicas"));
+          children.push(createSectionHeader(labels.skills));
           resume.skills.forEach((skillCat) => {
             children.push(
               new Paragraph({
@@ -168,7 +169,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
 
       case "experience":
         if (resume.experience && resume.experience.length > 0) {
-          children.push(createSectionHeader("Experiencia Laboral"));
+          children.push(createSectionHeader(labels.experience));
           resume.experience.forEach((exp) => {
             const dateStr = [exp.start_date, exp.end_date || (exp.current ? "Presente" : "")]
               .filter(Boolean)
@@ -244,7 +245,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
 
       case "projects":
         if (resume.projects && resume.projects.length > 0) {
-          children.push(createSectionHeader("Proyectos Destacados"));
+          children.push(createSectionHeader(labels.projects));
           resume.projects.forEach((proj) => {
             const dateStr = [proj.start_date, proj.end_date].filter(Boolean).join(" – ");
             const techStr = proj.technologies?.length ? ` (${proj.technologies.join(", ")})` : "";
@@ -324,7 +325,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
 
       case "education":
         if (resume.education && resume.education.length > 0) {
-          children.push(createSectionHeader("Educación"));
+          children.push(createSectionHeader(labels.education));
           resume.education.forEach((edu) => {
             const dateStr = [edu.start_date, edu.end_date || (edu.current ? "Presente" : "")]
               .filter(Boolean)
@@ -389,7 +390,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
 
       case "certifications":
         if (resume.certifications && resume.certifications.length > 0) {
-          children.push(createSectionHeader("Certificaciones"));
+          children.push(createSectionHeader(labels.certifications));
           resume.certifications.forEach((cert) => {
             children.push(
               new Paragraph({

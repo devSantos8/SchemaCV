@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   FileCode2,
   Download,
@@ -188,24 +188,42 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     }
   };
 
-  // Nombre de archivo ATS estandarizado: "CV_NombreApellido_Puesto"
-  const candidateCleanName = (resumeData.name || user?.name || "Candidato")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .split(/\s+/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join("");
+  // 1. Nombre de archivo ATS estandarizado y conciso: "CV_Nombre_Apellido_Puesto"
+  const candidateCleanName = useMemo(() => {
+    const rawName = (resumeData.name || user?.name || "Candidato")
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9\s]/g, "")
+      .split(/\s+/)
+      .filter(Boolean);
+    if (rawName.length === 0) return "Candidato";
+    if (rawName.length === 1) return rawName[0];
+    return `${rawName[0]}_${rawName[rawName.length - 1]}`;
+  }, [resumeData.name, user?.name]);
 
-  const candidateCleanRole = (activeProfile?.targetRole || resumeData?.headline || "Curriculum")
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .split(/\s+/)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join("");
+  const candidateCleanRole = useMemo(() => {
+    const roleSource = activeProfile?.name || activeProfile?.targetRole || resumeData?.headline || "CV";
+    return roleSource
+      .split(/[|/•,–-]/)[0]
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-zA-Z0-9\s]/g, "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("_") || "Profesional";
+  }, [activeProfile?.name, activeProfile?.targetRole, resumeData?.headline]);
 
-  const atsFileName = `CV_${candidateCleanName || "Candidato"}_${candidateCleanRole || "Profesional"}`;
+  const defaultAtsFileName = `CV_${candidateCleanName}_${candidateCleanRole}`;
+
+  // Estado para nombre de archivo personalizado editable por el usuario
+  const [customFileName, setCustomFileName] = useState<string | null>(null);
+  const [isEditingFileName, setIsEditingFileName] = useState(false);
+  const [tempFileName, setTempFileName] = useState("");
+
+  const atsFileName = (customFileName || defaultAtsFileName).replace(/[^a-zA-Z0-9_.-]/g, "_");
 
   // Exportar Word .docx
   const handleExportDocx = async () => {
@@ -539,17 +557,65 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           </div>
         </div>
 
-        {/* Nombre de Archivo ATS generado automáticamente */}
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground hover:text-foreground text-[11px] font-mono shadow-2xs backdrop-blur-md transition-all group select-all"
-          title="Nombre de archivo generado automáticamente según estándares ATS: CV_NombreApellido_Puesto"
-        >
-          <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
-          <span className="text-foreground font-semibold max-w-[170px] xl:max-w-[240px] truncate">
-            {atsFileName}
-          </span>
-          <span className="text-[10px] text-muted-foreground font-sans shrink-0">(.pdf / .docx)</span>
-        </div>
+        {/* Nombre de Archivo ATS generado y editable al hacer clic */}
+        {isEditingFileName ? (
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border-2 border-emerald-500 shadow-md">
+            <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <input
+              type="text"
+              value={tempFileName}
+              onChange={(e) => setTempFileName(e.target.value.replace(/[^a-zA-Z0-9_.-]/g, "_"))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (tempFileName.trim()) {
+                    setCustomFileName(tempFileName.trim());
+                  }
+                  setIsEditingFileName(false);
+                } else if (e.key === "Escape") {
+                  setIsEditingFileName(false);
+                }
+              }}
+              onBlur={() => {
+                if (tempFileName.trim()) {
+                  setCustomFileName(tempFileName.trim());
+                }
+                setIsEditingFileName(false);
+              }}
+              autoFocus
+              className="text-[11px] font-mono bg-transparent text-foreground outline-none w-[170px] xl:w-[240px] font-semibold"
+              placeholder="Nombre del archivo..."
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (tempFileName.trim()) {
+                  setCustomFileName(tempFileName.trim());
+                }
+                setIsEditingFileName(false);
+              }}
+              className="text-emerald-600 hover:text-emerald-700 p-0.5"
+              title="Guardar nombre"
+            >
+              <Check className="h-3 w-3" />
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => {
+              setTempFileName(atsFileName);
+              setIsEditingFileName(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground hover:text-foreground text-[11px] font-mono shadow-2xs backdrop-blur-md transition-all group cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
+            title="Clic para editar el nombre del archivo generado (.pdf / .docx)"
+          >
+            <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="text-foreground font-semibold max-w-[170px] xl:max-w-[240px] truncate">
+              {atsFileName}
+            </span>
+            <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+            <span className="text-[10px] text-muted-foreground font-sans shrink-0">(.pdf / .docx)</span>
+          </div>
+        )}
       </div>
 
       {/* 3. ZONA DERECHA: ACCIONES PRINCIPALES & EXPORTACIÓN */}
