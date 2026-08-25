@@ -49,7 +49,9 @@ import type { ApplicationStatus, Keyword } from "@/types/jobs";
 import { STATUS_LABELS } from "@/types/jobs";
 import type { EvaluationReport, ATSAuditRule } from "@/types/evaluator";
 import { AIChat } from "@/components/jobs/AIChat";
+import { buildResumeContext } from "@/lib/ai/prompts";
 import { ScoreProjectorSimulator } from "@/components/jobs/evaluate/ScoreProjectorSimulator";
+import { MatchKeywordsTab } from "@/components/jobs/evaluate/MatchKeywordsTab";
 import { runATSEvaluationPipeline } from "@/lib/ats";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -170,7 +172,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
   // Modo de visualización: Información de la vacante vs Evaluación ATS
   const [viewMode, setViewMode] = useState<"job_info" | "ats_evaluation">("job_info");
   const [activePrepSection, setActivePrepSection] = useState<"tailor" | "interview" | "cover_letter">("tailor");
-  const [activeAtsTab, setActiveAtsTab] = useState<"checklist" | "match" | "simulation">("checklist");
+  const [activeAtsTab, setActiveAtsTab] = useState<"match" | "checklist" | "simulation">("match");
   const [showChat, setShowChat] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string>("active");
   const [customPdfFile, setCustomPdfFile] = useState<File | null>(null);
@@ -196,7 +198,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onBack, showChat]);
 
-  // Cargar último reporte guardado
+  // Cargar último reporte guardado o autoevaluar si hay descripción
   useEffect(() => {
     if (application) {
       const existing = getLatestEvaluation(application.id);
@@ -444,6 +446,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   handleRunEvaluation("ats_evaluation");
                 } else {
                   setViewMode("ats_evaluation");
+                  setActiveAtsTab("match");
                 }
               }}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -452,15 +455,15 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                   : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
               }`}
             >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span>Evaluación ATS</span>
+              <Target className="h-3.5 w-3.5" />
+              <span>Comparativa CV & Evaluación ATS</span>
               {report && (
                 <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full font-bold ml-0.5 ${
                   viewMode === "ats_evaluation" 
                     ? "bg-emerald-700/60 text-white" 
                     : "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
                 }`}>
-                  {matchScore}%
+                  {matchScore}% Match
                 </span>
               )}
             </button>
@@ -619,6 +622,46 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       <Pencil className="h-3 w-3" />
                       <span>{isEditingDescription ? "Cerrar editor" : "Editar texto"}</span>
                     </button>
+                  </div>
+
+                  {/* ─── BANNER RESUMEN DE COMPARATIVA CON TU CV ─── */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-blue-500/5 to-transparent border border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm shrink-0 border border-emerald-500/20">
+                        {report ? `${report.matchScore}%` : <Target className="w-5 h-5" />}
+                      </div>
+                      <div className="space-y-0.5">
+                        <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                          <span>Afinidad con tu CV ({currentResumeData.name || "CV Activo"})</span>
+                          {report && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold">
+                              {report.atsScore >= 90 ? "100% ATS Pass" : `${report.atsScore}% ATS`}
+                            </span>
+                          )}
+                        </h4>
+                        <p className="text-[11px] text-zinc-500">
+                          {report
+                            ? `${report.requirements.filter((r) => r.matched).length} de ${report.requirements.length} requisitos respaldados en tu perfil.`
+                            : "Calcula el % de match, detecta palabras clave faltantes y verifica normas ATS."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (!report) {
+                          handleRunEvaluation("ats_evaluation");
+                        } else {
+                          setViewMode("ats_evaluation");
+                          setActiveAtsTab("match");
+                        }
+                      }}
+                      className="h-8 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 cursor-pointer shadow-xs gap-1.5"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      <span>Ver Comparativa y Sugerencias</span>
+                    </Button>
                   </div>
 
                   {/* Modo Edición o Contenido Estructurado */}
@@ -829,6 +872,19 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                     <div className="flex items-center gap-1.5 p-1 bg-zinc-100 dark:bg-zinc-800/60 rounded-2xl border border-zinc-200/60 dark:border-zinc-700/60 w-fit flex-wrap">
                       <button
                         type="button"
+                        onClick={() => setActiveAtsTab("match")}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                          activeAtsTab === "match"
+                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs font-bold"
+                            : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+                        }`}
+                      >
+                        <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                        <span>Comparativa y Fit Técnico ({report?.requirements?.length || 0})</span>
+                      </button>
+
+                      <button
+                        type="button"
                         onClick={() => setActiveAtsTab("checklist")}
                         className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
                           activeAtsTab === "checklist"
@@ -838,19 +894,6 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       >
                         <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                         <span>Normas ATS ({report?.auditRules?.length || 10})</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setActiveAtsTab("match")}
-                        className={`px-3 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-                          activeAtsTab === "match"
-                            ? "bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-xs font-bold"
-                            : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-                        }`}
-                      >
-                        <Target className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                        <span>Competencias y Palabras Clave ({report?.requirements?.length || 0})</span>
                       </button>
 
                       <button
@@ -1000,43 +1043,9 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
                       </div>
                     )}
 
-                    {/* ─── TAB 2: MATCH Y COMPETENCIAS ─── */}
-                    {activeAtsTab === "match" && (
-                      <div className="space-y-4">
-                        {report?.missingKeywords && report.missingKeywords.length > 0 && (
-                          <ScoreProjectorSimulator
-                            currentScore={report.matchScore}
-                            missingKeywords={report.missingKeywords}
-                          />
-                        )}
-
-                        <div className="space-y-2.5">
-                          <h4 className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                            Requisitos Detectados en la Oferta:
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {report?.requirements.map((req) => (
-                              <div
-                                key={req.id}
-                                className="p-3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between text-xs"
-                              >
-                                <span className="font-medium text-zinc-800 dark:text-zinc-200 truncate mr-2">
-                                  {req.text}
-                                </span>
-                                <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-md font-mono shrink-0 ${
-                                    req.matched
-                                      ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
-                                      : "bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300"
-                                  }`}
-                                >
-                                  {req.matched ? "Presente en CV" : "Falta en CV"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
+                    {/* ─── TAB 1: COMPARATIVA Y FIT TÉCNICO (MATCH) ─── */}
+                    {activeAtsTab === "match" && report && (
+                      <MatchKeywordsTab report={report} />
                     )}
 
                     {/* ─── TAB 3: SIMULACIÓN DE LECTURA DEL ROBOT ATS ─── */}
@@ -1234,7 +1243,7 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
           jobTitle={application.title}
           company={application.company}
           jobDescription={descInput}
-          resumeSummary={currentResumeData.summary || ""}
+          resumeSummary={buildResumeContext(currentResumeData)}
           onClose={() => setShowChat(false)}
         />
       )}

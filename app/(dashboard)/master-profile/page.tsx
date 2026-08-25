@@ -14,8 +14,14 @@ export default function MasterProfilePage() {
     initSession();
   }, [initSession]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isAuthenticated, router]);
+
   if (!isAuthenticated) {
-    return <AuthView />;
+    return <AuthView initialMode="login" />;
   }
 
   return (

@@ -28,6 +28,8 @@ export function resumeDataToYaml(data: ResumeData): string {
     },
     meta: {
       section_order: data.section_order,
+      ...(data.section_titles && Object.keys(data.section_titles).length > 0 ? { section_titles: data.section_titles } : {}),
+      ...(data.hidden_sections && data.hidden_sections.length > 0 ? { hidden_sections: data.hidden_sections } : {}),
     },
   };
 
@@ -150,6 +152,12 @@ export function yamlToResumeData(yamlStr: string): {
     // Conservar metadatos de orden si existen
     if (parsed.meta?.section_order && Array.isArray(parsed.meta.section_order)) {
       normalizedPartial.section_order = parsed.meta.section_order;
+    }
+    if (parsed.meta?.section_titles && typeof parsed.meta.section_titles === "object") {
+      normalizedPartial.section_titles = parsed.meta.section_titles;
+    }
+    if (parsed.meta?.hidden_sections && Array.isArray(parsed.meta.hidden_sections)) {
+      normalizedPartial.hidden_sections = parsed.meta.hidden_sections;
     }
 
     // Resumen directo de cv.sections.summary

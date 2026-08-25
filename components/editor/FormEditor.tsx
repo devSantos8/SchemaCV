@@ -26,8 +26,10 @@ import {
   CertificationEntry,
   SocialNetwork,
   normalizeSocialUrl,
+  getSectionLabels,
 } from "@/types/resume";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/TagInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -44,6 +46,7 @@ import { SectionOrganizer } from "./SectionOrganizer";
 export const FormEditor: React.FC = () => {
   const { resumeData, setResumeData } = useResumeStore();
   const hiddenSections = new Set(resumeData.hidden_sections || []);
+  const sectionLabels = getSectionLabels(resumeData);
 
   // Alternar visibilidad de sección completa
   const handleToggleSectionVisibility = (sectionId: string, e?: React.MouseEvent) => {
@@ -400,6 +403,43 @@ export const FormEditor: React.FC = () => {
     });
   };
 
+  // Reordenamiento de elementos principales dentro de cada sección
+  const handleMoveExperience = (index: number, direction: "up" | "down") => {
+    const list = [...(resumeData.experience || [])];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+    setResumeData({ experience: list });
+  };
+
+  const handleMoveProject = (index: number, direction: "up" | "down") => {
+    const list = [...(resumeData.projects || [])];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+    setResumeData({ projects: list });
+  };
+
+  const handleMoveEducation = (index: number, direction: "up" | "down") => {
+    const list = [...(resumeData.education || [])];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+    setResumeData({ education: list });
+  };
+
+  const handleMoveCertification = (index: number, direction: "up" | "down") => {
+    const list = [...(resumeData.certifications || [])];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+    setResumeData({ certifications: list });
+  };
+
   return (
     <div className="space-y-4 pb-12">
       <Accordion
@@ -488,7 +528,7 @@ export const FormEditor: React.FC = () => {
             <div className="space-y-1 pt-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Label className="text-xs font-semibold">Resumen Profesional (Bio / Summary)</Label>
+                  <Label className="text-xs font-semibold">{sectionLabels.summary}</Label>
                   {hiddenSections.has("summary") && (
                     <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.2 rounded border border-amber-500/20 font-medium">
                       Oculto en CV
@@ -621,7 +661,7 @@ export const FormEditor: React.FC = () => {
                   <Layers className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("skills") ? "line-through text-muted-foreground" : ""}>
-                  Habilidades Técnicas
+                  {sectionLabels.skills}
                 </span>
                 {hiddenSections.has("skills") && (
                   <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
@@ -684,7 +724,7 @@ export const FormEditor: React.FC = () => {
                   <Briefcase className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("experience") ? "line-through text-muted-foreground" : ""}>
-                  Experiencia Profesional
+                  {sectionLabels.experience}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.experience?.length || 0})
@@ -758,7 +798,7 @@ export const FormEditor: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {(resumeData.experience || []).map((exp) => {
+                {(resumeData.experience || []).map((exp, expIdx) => {
                   const isItemHidden = !!exp.hidden;
 
                   return (
@@ -781,6 +821,26 @@ export const FormEditor: React.FC = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={expIdx === 0}
+                            onClick={() => handleMoveExperience(expIdx, "up")}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                            title="Subir puesto"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={expIdx === ((resumeData.experience || []).length - 1)}
+                            onClick={() => handleMoveExperience(expIdx, "down")}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                            title="Bajar puesto"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -962,7 +1022,7 @@ export const FormEditor: React.FC = () => {
                   <FolderGit2 className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("projects") ? "line-through text-muted-foreground" : ""}>
-                  Proyectos
+                  {sectionLabels.projects}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.projects?.length || 0})
@@ -1036,7 +1096,7 @@ export const FormEditor: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {(resumeData.projects || []).map((proj) => {
+                {(resumeData.projects || []).map((proj, pIdx) => {
                   const isProjHidden = !!proj.hidden;
 
                   return (
@@ -1059,6 +1119,26 @@ export const FormEditor: React.FC = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={pIdx === 0}
+                            onClick={() => handleMoveProject(pIdx, "up")}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                            title="Subir proyecto"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={pIdx === ((resumeData.projects || []).length - 1)}
+                            onClick={() => handleMoveProject(pIdx, "down")}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                            title="Bajar proyecto"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1101,20 +1181,17 @@ export const FormEditor: React.FC = () => {
                             className="h-7 text-xs"
                           />
                         </div>
-                        <div className="space-y-1">
-                          <Label className="text-[11px]">Tecnologías (separadas por coma)</Label>
-                          <Input
-                            value={proj.technologies?.join(", ") || ""}
-                            onChange={(e) =>
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-[11px]">Tecnologías del Proyecto</Label>
+                          <TagInput
+                            value={proj.technologies || []}
+                            onChange={(newTechs) =>
                               handleUpdateProject(proj.id, {
-                                technologies: e.target.value
-                                  .split(",")
-                                  .map((t) => t.trim())
-                                  .filter(Boolean),
+                                technologies: newTechs,
                               })
                             }
-                            placeholder="React, TypeScript, Next.js, PostgreSQL"
-                            className="h-7 text-xs"
+                            placeholder="React, TypeScript, Next.js, PostgreSQL..."
+                            inputClassName="h-7 text-xs"
                           />
                         </div>
                         <div className="space-y-1">
@@ -1238,7 +1315,7 @@ export const FormEditor: React.FC = () => {
                   <GraduationCap className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("education") ? "line-through text-muted-foreground" : ""}>
-                  Educación
+                  {sectionLabels.education}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.education?.length || 0})
@@ -1312,7 +1389,7 @@ export const FormEditor: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                {(resumeData.education || []).map((edu) => {
+                {(resumeData.education || []).map((edu, eduIdx) => {
                   const isEduHidden = !!edu.hidden;
 
                   return (
@@ -1335,6 +1412,26 @@ export const FormEditor: React.FC = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={eduIdx === 0}
+                            onClick={() => handleMoveEducation(eduIdx, "up")}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                            title="Subir educación"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={eduIdx === ((resumeData.education || []).length - 1)}
+                            onClick={() => handleMoveEducation(eduIdx, "down")}
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 cursor-pointer"
+                            title="Bajar educación"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1538,7 +1635,7 @@ export const FormEditor: React.FC = () => {
                   <Award className="h-4 w-4" />
                 </div>
                 <span className={hiddenSections.has("certifications") ? "line-through text-muted-foreground" : ""}>
-                  Certificaciones
+                  {sectionLabels.certifications}
                 </span>
                 <span className="text-[10px] text-muted-foreground font-mono">
                   ({resumeData.certifications?.length || 0})
@@ -1612,7 +1709,7 @@ export const FormEditor: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                {(resumeData.certifications || []).map((cert) => {
+                {(resumeData.certifications || []).map((cert, cIdx) => {
                   const isCertHidden = !!cert.hidden;
                   const previewText = `${cert.name || "Certificación"}${cert.issuer ? ` — ${cert.issuer}` : ""}${cert.date ? ` (${cert.date})` : ""}`;
 
@@ -1624,25 +1721,45 @@ export const FormEditor: React.FC = () => {
                         : "border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700"
                         }`}
                     >
-                      <div className="flex gap-2 items-center">
+                      <div className="flex gap-1.5 items-center">
                         <Input
                           value={cert.name}
                           onChange={(e) => handleUpdateCertification(cert.id, { name: e.target.value })}
                           placeholder="Nombre (ej. AWS Solutions Architect)"
-                          className="h-7 text-xs w-2/5"
+                          className="h-7 text-xs flex-1"
                         />
                         <Input
                           value={cert.issuer}
                           onChange={(e) => handleUpdateCertification(cert.id, { issuer: e.target.value })}
                           placeholder="Emisor (ej. Amazon Web Services)"
-                          className="h-7 text-xs w-2/5"
+                          className="h-7 text-xs flex-1"
                         />
                         <Input
                           value={cert.date || ""}
                           onChange={(e) => handleUpdateCertification(cert.id, { date: e.target.value })}
                           placeholder="Año (ej. 2024)"
-                          className="h-7 text-xs w-1/5 font-mono"
+                          className="h-7 text-xs w-20 font-mono"
                         />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={cIdx === 0}
+                          onClick={() => handleMoveCertification(cIdx, "up")}
+                          className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 shrink-0 cursor-pointer"
+                          title="Subir certificación"
+                        >
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          disabled={cIdx === ((resumeData.certifications || []).length - 1)}
+                          onClick={() => handleMoveCertification(cIdx, "down")}
+                          className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 shrink-0 cursor-pointer"
+                          title="Bajar certificación"
+                        >
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"

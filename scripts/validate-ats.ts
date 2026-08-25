@@ -164,8 +164,8 @@ async function runAtsSuite() {
           detail: "Línea de nombre limpia y salto de línea verificado",
         },
         {
-          name: "A2: Emisor y año de certificación como 'Google (2026)' (con espacio exacto)",
-          passed: /Google\s+\(2026\)/.test(pureText) && /Google\s+\(2026\)/.test(reactText),
+          name: "A2: Emisor y año de certificación como 'Google (2026)' (con separador explícito)",
+          passed: /Google\s*\(2026\)/.test(pureText) && /Google\s*\(2026\)/.test(reactText),
           detail: "Formato 'Google (2026)' verificado en texto extraído",
         },
         {

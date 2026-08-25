@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import puppeteer from "puppeteer";
 import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
+import type { ResumeData, TemplateId, PaperSize } from "@/types/resume";
 
 export async function POST(req: NextRequest) {
   let browser = null;
@@ -16,11 +17,16 @@ export async function POST(req: NextRequest) {
 
     let documentHtml = "";
 
-    // Compilamos con el exportador puro semántico de alta fidelidad ATS
-    if (resumeData) {
-      documentHtml = generateTemplateHtml(resumeData, templateId, paperSize);
-    } else if (html) {
+    // Priorizar el HTML directo renderizado en el navegador para fidelidad visual 1:1 exacta,
+    // o compilar con el exportador semántico como fallback
+    if (html && typeof html === "string" && html.trim().length > 50) {
       documentHtml = html;
+    } else if (resumeData) {
+      documentHtml = generateTemplateHtml(
+        resumeData as ResumeData,
+        templateId as TemplateId,
+        paperSize as PaperSize
+      );
     }
 
     if (!documentHtml) {
@@ -61,9 +67,26 @@ export async function POST(req: NextRequest) {
     <title>${pdfDocumentTitle}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+              mono: ['Geist Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
+              serif: ['EB Garamond', 'Georgia', 'Times New Roman', 'serif'],
+            }
+          }
+        }
+      }
+    </script>
     <style>
+      :root {
+        --font-geist-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-geist-mono: 'Geist Mono', monospace;
+      }
       @page {
         size: ${isA4 ? "A4 portrait" : "letter portrait"};
         margin: 0;
@@ -78,10 +101,29 @@ export async function POST(req: NextRequest) {
         padding: 0;
         background-color: white !important;
         color: #09090b !important;
+        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      ul.list-disc, .list-disc, .entry-bullets, ul {
+        list-style-type: disc !important;
+      }
+      li {
+        display: list-item !important;
+      }
+      .list-inside {
+        list-style-position: inside !important;
+      }
+      .list-outside {
+        list-style-position: outside !important;
       }
       .page-break-avoid {
         break-inside: avoid !important;
         page-break-inside: avoid !important;
+      }
+      @media print {
+        body {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
       }
     </style>
   </head>
@@ -96,6 +138,8 @@ export async function POST(req: NextRequest) {
       waitUntil: "domcontentloaded",
       timeout: 30000,
     });
+
+    await page.evaluateHandle("document.fonts.ready");
 
     const pdfBuffer = await page.pdf({
       format: isA4 ? "A4" : "Letter",

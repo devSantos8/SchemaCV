@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { DashboardView } from "@/components/dashboard/DashboardView";
 import { AuthView } from "@/components/auth/AuthView";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useRouter } from "next/navigation";
@@ -14,19 +13,17 @@ export default function RootPage() {
     initSession();
   }, [initSession]);
 
-  if (!isAuthenticated) {
-    return <AuthView />;
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/dashboard");
+    } else {
+      router.replace("/login");
+    }
+  }, [isAuthenticated, router]);
+
+  if (isAuthenticated) {
+    return null;
   }
 
-  return (
-    <DashboardView
-      initialSection="home"
-      onOpenWorkspace={(profileId?: string) => {
-        router.push(profileId ? `/editor/${profileId}` : "/editor");
-      }}
-      onOpenSettings={() => {
-        router.push("/settings");
-      }}
-    />
-  );
+  return <AuthView initialMode="login" />;
 }

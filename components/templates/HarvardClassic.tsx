@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay, getSectionLabels } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -31,8 +31,7 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -50,25 +49,25 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
-        padding: "0.5in 0.6in",
-        fontSize: "10pt",
+        padding: "0.4in 0.5in",
+        fontSize: "9.5pt",
         fontFamily: "'Times New Roman', Georgia, Cambria, serif",
       }}
     >
       {/* Encabezado ATS Centrado Clásico */}
-      <header className="text-center pb-2 mb-2">
-        <h1 className="text-[20pt] font-bold tracking-tight text-zinc-950 uppercase mb-0.5">
+      <header className="text-center pb-1.5 mb-1.5">
+        <h1 className="text-[17pt] font-bold tracking-tight text-zinc-950 uppercase mb-0.5">
           {name || "Tu Nombre Completo"}
         </h1>
         {headline && (
-          <p className="text-[10pt] font-medium text-zinc-700 mb-1">
+          <p className="text-[9.5pt] font-medium text-zinc-700 mb-0.5">
             {headline}
           </p>
         )}
 
         {/* Línea de Contacto Única */}
         {contactItems.length > 0 && (
-          <div className="text-[9pt] text-zinc-700 flex flex-wrap justify-center items-center gap-x-2 gap-y-0.5 font-sans">
+          <div className="text-[8.5pt] text-zinc-700 flex flex-wrap justify-center items-center gap-x-2 gap-y-0.5 font-sans">
             {contactItems.map((item, idx) => (
               <React.Fragment key={idx}>
                 {item.url ? (
@@ -96,11 +95,11 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
           case "summary":
             if (!summary) return null;
             return (
-              <section key="summary" className="mb-3.5 page-break-avoid">
-                <h2 className="text-[10.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-1.5">
+              <section key="summary" className="mb-2 page-break-avoid">
+                <h2 className="text-[10pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-1">
                   {labels.summary}
                 </h2>
-                <p className="text-[9.5pt] leading-relaxed text-zinc-800 text-justify">
+                <p className="text-[9pt] leading-relaxed text-zinc-800 text-justify">
                   {summary}
                 </p>
               </section>
@@ -109,8 +108,8 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
           case "skills":
             if (!skills || skills.length === 0) return null;
             return (
-              <section key="skills" className="mb-3.5 page-break-avoid">
-                <h2 className="text-[10.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-1.5">
+              <section key="skills" className="mb-2 page-break-avoid">
+                <h2 className="text-[10pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-1">
                   {labels.skills}
                 </h2>
                 <div className="space-y-1 text-[9.5pt]">
@@ -127,32 +126,32 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
           case "experience":
             if (!experience || experience.length === 0) return null;
             return (
-              <section key="experience" className="mb-3.5">
-                <h2 className="text-[10.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-2">
+              <section key="experience" className="mb-2">
+                <h2 className="text-[10pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-1.5">
                   {labels.experience}
                 </h2>
-                <div className="space-y-2.5">
+                <div className="space-y-1.5">
                   {experience.map((exp) => (
                     <div key={exp.id} className="page-break-avoid">
                       <div className="flex justify-between items-baseline mb-0.5">
-                        <span className="font-bold text-[10pt] text-zinc-950">
+                        <span className="font-bold text-[9.5pt] text-zinc-950">
                           {exp.position}
                           <span className="font-medium text-zinc-700"> — {exp.company}</span>
-                          {exp.location && <span className="font-normal text-[9pt] text-zinc-600"> ({exp.location})</span>}
+                          {exp.location && <span className="font-normal text-[8.5pt] text-zinc-600"> ({exp.location})</span>}
                         </span>
-                        <span className="text-[9pt] text-zinc-600 font-sans shrink-0 font-medium">
+                        <span className="text-[8.5pt] text-zinc-600 font-sans shrink-0 font-medium">
                           {exp.start_date} – {exp.current ? labels.present : (exp.end_date || labels.present)}
                         </span>
                       </div>
 
                       {exp.summary && (
-                        <p className="text-[9pt] text-zinc-700 mb-1 leading-snug">
+                        <p className="text-[8.5pt] text-zinc-700 mb-0.5 leading-snug">
                           {exp.summary}
                         </p>
                       )}
 
                       {exp.highlights && exp.highlights.length > 0 && (
-                        <ul className="list-disc list-outside ml-4 space-y-0.5 text-[9.5pt] text-zinc-800 leading-snug">
+                        <ul className="list-disc list-outside ml-4 space-y-0.5 text-[9pt] text-zinc-800 leading-snug">
                           {exp.highlights.map((bullet, idx) => (
                             <li key={idx}>{bullet}</li>
                           ))}
@@ -167,16 +166,16 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
           case "projects":
             if (!projects || projects.length === 0) return null;
             return (
-              <section key="projects" className="mb-3.5">
-                <h2 className="text-[10.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-2">
+              <section key="projects" className="mb-2">
+                <h2 className="text-[10pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-1.5">
                   {labels.projects}
                 </h2>
-                <div className="space-y-2.5">
+                <div className="space-y-1.5">
                   {projects.map((proj) => (
                     <div key={proj.id} className="page-break-avoid">
                       <div className="flex justify-between items-baseline mb-0.5">
                         <div className="flex flex-wrap items-baseline gap-x-2">
-                          <span className="font-bold text-[10pt] text-zinc-950">
+                          <span className="font-bold text-[9.5pt] text-zinc-950">
                             {proj.name}
                           </span>
                           {proj.github_url && (
@@ -200,13 +199,13 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                             </a>
                           )}
                           {proj.technologies && proj.technologies.length > 0 && (
-                            <span className="text-[9pt] font-sans text-zinc-600 font-medium">
+                            <span className="text-[8.5pt] font-sans text-zinc-600 font-medium">
                               | {proj.technologies.join(", ")}
                             </span>
                           )}
                         </div>
                         {proj.start_date && (
-                          <span className="text-[9pt] text-zinc-600 font-sans shrink-0 font-medium">
+                          <span className="text-[8.5pt] text-zinc-600 font-sans shrink-0 font-medium">
                             {proj.start_date}
                             {proj.end_date ? ` – ${proj.end_date}` : ""}
                           </span>
@@ -214,13 +213,13 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                       </div>
 
                       {proj.description && (!proj.highlights || proj.highlights.length === 0 || proj.highlights[0] !== proj.description) && (
-                        <p className="text-[9pt] text-zinc-700 mb-1 leading-snug">
+                        <p className="text-[8.5pt] text-zinc-700 mb-0.5 leading-snug">
                           {proj.description}
                         </p>
                       )}
 
                       {proj.highlights && proj.highlights.length > 0 && (
-                        <ul className="list-disc list-outside ml-4 space-y-0.5 text-[9.5pt] text-zinc-800 leading-snug">
+                        <ul className="list-disc list-outside ml-4 space-y-0.5 text-[9pt] text-zinc-800 leading-snug">
                           {proj.highlights.map((bullet, idx) => (
                             <li key={idx}>{bullet}</li>
                           ))}
@@ -235,8 +234,8 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
           case "education":
             if (!education || education.length === 0) return null;
             return (
-              <section key="education" className="mb-3.5">
-                <h2 className="text-[10.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-2">
+              <section key="education" className="mb-2">
+                <h2 className="text-[10pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-900 pb-0.5 mb-1.5">
                   {labels.education}
                 </h2>
                 <div className="space-y-2">
@@ -293,13 +292,8 @@ export const HarvardClassic: React.FC<TemplateProps> = ({ data, paperSize = "let
                     <div key={cert.id} className="flex justify-between items-baseline">
                       <div>
                         <span className="font-bold text-zinc-900">{cert.name}</span>
-                        <span className="text-zinc-700"> — {cert.issuer}{" "}</span>
+                        <span className="text-zinc-700"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                       </div>
-                      {cert.date && (
-                        <span className="text-[9pt] text-zinc-600 font-sans font-medium">
-                          ({cert.date})
-                        </span>
-                      )}
                     </div>
                   ))}
                 </div>

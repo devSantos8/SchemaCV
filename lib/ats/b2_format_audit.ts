@@ -130,15 +130,17 @@ export function auditATSFormat(input: {
     }
   }
 
-  // Check 4.4: Delimitadores pegados sin espacio (ej: "Ingeniero I+DevOps", "Position|Company")
-  const fusedDelimiterRegex = /\b([a-zA-Z]{2,})([+|/|—])([a-zA-Z]{2,})\b/g;
+  // Check 4.4: Delimitadores de layout pegados sin espacio (ej: "Position|Company", "Section—Title")
+  const textWithoutUrls = rawText
+    .replace(/https?:\/\/[^\s]+/gi, "")
+    .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi, "")
+    .replace(/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\/[^\s]*/gi, "");
+
+  const fusedDelimiterRegex = /\b([a-zA-Z]{2,})([|—])([a-zA-Z]{2,})\b/g;
   let matchDelim: RegExpExecArray | null;
-  while ((matchDelim = fusedDelimiterRegex.exec(rawText)) !== null) {
+  while ((matchDelim = fusedDelimiterRegex.exec(textWithoutUrls)) !== null) {
     const fullMatch = matchDelim[0];
-    // Excluir C++, TCP/IP, CI/CD, I/O
-    if (!/^(?:C\+\+|TCP\/IP|CI\/CD|I\/O|PL\/SQL)$/i.test(fullMatch)) {
-      fusedTokensDetected.push(`Delimitador sin espacios ("${fullMatch}")`);
-    }
+    fusedTokensDetected.push(`Delimitador sin espacios ("${fullMatch}")`);
   }
 
   const hasFusedTokens = fusedTokensDetected.length > 0;

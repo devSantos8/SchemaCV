@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 export const ResumePreview: React.FC = () => {
   const { resumeData, activeTemplate, paperSize, zoom, setActiveTemplate } = useResumeStore();
   const docRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const [pageMetrics, setPageMetrics] = useState({
     occupancyPercent: 100,
@@ -36,20 +37,18 @@ export const ResumePreview: React.FC = () => {
   // Medición dinámica en tiempo real del tamaño de hoja y desbordamiento
   useEffect(() => {
     const measureDocument = () => {
-      if (!docRef.current) return;
+      const target = contentRef.current || docRef.current;
+      if (!target) return;
 
       // Dimensiones de 1 página a 96 DPI: Letter = 11in = 1056px | A4 = 297mm ≈ 1122.52px
       const singlePageHeightPx = isA4 ? (297 * 96) / 25.4 : 11 * 96;
       
-      // Medir la altura real del contenido del template hijo
-      const templateEl = docRef.current.firstElementChild as HTMLElement | null;
-      const actualHeight = templateEl
-        ? Math.max(templateEl.scrollHeight, templateEl.offsetHeight)
-        : docRef.current.scrollHeight;
+      // Medir la altura real del contenido del template
+      const actualHeight = Math.max(target.scrollHeight, target.offsetHeight);
 
       // Tolerancia prudente de 16px para subpixel rendering y bordes
       const isOver = actualHeight > singlePageHeightPx + 16;
-      const percent = Math.round((actualHeight / singlePageHeightPx) * 100);
+      const percent = Math.min(200, Math.max(10, Math.round((actualHeight / singlePageHeightPx) * 100)));
       const estimated = (actualHeight / singlePageHeightPx).toFixed(1);
       const count = isOver ? Math.max(2, Math.ceil((actualHeight - 16) / singlePageHeightPx)) : 1;
 
@@ -68,11 +67,10 @@ export const ResumePreview: React.FC = () => {
       measureDocument();
     });
 
-    if (docRef.current) {
+    if (contentRef.current) {
+      observer.observe(contentRef.current);
+    } else if (docRef.current) {
       observer.observe(docRef.current);
-      if (docRef.current.firstElementChild) {
-        observer.observe(docRef.current.firstElementChild);
-      }
     }
 
     return () => {
@@ -228,11 +226,13 @@ export const ResumePreview: React.FC = () => {
             )}
 
             {/* Renderizado de la plantilla activa */}
-            <TemplateRenderer
-              templateId={activeTemplate}
-              data={resumeData}
-              paperSize={paperSize}
-            />
+            <div ref={contentRef} id="cv-template-content" className="w-full h-auto">
+              <TemplateRenderer
+                templateId={activeTemplate}
+                data={resumeData}
+                paperSize={paperSize}
+              />
+            </div>
           </div>
         </div>
       </div>

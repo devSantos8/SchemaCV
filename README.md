@@ -12,6 +12,7 @@ Plataforma de creación y edición de currículums de alto rendimiento diseñada
 [![Zustand](https://img.shields.io/badge/State-Zustand-orange?style=flat-square)](https://zustand-demo.pmnd.rs/)
 [![ATS Score](https://img.shields.io/badge/ATS_Compatibility-100%25-emerald?style=flat-square)](https://github.com/devSantos8/schemacv)
 [![Author](https://img.shields.io/badge/Creator-Joain%20Monroy%20(devSantos8)-black?style=flat-square&logo=github)](https://github.com/devSantos8)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
 
 [Características](#características-principales) •
 [Perfil Base y Versiones](#perfil-base-maestro-y-versiones-de-cv) •
@@ -249,6 +250,39 @@ section_order:
 
 ---
 
+## Capa de Inteligencia Artificial (AI Engineering & Prompts)
+
+SchemaCV incorpora una capa de IA fuertemente tipada, versionada y centralizada en [`/lib/ai/prompts.ts`](lib/ai/prompts.ts) bajo el modelo **BYOK (Bring Your Own Key)** compatible con Google Gemini (`gemini-3.6-flash`), OpenAI (`gpt-4o-mini`) y Anthropic Claude (`claude-3-5-haiku`).
+
+### 🛡️ La Regla de Oro de Honestidad
+> **Principio Inquebrantable:** La IA de SchemaCV tiene **estrictamente prohibido inventar** empleos, métricas, herramientas, habilidades o proyectos que no existan en el CV del usuario. Su función es analizar, reestructurar y potenciar la trayectoria real. Si una palabra clave requerida no tiene respaldo en la experiencia del candidato, la IA la clasifica explícitamente como una brecha real y propone una ruta honesta de adquisición (proyectos personales, documentación o certificaciones).
+
+### 🧠 Catálogo de Skills de la IA
+
+| Skill | Prompt Builder | Temperatura | Salida | Propósito y Capacidades |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Extracción de Keywords** | `buildExtractKeywordsPrompt` | `0.2` | JSON Estricto | Extrae hasta 40 keywords normalizadas, categoría (hard/tool/soft), importancia (*required* vs *preferred*), años de experiencia y grado académico. |
+| **2. Explicación de Match** | `buildExplainMatchPrompt` | `0.4` | Texto | Explica el puntaje de afinidad, destaca 3 fortalezas clave, 3 brechas prioritarias y entrega un veredicto de postulación honesto. |
+| **3. Sugerencias de Mejora** | `buildSuggestImprovementsPrompt` | `0.3` | JSON Estricto | Analiza keywords faltantes: si tienen respaldo genera viñetas de ejemplo; si no, indica ruta de aprendizaje. |
+| **4. Narrativa de Auditoría ATS** | `buildATSAuditNarrativePrompt` | `0.3` | Texto | Traduce los fallos deterministas de `/lib/ats` en explicaciones comprensibles y pasos de corrección sin suavizar errores críticos. |
+| **5. Reescritor de Bullets** | `buildBulletRewriterPrompt` | `0.4` | JSON Estricto | Transforma viñetas aplicando la fórmula *[Verbo de acción] + [Métrica de impacto] + [Tecnología]* preservando cifras reales. |
+| **6. Carta de Presentación** | `buildCoverLetterPrompt` | `0.6` | Texto | Redacta cartas de presentación de 3 párrafos (máx 250 palabras) con gancho técnico y sin clichés genéricos. |
+| **7. Copilot de Postulación** | `buildChatSystemPrompt` | `0.7` | Streaming | Asistente conversacional con contexto total de la vacante y el CV para simulación de entrevistas STAR y asesoría de carrera. |
+
+### 🧪 Suite de Pruebas de Prompts
+```bash
+# Ejecutar validación unitaria de prompts, sanitizado y parsers
+npm run test:prompts
+```
+
+### 🛠️ Cómo Contribuir o Modificar Prompts
+1. **Edición Centralizada:** Modifica exclusivamente [`lib/ai/prompts.ts`](lib/ai/prompts.ts) (prohibidos los prompts inline dispersos en componentes).
+2. **Versionado Semver:** Incrementa `PROMPTS_VERSION` ante cualquier cambio en reglas, tono o esquemas de salida.
+3. **Validación Zod:** Si añades una nueva salida estructurada, define su correspondiente `ZodSchema` y función `parse*Output`.
+4. **Verificación:** Asegura que todos los tests pasen ejecutando `npm run test:prompts && npm run test:ats`.
+
+---
+
 ## Atajos de Teclado
 
 | Atajo | Acción |
@@ -262,7 +296,8 @@ section_order:
 ## Stack Tecnológico
 
 - **Framework:** Next.js 15+ (App Router)
-- **Interfaz y Componentes:** React 19, Radix UI, Lucide Icons
+- **Capa de IA:** Vercel AI SDK (`ai`), `@ai-sdk/google`, `@ai-sdk/openai`, `@ai-sdk/anthropic`
+- **Interfaz y Componentes:** React 19, Radix UI, Lucide Icons, Framer Motion
 - **Estilos:** Tailwind CSS v4
 - **Gestión de Estado:** Zustand con persistencia en LocalStorage
 - **Editor de Código:** CodeMirror 6 con soporte YAML
@@ -270,6 +305,25 @@ section_order:
 - **Generación DOCX:** docx
 - **Motor PDF:** Puppeteer y unpdf
 
-## Licencia
+---
 
-Este proyecto se distribuye bajo la licencia MIT. Consulta el archivo `LICENSE` para más información.
+## 👤 Autor y Créditos
+
+**SchemaCV** fue diseñado, desarrollado y es mantenido por:
+
+- **Autor:** Joain Monroy Santos
+- **GitHub:** [@devSantos8](https://github.com/devSantos8)
+- **LinkedIn:** [linkedin.com/in/jmonroys17](https://linkedin.com/in/jmonroys17)
+- **Email:** [joainsantos.m@gmail.com](mailto:joainsantos.m@gmail.com)
+
+---
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la **Licencia MIT**. Puedes usarlo, modificarlo y distribuirlo libremente manteniendo el aviso de derechos de autor original.
+
+Consulta el archivo [LICENSE](LICENSE) para el texto legal completo.
+
+```text
+Copyright (c) 2024-2026 Joain Monroy Santos (devSantos8)
+```

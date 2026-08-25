@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay, getSectionLabels } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -31,8 +31,7 @@ export const CareerChanger: React.FC<TemplateProps> = ({ data, paperSize = "lett
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -263,13 +262,8 @@ export const CareerChanger: React.FC<TemplateProps> = ({ data, paperSize = "lett
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <div>
                           <span className="font-bold text-zinc-900">{cert.name}</span>
-                          <span className="text-zinc-700"> — {cert.issuer}{" "}</span>
+                          <span className="text-zinc-700"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                         </div>
-                        {cert.date && (
-                          <span className="text-[8pt] font-mono text-zinc-500">
-                            ({cert.date})
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>

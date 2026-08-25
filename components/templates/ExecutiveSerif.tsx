@@ -1,5 +1,5 @@
 import React from "react";
-import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay } from "@/types/resume";
+import { ResumeData, PaperSize, SECTION_LABELS, ResumeLanguage, formatSocialDisplay, getSectionLabels } from "@/types/resume";
 
 interface TemplateProps {
   data: ResumeData;
@@ -25,14 +25,13 @@ export const ExecutiveSerif: React.FC<TemplateProps> = ({ data, paperSize = "let
       "summary",
       "experience",
       "education",
-      "skills",
       "projects",
+      "skills",
       "certifications",
     ],
   } = data;
 
-  const lang: ResumeLanguage = (data.language as ResumeLanguage) || "es";
-  const labels = SECTION_LABELS[lang] || SECTION_LABELS.es;
+  const labels = getSectionLabels(data);
 
   const contactItems: { label: string; url?: string }[] = [];
   if (location) contactItems.push({ label: location });
@@ -50,25 +49,25 @@ export const ExecutiveSerif: React.FC<TemplateProps> = ({ data, paperSize = "let
         paperSize === "a4" ? "max-w-[210mm]" : "max-w-[8.5in]"
       } mx-auto print:max-w-none print:m-0`}
       style={{
-        padding: "0.55in 0.65in",
-        fontSize: "10pt",
+        padding: "0.4in 0.5in",
+        fontSize: "9.5pt",
         fontFamily: "var(--font-garamond), Georgia, Cambria, 'Times New Roman', serif",
       }}
     >
       {/* Encabezado Formal Ejecutivo Centrado */}
-      <header className="text-center pb-2 mb-2">
-        <h1 className="text-[21pt] font-extrabold tracking-wide text-zinc-950 uppercase mb-1">
+      <header className="text-center pb-1.5 mb-1.5">
+        <h1 className="text-[17pt] font-extrabold tracking-wide text-zinc-950 uppercase mb-0.5">
           {name || "Nombre Completo"}
         </h1>
         {headline && (
-          <p className="text-[10pt] font-sans font-medium text-zinc-700 uppercase tracking-widest mb-1.5">
+          <p className="text-[9pt] font-sans font-medium text-zinc-700 uppercase tracking-widest mb-1">
             {headline}
           </p>
         )}
 
         {/* Contacto en una sola línea */}
         {contactItems.length > 0 && (
-          <div className="text-[9pt] font-sans text-zinc-600 flex flex-wrap justify-center items-center gap-x-2.5 gap-y-0.5">
+          <div className="text-[8.5pt] font-sans text-zinc-600 flex flex-wrap justify-center items-center gap-x-2.5 gap-y-0.5">
             {contactItems.map((item, idx) => (
               <React.Fragment key={idx}>
                 {item.url ? (
@@ -91,17 +90,17 @@ export const ExecutiveSerif: React.FC<TemplateProps> = ({ data, paperSize = "let
       </header>
 
       {/* Secciones estructuradas con espaciado generoso */}
-      <div className="space-y-3.5">
+      <div className="space-y-2">
         {section_order.map((sectionKey) => {
           switch (sectionKey) {
             case "summary":
               if (!summary) return null;
               return (
                 <section key="summary" className="page-break-avoid">
-                  <h2 className="text-[10.5pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-0.5 mb-1.5 font-sans">
+                  <h2 className="text-[10pt] font-bold uppercase tracking-wider text-zinc-900 border-b border-zinc-300 pb-0.5 mb-1 font-sans">
                     {labels.summary}
                   </h2>
-                  <p className="text-[9.5pt] leading-relaxed text-zinc-800 text-justify">
+                  <p className="text-[9pt] leading-relaxed text-zinc-800 text-justify">
                     {summary}
                   </p>
                 </section>
@@ -278,13 +277,8 @@ export const ExecutiveSerif: React.FC<TemplateProps> = ({ data, paperSize = "let
                       <div key={cert.id} className="flex justify-between items-baseline">
                         <div>
                           <span className="font-bold text-zinc-900">{cert.name}</span>
-                          <span className="text-zinc-700"> — {cert.issuer}{" "}</span>
+                          <span className="text-zinc-700"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                         </div>
-                        {cert.date && (
-                          <span className="text-[8.5pt] font-sans text-zinc-600">
-                            ({cert.date})
-                          </span>
-                        )}
                       </div>
                     ))}
                   </div>

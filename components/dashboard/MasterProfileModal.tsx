@@ -14,6 +14,7 @@ import { upsertMasterResumeToSupabase } from "@/lib/supabase/db";
 import { ResumeData } from "@/types/resume";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/TagInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -369,15 +370,14 @@ export const MasterProfileModal: React.FC = () => {
                         {cat.category} ({cat.skills.length} skills)
                       </span>
                     </div>
-                    <Input
-                      value={cat.skills.join(", ")}
-                      onChange={(e) => {
+                    <TagInput
+                      value={cat.skills || []}
+                      onChange={(newSkills) => {
                         const updated = [...formData.skills];
-                        updated[catIdx].skills = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                        updated[catIdx].skills = newSkills;
                         setFormData({ ...formData, skills: updated });
                       }}
-                      placeholder="Separadas por comas, ej: React, TypeScript, Docker"
-                      className="h-7 text-xs font-mono"
+                      placeholder="ej: React, TypeScript, Docker..."
                     />
                   </div>
                 ))}

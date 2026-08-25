@@ -105,12 +105,25 @@ export const JobApplicationSchema = z.object({
 export type JobApplication = z.infer<typeof JobApplicationSchema>;
 
 // Proveedor de IA
-export const AIProviderSchema = z.enum(['openai', 'anthropic']);
+export const AIProviderSchema = z.enum(['google', 'openai', 'anthropic']);
 export type AIProvider = z.infer<typeof AIProviderSchema>;
 
 export const AI_PROVIDER_LABELS: Record<AIProvider, string> = {
+  google: 'Google (Gemini)',
   openai: 'OpenAI (GPT-4o)',
   anthropic: 'Anthropic (Claude)',
+};
+
+export const AI_PROVIDER_DOCS: Record<AIProvider, string> = {
+  google: 'https://aistudio.google.com/app/apikey',
+  openai: 'https://platform.openai.com/api-keys',
+  anthropic: 'https://console.anthropic.com/keys',
+};
+
+export const AI_PROVIDER_PLACEHOLDERS: Record<AIProvider, string> = {
+  google: 'AIzaSy...',
+  openai: 'sk-...',
+  anthropic: 'sk-ant-...',
 };
 
 // Mensaje de chat

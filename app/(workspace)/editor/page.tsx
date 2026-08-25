@@ -71,8 +71,14 @@ export default function EditorPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo, canUndo, canRedo]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace("/login");
+    }
+  }, [isAuthenticated, router]);
+
   if (!isAuthenticated) {
-    return <AuthView />;
+    return <AuthView initialMode="login" />;
   }
 
   return (

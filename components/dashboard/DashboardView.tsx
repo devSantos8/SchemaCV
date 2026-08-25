@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import { JobTrackerView } from "@/components/jobs/JobTrackerView";
 import { AISettingsCard } from "@/components/settings/AISettingsCard";
 import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
+import { useAISettingsStore } from "@/store/useAISettingsStore";
+import { AI_PROVIDER_LABELS } from "@/types/jobs";
 import {
   Home,
   Plus,
@@ -85,9 +87,11 @@ import { resumeDataToYaml } from "@/lib/exporters/yamlExporter";
 import { SAMPLE_RESUME_FULLSTACK } from "@/lib/mock/sampleResumes";
 import { upsertMasterResumeToSupabase } from "@/lib/supabase/db";
 import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
+import { TemplatePreviewModal } from "@/components/templates/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { TagInput } from "@/components/ui/TagInput";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -314,6 +318,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     activeTemplate,
     paperSize,
     setPaperSize,
+    setResumeData,
   } = useResumeStore();
 
   const {
@@ -322,6 +327,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     logout,
     updateUserProfile,
   } = useAuthStore();
+
+  const {
+    enabled: aiEnabled,
+    provider: aiProvider,
+    apiKey: aiApiKey,
+  } = useAISettingsStore();
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -405,6 +416,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   // Estados de la Galería de Plantillas
   const [templatePreviewSample, setTemplatePreviewSample] = useState(true);
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState<string>("all");
+  const [enlargedTemplateId, setEnlargedTemplateId] = useState<TemplateId | null>(null);
 
   // Sincronizar formulario maestro si cambia el store
   useEffect(() => {
@@ -959,6 +972,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <Settings className="h-4 w-4 shrink-0" />
                   {!isSidebarCollapsed && <span>Configuración</span>}
                 </div>
+              </button>
+
+              {/* Boton Acceso Rapido Motor IA */}
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveSection("settings");
+                  setSettingsSubTab("account");
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`transition-all cursor-pointer ${
+                  isSidebarCollapsed
+                    ? `h-10 w-10 rounded-xl flex items-center justify-center ${
+                        aiEnabled && aiApiKey
+                          ? "bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800/80"
+                      }`
+                    : `w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold ${
+                        aiEnabled && aiApiKey
+                          ? "bg-violet-500/10 text-violet-700 dark:text-violet-300 border border-violet-500/20 hover:bg-violet-500/15"
+                          : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent"
+                      }`
+                }`}
+                title={
+                  aiEnabled && aiApiKey
+                    ? `Motor IA Conectado: ${AI_PROVIDER_LABELS[aiProvider]}`
+                    : "Configurar Motor IA (Google Gemini, OpenAI, Claude)"
+                }
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Cpu className="h-4 w-4 shrink-0 text-violet-500" />
+                  {!isSidebarCollapsed && <span>Motor IA</span>}
+                </div>
+                {!isSidebarCollapsed && (
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] font-mono px-1.5 py-0 ${
+                      aiEnabled && aiApiKey
+                        ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 font-bold"
+                        : "border-border text-muted-foreground bg-muted/40"
+                    }`}
+                  >
+                    {aiEnabled && aiApiKey
+                      ? (aiProvider === "google" ? "Gemini" : aiProvider === "openai" ? "GPT-4o" : "Claude")
+                      : "Inactivo"}
+                  </Badge>
+                )}
               </button>
             </div>
           </nav>
@@ -2435,46 +2495,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               </div>
                             </div>
 
-                            {/* Tags visuales interactivos */}
-                            {cat.skills.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5 pt-1">
-                                {cat.skills.map((skill, sIdx) => (
-                                  <Badge
-                                    key={sIdx}
-                                    variant="secondary"
-                                    className="text-[11px] font-mono py-1 px-2.5 rounded-lg flex items-center gap-1.5"
-                                  >
-                                    <span>{skill}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const updated = [...masterFormData.skills];
-                                        updated[catIdx].skills = updated[catIdx].skills.filter((_, i) => i !== sIdx);
-                                        setMasterFormData({ ...masterFormData, skills: updated });
-                                      }}
-                                      className="text-muted-foreground hover:text-rose-500 cursor-pointer"
-                                    >
-                                      <X className="h-3 w-3" />
-                                    </button>
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Input para edición rápida por comas */}
-                            <div className="space-y-1 pt-1">
-                              <Label className="text-[10px] text-muted-foreground font-mono">
-                                Habilidades separadas por comas:
-                              </Label>
-                              <Input
-                                value={cat.skills.join(", ")}
-                                onChange={(e) => {
+                            {/* Tags e Input Interactivo de Habilidades */}
+                            <div className="pt-1">
+                              <TagInput
+                                value={cat.skills || []}
+                                onChange={(newSkills) => {
                                   const updated = [...masterFormData.skills];
-                                  updated[catIdx].skills = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                  updated[catIdx].skills = newSkills;
                                   setMasterFormData({ ...masterFormData, skills: updated });
                                 }}
-                                placeholder="ej: TypeScript, React, Next.js, Node.js, Tailwind CSS, Docker..."
-                                className="h-8 text-xs font-mono rounded-xl bg-background"
+                                placeholder="ej: Python, Django, FastAPI, PostgreSQL..."
                               />
                             </div>
                           </div>
@@ -2663,18 +2693,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                               <div className="space-y-1">
                                 <Label className="text-[11px] font-bold text-muted-foreground flex items-center gap-0.5">
-                                  <span>Tecnologías (separadas por comas)</span>
+                                  <span>Tecnologías del Proyecto</span>
                                   <span className="text-[9px] font-normal">(Opcional)</span>
                                 </Label>
-                                <Input
-                                  value={proj.technologies?.join(", ") || ""}
-                                  onChange={(e) => {
+                                <TagInput
+                                  value={proj.technologies || []}
+                                  onChange={(newTechs) => {
                                     const updated = [...masterFormData.projects];
-                                    updated[idx].technologies = e.target.value.split(",").map((t) => t.trim()).filter(Boolean);
+                                    updated[idx].technologies = newTechs;
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
-                                  placeholder="ej: Next.js, React, Tailwind CSS, Turbopack"
-                                  className="h-8 text-xs font-mono rounded-xl"
+                                  placeholder="ej: Next.js, React, Tailwind CSS, Turbopack..."
                                 />
                               </div>
                             </div>
@@ -3321,7 +3350,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="max-w-6xl mx-auto space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
                 <div>
-                  <h2 className="text-base font-bold text-foreground">Catálogo de 6 Plantillas ATS</h2>
+                  <h2 className="text-base font-bold text-foreground">Catálogo de 12 Plantillas ATS</h2>
                   <p className="text-xs text-muted-foreground">
                     Diseños estructurados en 1 sola columna aprobados para superar filtros automatizados.
                   </p>
@@ -3349,8 +3378,55 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
               </div>
 
+              {/* Barra de Filtros por Categoría */}
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {[
+                  { id: "all", label: "Todas las Plantillas", count: 12 },
+                  { id: "chile", label: "🇨🇱 Chile & LatAm", count: 1 },
+                  { id: "tech", label: "💻 Tech & Silicon Valley", count: 3 },
+                  { id: "executive", label: "🏛️ Harvard & Corporativo", count: 3 },
+                  { id: "one_page", label: "🇨🇭 1 Página Estricta", count: 2 },
+                  { id: "builder", label: "🚀 Proyectos & AI", count: 4 },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setSelectedTemplateCategory(tab.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                      selectedTemplateCategory === tab.id
+                        ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs"
+                        : "bg-zinc-200/60 dark:bg-zinc-800/60 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-300/60 dark:hover:bg-zinc-700/60"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                        selectedTemplateCategory === tab.id
+                          ? "bg-zinc-700 dark:bg-zinc-200 text-zinc-100 dark:text-zinc-800"
+                          : "bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300"
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Grid de Plantillas */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {templateKeys.map((tempId) => {
+                {(
+                  (selectedTemplateCategory === "chile"
+                    ? ["chile_profesional"]
+                    : selectedTemplateCategory === "tech"
+                    ? ["tech_minimalist", "stanford_clean", "tech_compact"]
+                    : selectedTemplateCategory === "executive"
+                    ? ["harvard", "modern_executive", "executive_serif"]
+                    : selectedTemplateCategory === "one_page"
+                    ? ["compact_swiss", "tech_compact"]
+                    : selectedTemplateCategory === "builder"
+                    ? ["skills_first", "career_changer", "modern_minimal", "academic_international"]
+                    : templateKeys) as TemplateId[]
+                ).map((tempId: TemplateId) => {
                   const meta = TEMPLATE_METADATA[tempId];
                   const Icon = TEMPLATE_ICONS[tempId] || Terminal;
                   const isSelected = tempId === activeTemplate;
@@ -3359,8 +3435,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   return (
                     <div
                       key={tempId}
-                      className={`group rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:shadow-lg ${
-                        isSelected ? "border-emerald-600 ring-2 ring-emerald-500/20" : "border-border/80"
+                      onClick={() => setEnlargedTemplateId(tempId)}
+                      className={`group rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-xl hover:border-zinc-300 dark:hover:border-zinc-700 ${
+                        isSelected ? "border-emerald-600 ring-2 ring-emerald-500/20 shadow-md" : "border-border/80"
                       }`}
                     >
                       <div className="relative h-60 bg-zinc-100 dark:bg-zinc-900 border-b border-border/60 overflow-hidden flex justify-center items-start pt-2">
@@ -3373,23 +3450,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           </div>
                         </div>
 
+                        {/* Indicador de Hover para Ver Vista Previa */}
                         <div className="absolute inset-0 bg-zinc-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-2xs p-3">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              setActiveTemplate(tempId);
-                              onOpenWorkspace();
-                            }}
-                            className="w-full max-w-[160px] h-8 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
-                          >
-                            <Check className="h-3.5 w-3.5" />
-                            <span>Usar Plantilla</span>
-                          </Button>
+                          <div className="px-3.5 py-1.5 rounded-full bg-white/95 text-zinc-900 dark:bg-zinc-900/95 dark:text-zinc-100 text-xs font-bold shadow-lg flex items-center gap-1.5 transition-transform group-hover:scale-105">
+                            <Eye className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>Ver Vista Previa Ampliada</span>
+                          </div>
                         </div>
 
                         {isSelected && (
                           <div className="absolute top-2.5 left-2.5 z-10">
-                            <Badge className="bg-emerald-600 text-white font-bold text-[9px]">En Uso</Badge>
+                            <Badge className="bg-emerald-600 text-white font-bold text-[9px] gap-1 shadow-sm">
+                              <Check className="h-3 w-3" />
+                              <span>En Uso</span>
+                            </Badge>
                           </div>
                         )}
                       </div>
@@ -3413,13 +3487,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => {
-                            setActiveTemplate(tempId);
-                            onOpenWorkspace();
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEnlargedTemplateId(tempId);
                           }}
-                          className="w-full h-7 text-xs font-semibold rounded-lg"
+                          className="w-full h-8 text-xs font-semibold rounded-xl gap-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         >
-                          <span>Abrir en Editor</span>
+                          <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span>Ver Vista Previa</span>
                         </Button>
                       </div>
                     </div>
@@ -4230,6 +4305,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <DeleteAccountModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
+      />
+
+      {/* Modal de Vista Previa Ampliada de Plantilla ATS */}
+      <TemplatePreviewModal
+        open={Boolean(enlargedTemplateId)}
+        onOpenChange={(open) => {
+          if (!open) setEnlargedTemplateId(null);
+        }}
+        templateId={enlargedTemplateId}
+        onApplyTemplate={(tempId, withSample) => {
+          setActiveTemplate(tempId);
+          if (withSample) {
+            setResumeData(SAMPLE_RESUME_FULLSTACK);
+          }
+          setEnlargedTemplateId(null);
+          onOpenWorkspace();
+        }}
+        userResumeData={masterProfileData}
+        initialPaperSize={paperSize}
       />
     </div>
   );

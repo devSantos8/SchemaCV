@@ -10,6 +10,7 @@ import { useJobsStore } from "@/store/useJobsStore";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAISettingsStore } from "@/store/useAISettingsStore";
 import { AIChat } from "./AIChat";
+import { buildResumeContext } from "@/lib/ai/prompts";
 import { STATUS_LABELS, STATUS_COLORS, type ApplicationStatus } from "@/types/jobs";
 
 const STATUSES: ApplicationStatus[] = ["bookmarked", "applied", "interviewing", "offer", "rejected", "closed"];
@@ -437,7 +438,7 @@ export function JobDetailPanel({ applicationId, onClose }: JobDetailPanelProps) 
             jobTitle={title}
             company={company}
             jobDescription={description}
-            resumeSummary={resumeData.summary ?? ""}
+            resumeSummary={buildResumeContext(resumeData)}
             onClose={() => setShowChat(false)}
           />
         )}
