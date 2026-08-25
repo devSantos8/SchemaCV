@@ -242,7 +242,8 @@ export const TemplateGalleryModal: React.FC = () => {
               return (
                 <div
                   key={tempId}
-                  className={`group rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 hover:shadow-xl ${
+                  onClick={() => setFullscreenTemplate(tempId)}
+                  className={`group rounded-2xl border bg-card flex flex-col justify-between overflow-hidden transition-all duration-200 cursor-pointer hover:shadow-xl ${
                     isSelected
                       ? "border-emerald-600 ring-2 ring-emerald-500/20 shadow-md"
                       : "border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700"
@@ -268,33 +269,11 @@ export const TemplateGalleryModal: React.FC = () => {
                     </div>
 
                     {/* Overlay al hacer hover */}
-                    <div className="absolute inset-0 bg-zinc-950/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-2xs p-4">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => setFullscreenTemplate(tempId)}
-                        className="w-full max-w-[180px] h-8 text-xs font-semibold gap-1.5 shadow-md bg-white text-zinc-950 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-100"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                        <span>Vista Detallada</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleSelectTemplate(tempId, false)}
-                        className="w-full max-w-[180px] h-8 text-xs font-semibold gap-1.5 shadow-md bg-emerald-600 hover:bg-emerald-700 text-white"
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                        <span>Aplicar Plantilla</span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSelectTemplate(tempId, true)}
-                        className="w-full max-w-[180px] h-7 text-[11px] font-medium gap-1 bg-zinc-900/80 text-white border-zinc-600 hover:bg-zinc-800"
-                      >
-                        <Sparkles className="h-3 w-3 text-amber-400" />
-                        <span>Con Datos Ejemplo</span>
-                      </Button>
+                    <div className="absolute inset-0 bg-zinc-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-2xs p-4">
+                      <div className="px-3.5 py-1.5 rounded-full bg-white/95 text-zinc-900 dark:bg-zinc-900/95 dark:text-zinc-100 text-xs font-bold shadow-lg flex items-center gap-1.5 transition-transform group-hover:scale-105">
+                        <Eye className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Ver Vista Previa Ampliada</span>
+                      </div>
                     </div>
 
                     {/* Badge de Selección */}
@@ -346,29 +325,19 @@ export const TemplateGalleryModal: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Botones de acción */}
+                    {/* Botón de acción */}
                     <div className="pt-2 flex flex-col gap-1.5">
                       <Button
                         size="sm"
-                        variant={isSelected ? "outline" : "default"}
-                        onClick={() => handleSelectTemplate(tempId, false)}
-                        className={`w-full h-8 text-xs font-semibold rounded-xl ${
-                          isSelected
-                            ? "border-emerald-600/50 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5"
-                            : "bg-foreground text-background hover:opacity-90"
-                        }`}
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFullscreenTemplate(tempId);
+                        }}
+                        className="w-full h-8 text-xs font-semibold rounded-xl gap-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                       >
-                        {isSelected ? (
-                          <>
-                            <Check className="h-3.5 w-3.5 mr-1" />
-                            <span>Plantilla Seleccionada</span>
-                          </>
-                        ) : (
-                          <>
-                            <span>Usar {meta.name}</span>
-                            <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                          </>
-                        )}
+                        <Eye className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span>Ver Vista Previa</span>
                       </Button>
                     </div>
                   </div>
