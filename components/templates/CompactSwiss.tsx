@@ -62,7 +62,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
           </h1>
           {headline && (
             <p className="text-[8.5pt] font-mono font-medium text-zinc-700 mt-1 uppercase tracking-wider">
-              // {headline}
+              {`// ${headline}`}
             </p>
           )}
         </div>

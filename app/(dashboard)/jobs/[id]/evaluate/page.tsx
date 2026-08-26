@@ -150,45 +150,19 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
 
   const parsedJob = useMemo(() => parseJobDescription(manualDescInput || application?.description || ""), [manualDescInput, application?.description]);
 
-  // Si no hay reporte inicial y hay descripción, ejecutar la primera evaluación
-  useEffect(() => {
-    if (application && (manualDescInput || application.description) && !report && !isEvaluating) {
-      handleRunEvaluation();
-    }
-  }, [application?.id, manualDescInput, selectedProfileId]);
-
-  if (!isAuthenticated) {
-    return <AuthView initialMode="login" />;
-  }
-
-  if (!application) {
-    return (
-      <div className="min-h-screen bg-[#f8fafc] dark:bg-zinc-950 flex flex-col items-center justify-center p-8 text-center">
-        <p className="text-sm text-zinc-500 font-medium">Postulación no encontrada.</p>
-        <Button
-          onClick={() => router.push("/jobs")}
-          className="mt-4 text-xs font-bold rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-        >
-          Volver a postulaciones
-        </Button>
-      </div>
-    );
-  }
-
-  const { title, company, status, location, salary, url, portal } = application;
-  const isSaved = status === "bookmarked";
-
   const handleToggleSave = () => {
-    const nextStatus: ApplicationStatus = isSaved ? "applied" : "bookmarked";
+    if (!application) return;
+    const nextStatus: ApplicationStatus = application.status === "bookmarked" ? "applied" : "bookmarked";
     updateApplication(application.id, { status: nextStatus });
-    toast.success(isSaved ? "Movido a Postuladas" : "Guardado en Favoritos");
+    toast.success(application.status === "bookmarked" ? "Movido a Postuladas" : "Guardado en Favoritos");
   };
 
   const handleSendApplication = () => {
-    if (url) {
-      window.open(url, "_blank");
+    if (!application) return;
+    if (application.url) {
+      window.open(application.url, "_blank");
     }
-    if (status === "bookmarked") {
+    if (application.status === "bookmarked") {
       updateApplication(application.id, { status: "applied" });
     }
     toast.success("Abriendo enlace de la oferta...");
@@ -281,6 +255,34 @@ export default function EvaluatePage({ params }: EvaluatePageProps) {
   const failedRulesCount = report?.auditRules.filter((r) => r.status === "fail").length || 0;
   const warningRulesCount = report?.auditRules.filter((r) => r.status === "warning").length || 0;
   const passedRulesCount = report?.auditRules.filter((r) => r.status === "pass").length || 0;
+
+  // Si no hay reporte inicial y hay descripción, ejecutar la primera evaluación
+  useEffect(() => {
+    if (application && (manualDescInput || application.description) && !report && !isEvaluating) {
+      handleRunEvaluation();
+    }
+  }, [application?.id, manualDescInput, selectedProfileId]);
+
+  if (!isAuthenticated) {
+    return <AuthView initialMode="login" />;
+  }
+
+  if (!application) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] dark:bg-zinc-950 flex flex-col items-center justify-center p-8 text-center">
+        <p className="text-sm text-zinc-500 font-medium">Postulación no encontrada.</p>
+        <Button
+          onClick={() => router.push("/jobs")}
+          className="mt-4 text-xs font-bold rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+        >
+          Volver a postulaciones
+        </Button>
+      </div>
+    );
+  }
+
+  const { title, company, status, location, salary, url, portal } = application;
+  const isSaved = status === "bookmarked";
 
   // Visual tokens
   const atsScore = report?.atsScore ?? 0;

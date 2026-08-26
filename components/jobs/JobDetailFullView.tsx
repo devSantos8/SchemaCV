@@ -218,6 +218,25 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
 
   const parsedJob = useMemo(() => parseJobDescription(descInput), [descInput]);
 
+  // Generador de Carta de Presentación
+  const generatedCoverLetter = useMemo(() => {
+    const companyName = application?.company || "la empresa";
+    const jobTitle = application?.title || "la posición";
+    const candidateName = currentResumeData.name || user?.name || "Candidato";
+    const candidateRole = currentResumeData.headline || "Profesional";
+    const candidateEmail = currentResumeData.email || user?.email || "";
+    const candidatePhone = currentResumeData.phone || "";
+
+    return `Estimado equipo de selección de ${companyName},\n\nLe escribo para presentar formalmente mi postulación al cargo de ${jobTitle}. Con mi experiencia como ${candidateRole} y mis competencias en desarrollo de soluciones tecnológicas, considero que mi perfil se ajusta estrechamente a los requerimientos de ${companyName}.\n\nRevisando el perfil solicitado, poseo experiencia práctica en las tecnologías clave requeridas para este rol. Me he caracterizado por entregar proyectos de alto impacto, optimizar procesos de ingeniería y colaborar eficazmente en equipos multidisciplinarios.\n\nMe entusiasma la oportunidad de aportar valor en ${companyName} y estaré encantado de conversar más a fondo sobre cómo mi experiencia puede contribuir al éxito del equipo.\n\nQuedo a su entera disposición.\n\nAtentamente,\n${candidateName}\n${candidateEmail} | ${candidatePhone}`;
+  }, [application?.company, application?.title, currentResumeData, user]);
+
+  // Filtrado de reglas ATS
+  const filteredRules = useMemo(() => {
+    if (!report?.auditRules) return [];
+    if (filterRuleStatus === "all") return report.auditRules;
+    return report.auditRules.filter((r) => r.status === filterRuleStatus);
+  }, [report?.auditRules, filterRuleStatus]);
+
   if (!application) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -349,16 +368,6 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
     toast.success("Descripción actualizada y analizada");
   }
 
-  // Generador de Carta de Presentación
-  const generatedCoverLetter = useMemo(() => {
-    const candidateName = currentResumeData.name || user?.name || "Candidato";
-    const candidateRole = currentResumeData.headline || "Profesional";
-    const candidateEmail = currentResumeData.email || user?.email || "";
-    const candidatePhone = currentResumeData.phone || "";
-
-    return `Estimado equipo de selección de ${company},\n\nLe escribo para presentar formalmente mi postulación al cargo de ${title}. Con mi experiencia como ${candidateRole} y mis competencias en desarrollo de soluciones tecnológicas, considero que mi perfil se ajusta estrechamente a los requerimientos de ${company}.\n\nRevisando el perfil solicitado, poseo experiencia práctica en las tecnologías clave requeridas para este rol. Me he caracterizado por entregar proyectos de alto impacto, optimizar procesos de ingeniería y colaborar eficazmente en equipos multidisciplinarios.\n\nMe entusiasma la oportunidad de aportar valor en ${company} y estaré encantado de conversar más a fondo sobre cómo mi experiencia puede contribuir al éxito del equipo.\n\nQuedo a su entera disposición.\n\nAtentamente,\n${candidateName}\n${candidateEmail} | ${candidatePhone}`;
-  }, [company, title, currentResumeData, user]);
-
   const handleCopyCoverLetter = () => {
     navigator.clipboard.writeText(generatedCoverLetter);
     setCopiedCoverLetter(true);
@@ -385,13 +394,6 @@ export function JobDetailFullView({ applicationId, onBack }: JobDetailFullViewPr
   // Visual tokens de puntuación
   const atsScore = report?.atsScore ?? 0;
   const matchScore = report?.matchScore ?? (application.matchAnalysis?.score ?? 0);
-
-  // Filtrado de reglas ATS
-  const filteredRules = useMemo(() => {
-    if (!report?.auditRules) return [];
-    if (filterRuleStatus === "all") return report.auditRules;
-    return report.auditRules.filter((r) => r.status === filterRuleStatus);
-  }, [report?.auditRules, filterRuleStatus]);
 
   const failedRulesCount = report?.auditRules.filter((r) => r.status === "fail").length || 0;
   const warningRulesCount = report?.auditRules.filter((r) => r.status === "warning").length || 0;
