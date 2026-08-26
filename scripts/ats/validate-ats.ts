@@ -10,21 +10,21 @@ import puppeteer, { Browser } from "puppeteer";
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { extractText } from "unpdf";
-import { generateTemplateHtml } from "../lib/exporters/htmlTemplateExporter";
-import { TemplateId, SECTION_LABELS, ResumeData, getVisibleResumeData } from "../types/resume";
+import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
+import { TemplateId, SECTION_LABELS, ResumeData, getVisibleResumeData } from "@/types/resume";
 
-import { ChileProfesional } from "../components/templates/ChileProfesional";
-import { HarvardClassic } from "../components/templates/HarvardClassic";
-import { TechMinimalist } from "../components/templates/TechMinimalist";
-import { ModernExecutive } from "../components/templates/ModernExecutive";
-import { SkillsFirstBuilder } from "../components/templates/SkillsFirstBuilder";
-import { StanfordClean } from "../components/templates/StanfordClean";
-import { CompactSwiss } from "../components/templates/CompactSwiss";
-import { ExecutiveSerif } from "../components/templates/ExecutiveSerif";
-import { TechCompact } from "../components/templates/TechCompact";
-import { ModernMinimal } from "../components/templates/ModernMinimal";
-import { CareerChanger } from "../components/templates/CareerChanger";
-import { AcademicInternational } from "../components/templates/AcademicInternational";
+import { ChileProfesional } from "@/components/templates/ChileProfesional";
+import { HarvardClassic } from "@/components/templates/HarvardClassic";
+import { TechMinimalist } from "@/components/templates/TechMinimalist";
+import { ModernExecutive } from "@/components/templates/ModernExecutive";
+import { SkillsFirstBuilder } from "@/components/templates/SkillsFirstBuilder";
+import { StanfordClean } from "@/components/templates/StanfordClean";
+import { CompactSwiss } from "@/components/templates/CompactSwiss";
+import { ExecutiveSerif } from "@/components/templates/ExecutiveSerif";
+import { TechCompact } from "@/components/templates/TechCompact";
+import { ModernMinimal } from "@/components/templates/ModernMinimal";
+import { CareerChanger } from "@/components/templates/CareerChanger";
+import { AcademicInternational } from "@/components/templates/AcademicInternational";
 
 const TEMPLATES: { id: TemplateId; name: string; comp: React.FC<any> }[] = [
   { id: "chile_profesional", name: "Chile & LatAm Profesional", comp: ChileProfesional },

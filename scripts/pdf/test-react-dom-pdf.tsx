@@ -2,18 +2,18 @@ import puppeteer from "puppeteer";
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { extractText } from "unpdf";
-import { TechMinimalist } from "../components/templates/TechMinimalist";
-import { ChileProfesional } from "../components/templates/ChileProfesional";
-import { HarvardClassic } from "../components/templates/HarvardClassic";
-import { ModernExecutive } from "../components/templates/ModernExecutive";
-import { StanfordClean } from "../components/templates/StanfordClean";
-import { CompactSwiss } from "../components/templates/CompactSwiss";
-import { ExecutiveSerif } from "../components/templates/ExecutiveSerif";
-import { TechCompact } from "../components/templates/TechCompact";
-import { ModernMinimal } from "../components/templates/ModernMinimal";
-import { CareerChanger } from "../components/templates/CareerChanger";
-import { AcademicInternational } from "../components/templates/AcademicInternational";
-import { SkillsFirstBuilder } from "../components/templates/SkillsFirstBuilder";
+import { TechMinimalist } from "@/components/templates/TechMinimalist";
+import { ChileProfesional } from "@/components/templates/ChileProfesional";
+import { HarvardClassic } from "@/components/templates/HarvardClassic";
+import { ModernExecutive } from "@/components/templates/ModernExecutive";
+import { StanfordClean } from "@/components/templates/StanfordClean";
+import { CompactSwiss } from "@/components/templates/CompactSwiss";
+import { ExecutiveSerif } from "@/components/templates/ExecutiveSerif";
+import { TechCompact } from "@/components/templates/TechCompact";
+import { ModernMinimal } from "@/components/templates/ModernMinimal";
+import { CareerChanger } from "@/components/templates/CareerChanger";
+import { AcademicInternational } from "@/components/templates/AcademicInternational";
+import { SkillsFirstBuilder } from "@/components/templates/SkillsFirstBuilder";
 
 const sampleData = {
   name: "JOAIN MATIAS MONROY SANTOS",

@@ -1,8 +1,8 @@
 import fs from 'fs';
 import puppeteer from 'puppeteer';
 import { extractText } from 'unpdf';
-import { generateTemplateHtml } from '../lib/exporters/htmlTemplateExporter';
-import { TemplateId, ResumeData } from '../types/resume';
+import { generateTemplateHtml } from '@/lib/exporters/htmlTemplateExporter';
+import { TemplateId, ResumeData } from '@/types/resume';
 
 const TEMPLATE_LIST: { id: TemplateId; name: string }[] = [
   { id: "chile_profesional", name: "Chile & LatAm Profesional" },

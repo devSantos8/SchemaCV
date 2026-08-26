@@ -2,8 +2,9 @@ import puppeteer from 'puppeteer';
 import { extractText } from 'unpdf';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
-import { AcademicInternational } from '../components/templates/AcademicInternational';
-import { ResumeData } from '../types/resume';
+import { generateTemplateHtml } from '@/lib/exporters/htmlTemplateExporter';
+import { AcademicInternational } from '@/components/templates/AcademicInternational';
+import { ResumeData } from '@/types/resume';
 
 const USER_DATA: ResumeData = {
   name: "Joain Matias Monroy Santos",
@@ -80,7 +81,6 @@ const USER_DATA: ResumeData = {
   custom_sections: [],
   hidden_sections: [],
   section_order: [
-    "summary",
     "skills",
     "experience",
     "projects",
@@ -89,96 +89,54 @@ const USER_DATA: ResumeData = {
   ],
 };
 
-async function testExactRoute() {
+async function testUserCv() {
   const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-  const page = await browser.newPage();
+  
+  // 1. Test pure HTML exporter
+  const pureHtml = generateTemplateHtml(USER_DATA, 'academic_international', 'letter');
+  const page1 = await browser.newPage();
+  await page1.setContent(`<!DOCTYPE html><html><head><meta charset='UTF-8'><style>@page{size:letter portrait;margin:0;}*{box-sizing:border-box;}body{margin:0;padding:0;}</style></head><body>${pureHtml}</body></html>`, { waitUntil: 'domcontentloaded' });
+  const pdf1 = await page1.pdf({ format: 'Letter', printBackground: true, margin: { top: '0mm', bottom: '0mm', left: '0mm', right: '0mm' } });
+  const res1 = await extractText(new Uint8Array(pdf1));
+  console.log('Pure HTML exporter total pages:', res1.totalPages);
+  await page1.close();
 
-  // Exact reproduction of what Header.tsx sends when summary is present (in screenshot summary was visible!)
+  // 2. Test React component via client outerHTML simulation (which is what Header.tsx sends!)
   const reactMarkup = ReactDOMServer.renderToStaticMarkup(
     React.createElement(AcademicInternational, { data: USER_DATA, paperSize: 'letter' })
   );
-  const clientOuterHtml = `<div id="cv-printable-document" class="relative bg-white text-zinc-950 shadow-2xl rounded-sm transition-all border border-zinc-200/80 dark:border-zinc-800/80 print:shadow-none print:border-none print:rounded-none print:w-full print:max-w-none print:m-0 print:p-0 w-[8.5in] min-h-[11in]">${reactMarkup}</div>`;
-
-  const routeFullHtml = `<!DOCTYPE html>
+  
+  // In Header.tsx: html is printDoc.outerHTML where printDoc has min-h-[11in]
+  const clientHtml = `<div id="cv-printable-document" class="w-[8.5in] min-h-[11in]">${reactMarkup}</div>`;
+  
+  const page2 = await browser.newPage();
+  const routeHtml = `<!DOCTYPE html>
 <html lang="es">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV_Test</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-              mono: ['Geist Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
-              serif: ['EB Garamond', 'Georgia', 'Times New Roman', 'serif'],
-            }
-          }
-        }
-      }
-    </script>
     <style>
-      :root {
-        --font-geist-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-geist-mono: 'Geist Mono', monospace;
-      }
-      @page {
-        size: letter portrait;
-        margin: 0;
-      }
-      * {
-        box-sizing: border-box;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: white !important;
-        color: #09090b !important;
-        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      }
-      .page-break-avoid {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-      @media print {
-        body {
-          -webkit-print-color-adjust: exact;
-          print-color-adjust: exact;
-        }
-      }
+      @page { size: letter portrait; margin: 0; }
+      * { box-sizing: border-box; }
+      body { margin: 0; padding: 0; background: white; color: #09090b; }
+      .page-break-avoid { break-inside: avoid !important; }
     </style>
   </head>
   <body>
     <div id="print-root" style="width: 100%; margin: 0; padding: 0;">
-      ${clientOuterHtml}
+      ${clientHtml}
     </div>
   </body>
 </html>`;
 
-  await page.setContent(routeFullHtml, {
-    waitUntil: "domcontentloaded",
-    timeout: 30000,
-  });
-  await page.evaluateHandle("document.fonts.ready");
+  await page2.setContent(routeHtml, { waitUntil: 'networkidle0' as any });
+  const pdf2 = await page2.pdf({ format: 'Letter', printBackground: true, margin: { top: '0mm', bottom: '0mm', left: '0mm', right: '0mm' } });
+  const res2 = await extractText(new Uint8Array(pdf2));
+  console.log('React Client HTML total pages:', res2.totalPages);
+  await page2.close();
 
-  const pdfBuffer = await page.pdf({
-    format: "Letter",
-    printBackground: true,
-    margin: { top: "0mm", bottom: "0mm", left: "0mm", right: "0mm" },
-    preferCSSPageSize: true,
-  });
-
-  const { totalPages, text } = await extractText(new Uint8Array(pdfBuffer));
-  console.log(`\nExact Route Result: totalPages = ${totalPages}`);
-  console.log('Last page text lines:', text[text.length - 1]?.slice(0, 300));
   await browser.close();
 }
 
-testExactRoute();
+testUserCv();

@@ -4,8 +4,8 @@
  * 
  * Ejecución: npx tsx scripts/test-ats-evaluator.ts
  */
-import { runATSEvaluationPipeline, calculateProjectedScore } from "../lib/ats";
-import type { ResumeData } from "../types/resume";
+import { runATSEvaluationPipeline, calculateProjectedScore } from "@/lib/ats";
+import type { ResumeData } from "@/types/resume";
 
 const SAMPLE_ATS_COMPLIANT_CV: ResumeData = {
   name: "Carlos Mendoza",

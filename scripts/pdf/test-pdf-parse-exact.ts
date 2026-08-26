@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
 import { extractText } from "unpdf";
-import { generateTemplateHtml } from "../lib/exporters/htmlTemplateExporter";
+import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
 
 const sampleData = {
   name: "Joain Matias Monroy Santos",

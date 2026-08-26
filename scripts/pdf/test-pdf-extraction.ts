@@ -2,9 +2,9 @@ import puppeteer from "puppeteer";
 import { extractText } from "unpdf";
 import React from "react";
 import { renderToString } from "react-dom/server";
-import { TemplateRenderer } from "../components/templates/TemplateRenderer";
-import { generateTemplateHtml } from "../lib/exporters/htmlTemplateExporter";
-import type { ResumeData, TemplateId } from "../types/resume";
+import { TemplateRenderer } from "@/components/templates/TemplateRenderer";
+import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
+import type { ResumeData, TemplateId } from "@/types/resume";
 
 const AUDIT_RESUME: ResumeData = {
   name: "JOAIN MATIAS MONROY SANTOS",

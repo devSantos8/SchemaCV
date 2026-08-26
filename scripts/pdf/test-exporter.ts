@@ -1,9 +1,7 @@
 import puppeteer from 'puppeteer';
 import { extractText } from 'unpdf';
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
-import { TemplateRenderer } from '../components/templates/TemplateRenderer';
-import { TemplateId, ResumeData } from '../types/resume';
+import { generateTemplateHtml } from '@/lib/exporters/htmlTemplateExporter';
+import { ResumeData } from '@/types/resume';
 
 const USER_DATA: ResumeData = {
   name: "Joain Matias Monroy Santos",
@@ -89,111 +87,23 @@ const USER_DATA: ResumeData = {
   ],
 };
 
-const TEMPLATE_IDS: TemplateId[] = [
-  "academic_international",
-  "tech_minimalist",
-  "chile_profesional",
-  "harvard",
-  "modern_executive",
-  "compact_swiss",
-  "stanford_clean",
-  "skills_first",
-  "executive_serif",
-  "tech_compact",
-  "modern_minimal",
-  "career_changer",
-];
-
-async function testAllTemplatesRender() {
+async function testExporter() {
   const browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-  
-  console.log("Probando renderizado real de React templates en Puppeteer...\n");
+  const page = await browser.newPage();
 
-  for (const tid of TEMPLATE_IDS) {
-    const page = await browser.newPage();
-    
-    // Render React component directly
-    const reactHtml = ReactDOMServer.renderToStaticMarkup(
-      React.createElement(TemplateRenderer, {
-        templateId: tid,
-        data: USER_DATA,
-        paperSize: "letter",
-      })
-    );
+  const pureHtml = generateTemplateHtml(USER_DATA, 'academic_international', 'letter');
+  const fullHtml = `<!DOCTYPE html><html><head><meta charset='UTF-8'><style>@page{size:letter portrait;margin:0;}*{box-sizing:border-box;}body{margin:0;padding:0;}</style></head><body>${pureHtml}</body></html>`;
 
-    const fullHtml = `<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-              mono: ['Geist Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
-              serif: ['EB Garamond', 'Georgia', 'Times New Roman', 'serif'],
-            }
-          }
-        }
-      }
-    </script>
-    <style>
-      :root {
-        --font-geist-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-geist-mono: 'Geist Mono', monospace;
-      }
-      @page {
-        size: letter portrait;
-        margin: 0;
-      }
-      * {
-        box-sizing: border-box;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        background-color: white !important;
-        color: #09090b !important;
-        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      }
-      .page-break-avoid {
-        break-inside: avoid !important;
-        page-break-inside: avoid !important;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="print-root" style="width: 100%; margin: 0; padding: 0;">
-      ${reactHtml}
-    </div>
-  </body>
-</html>`;
+  await page.setContent(fullHtml, { waitUntil: 'domcontentloaded' });
+  const pdfBuffer = await page.pdf({
+    format: "Letter",
+    printBackground: true,
+    margin: { top: "0mm", bottom: "0mm", left: "0mm", right: "0mm" },
+  });
 
-    await page.setContent(fullHtml, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.evaluateHandle("document.fonts.ready");
-
-    const pdfBuffer = await page.pdf({
-      format: "Letter",
-      printBackground: true,
-      margin: { top: "0mm", bottom: "0mm", left: "0mm", right: "0mm" },
-      preferCSSPageSize: true,
-    });
-
-    const { totalPages } = await extractText(new Uint8Array(pdfBuffer));
-    console.log(`[${totalPages === 1 ? '✅ 1 PÁGINA' : '❌ ' + totalPages + ' PÁGINAS'}] ${tid}`);
-    await page.close();
-  }
-
+  const { totalPages } = await extractText(new Uint8Array(pdfBuffer));
+  console.log(`generateTemplateHtml Result: totalPages = ${totalPages}`);
   await browser.close();
 }
 
-testAllTemplatesRender();
+testExporter();

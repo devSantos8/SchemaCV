@@ -24,8 +24,8 @@ import {
   truncateText,
   sanitizePromptText,
   detectLanguage,
-} from "../lib/ai/prompts";
-import type { ResumeData } from "../types/resume";
+} from "@/lib/ai/prompts";
+import type { ResumeData } from "@/types/resume";
 
 const mockResume: ResumeData = {
   name: "Joain Matias Monroy",
