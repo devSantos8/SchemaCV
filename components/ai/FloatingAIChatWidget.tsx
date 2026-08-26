@@ -187,6 +187,7 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
 
 export function FloatingAIChatWidget() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [input, setInput] = useState("");
@@ -194,6 +195,10 @@ export function FloatingAIChatWidget() {
   const [streamingContent, setStreamingContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [inactivityNotice, setInactivityNotice] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { resumeData } = useResumeStore();
   const { user } = useAuthStore();
@@ -368,7 +373,7 @@ export function FloatingAIChatWidget() {
     }
   };
 
-  if (pathname?.startsWith("/editor")) {
+  if (!mounted || !pathname || pathname.startsWith("/editor") || pathname.includes("/editor/")) {
     return null;
   }
 

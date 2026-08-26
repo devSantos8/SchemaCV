@@ -359,7 +359,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1">
-                      <span className="text-xs font-bold text-foreground max-w-[140px] sm:max-w-[190px] truncate">
+                      <span className="text-xs font-bold text-foreground max-w-[120px] sm:max-w-[150px] lg:max-w-[130px] xl:max-w-[180px] truncate">
                         {activeProfile.name}
                       </span>
                       <ChevronDown className="h-3 w-3 text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -440,8 +440,8 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       </div>
 
       {/* 2. ZONA CENTRAL: CÁPSULA FLOTANTE DE PLANTILLA, TAMAÑO & HISTORIAL */}
-      <div className="hidden lg:flex items-center gap-2">
-        <div className="flex items-center bg-zinc-100/90 dark:bg-zinc-900/90 p-1 rounded-full border border-border/60 shadow-2xs backdrop-blur-md">
+      <div className="hidden xl:flex items-center gap-2 min-w-0">
+        <div className="flex items-center bg-zinc-100/90 dark:bg-zinc-900/90 p-1 rounded-full border border-border/60 shadow-2xs backdrop-blur-md shrink-0">
           {/* Selector de Plantilla ATS */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -561,7 +561,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
 
         {/* Nombre de Archivo ATS generado y editable al hacer clic */}
         {isEditingFileName ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border-2 border-emerald-500 shadow-md">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-zinc-900 border-2 border-emerald-500 shadow-md shrink-0">
             <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <input
               type="text"
@@ -584,7 +584,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
                 setIsEditingFileName(false);
               }}
               autoFocus
-              className="text-[11px] font-mono bg-transparent text-foreground outline-none w-[170px] xl:w-[240px] font-semibold"
+              className="text-[11px] font-mono bg-transparent text-foreground outline-none w-[130px] xl:w-[170px] 2xl:w-[220px] font-semibold"
               placeholder="Nombre del archivo..."
             />
             <button
@@ -607,26 +607,26 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
               setTempFileName(atsFileName);
               setIsEditingFileName(true);
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground hover:text-foreground text-[11px] font-mono shadow-2xs backdrop-blur-md transition-all group cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-zinc-100/90 dark:bg-zinc-900/90 border border-border/60 text-muted-foreground hover:text-foreground text-[11px] font-mono shadow-2xs backdrop-blur-md transition-all group cursor-pointer hover:border-emerald-500/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20 shrink-0"
             title="Clic para editar el nombre del archivo generado (.pdf / .docx)"
           >
             <FileText className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
-            <span className="text-foreground font-semibold max-w-[170px] xl:max-w-[240px] truncate">
+            <span className="text-foreground font-semibold max-w-[120px] xl:max-w-[170px] 2xl:max-w-[220px] truncate">
               {atsFileName}
             </span>
             <Pencil className="h-2.5 w-2.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-            <span className="text-[10px] text-muted-foreground font-sans shrink-0">(.pdf / .docx)</span>
+            <span className="text-[10px] text-muted-foreground font-sans shrink-0 hidden 2xl:inline">(.pdf / .docx)</span>
           </div>
         )}
       </div>
 
       {/* 3. ZONA DERECHA: ACCIONES PRINCIPALES & EXPORTACIÓN */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Toggle Copilot IA Sidebar (GitHub Copilot style) */}
         <button
           type="button"
           onClick={toggleChat}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
             isChatOpen
               ? "bg-violet-600 text-white border-violet-500 shadow-xs ring-2 ring-violet-500/20"
               : "text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border-border/60"
@@ -634,18 +634,18 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           title={isChatOpen ? "Ocultar Copilot IA" : "Abrir Copilot IA (Sidebar)"}
         >
           <Sparkles className={`h-3.5 w-3.5 ${isChatOpen ? "text-amber-300 animate-pulse" : "text-violet-500"}`} />
-          <span className="hidden sm:inline">Copilot IA</span>
+          <span className="hidden xl:inline">Copilot IA</span>
         </button>
 
         {/* Ingesta con IA */}
         <button
           type="button"
           onClick={() => setImportModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all"
+          className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all cursor-pointer"
           title="Importar CV o contenido con IA"
         >
           <Upload className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="hidden sm:inline">Importar CV</span>
+          <span className="hidden xl:inline">Importar CV</span>
         </button>
 
         {/* Botón de Guardar en Supabase / Nube */}
@@ -654,7 +654,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           size="sm"
           onClick={handleSaveResume}
           disabled={isSaving}
-          className={`h-8 px-3 text-xs gap-1.5 font-medium transition-all cursor-pointer ${
+          className={`h-8 px-2.5 sm:px-3 text-xs gap-1.5 font-medium transition-all cursor-pointer ${
             lastSavedAt
               ? "text-emerald-700 dark:text-emerald-300 border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20"
               : "border-border hover:bg-zinc-100 dark:hover:bg-zinc-900 text-foreground"
@@ -668,17 +668,17 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           {isSaving ? (
             <>
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              <span>Guardando...</span>
+              <span className="hidden sm:inline">Guardando...</span>
             </>
           ) : lastSavedAt ? (
             <>
               <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="hidden sm:inline font-semibold">Guardado</span>
+              <span className="hidden 2xl:inline font-semibold">Guardado</span>
             </>
           ) : (
             <>
               <Cloud className="h-3.5 w-3.5 text-blue-500" />
-              <span>Guardar</span>
+              <span className="hidden sm:inline">Guardar</span>
             </>
           )}
         </Button>

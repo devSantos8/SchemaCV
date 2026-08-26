@@ -12,6 +12,7 @@ import { MasterProfileModal } from "@/components/dashboard/MasterProfileModal";
 import { AuthView } from "@/components/auth/AuthView";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useAIChatStore } from "@/store/useAIChatStore";
 import { useRouter } from "next/navigation";
 
 export default function EditorPage() {
@@ -24,6 +25,7 @@ export default function EditorPage() {
     saveCurrentResumeToSupabase,
   } = useResumeStore();
   const { user, isAuthenticated, initSession } = useAuthStore();
+  const { isOpen: isChatOpen } = useAIChatStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -92,8 +94,14 @@ export default function EditorPage() {
 
       {/* 2. Área de Trabajo Principal Dividida (Editor Dual ⟷ Vista Previa ATS ⟷ Copilot Sidebar) */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden print:block print:overflow-visible relative">
-        {/* Panel Izquierdo: Editor Dual (Visual ⟷ YAML) */}
-        <section className="w-full md:w-[48%] lg:w-[45%] xl:w-[40%] 2xl:w-[38%] h-1/2 md:h-full shrink-0 flex flex-col print:hidden border-r border-border/60">
+        {/* Panel Izquierdo: Editor Dual (Visual ⟷ YAML) con ancho dinámico adaptativo */}
+        <section
+          className={`h-1/2 md:h-full shrink-0 flex flex-col print:hidden border-r border-border/60 transition-all duration-300 ease-in-out ${
+            isChatOpen
+              ? "w-full md:w-[35%] lg:w-[32%] xl:w-[28%] 2xl:w-[26%]"
+              : "w-full md:w-[48%] lg:w-[45%] xl:w-[42%] 2xl:w-[38%]"
+          }`}
+        >
           <DualModeEditor />
         </section>
 

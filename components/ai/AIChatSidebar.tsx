@@ -385,12 +385,12 @@ export function AIChatSidebar() {
       <aside
         className={`h-full shrink-0 border-l border-border/70 bg-card/95 backdrop-blur-xl flex flex-col transition-all duration-300 ease-in-out print:hidden ${
           isOpen
-            ? "w-full md:w-[380px] lg:w-[400px] xl:w-[430px] 2xl:w-[460px] opacity-100"
+            ? "w-full md:w-[300px] lg:w-[320px] xl:w-[340px] 2xl:w-[360px] opacity-100"
             : "w-0 opacity-0 overflow-hidden border-l-0"
         }`}
       >
         {isOpen && (
-          <div className="flex flex-col h-full w-full min-w-[340px]">
+          <div className="flex flex-col h-full w-full min-w-[280px]">
             {/* Header del Sidebar estilo Copilot */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-muted/40 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">

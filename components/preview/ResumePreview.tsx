@@ -83,7 +83,7 @@ export const ResumePreview: React.FC = () => {
       {/* 1. BANNER DE ESTADO DE 1 SOLA HOJA (ATS OPTIMIZATION INDICATOR) */}
       <div className="print:hidden shrink-0 z-20">
         <div
-          className={`px-4 py-2 border-b text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-colors ${
+          className={`px-3 py-1.5 border-b text-xs flex flex-wrap items-center justify-between gap-1.5 transition-colors ${
             pageMetrics.isOverflowing
               ? "bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200"
               : "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200"
@@ -177,7 +177,7 @@ export const ResumePreview: React.FC = () => {
       </div>
 
       {/* 2. ÁREA CON SCROLL INDEPENDIENTE PARA EL DOCUMENTO */}
-      <div className="flex-1 overflow-auto p-4 sm:p-8 flex justify-center items-start print:p-0 print:m-0 print:overflow-visible print:block scrollbar-thin">
+      <div className="flex-1 overflow-auto p-3 sm:p-6 pb-28 sm:pb-32 flex justify-center items-start print:p-0 print:m-0 print:overflow-visible print:block scrollbar-thin">
         {/* Contenedor de Zoom interactivo */}
         <div
           id="cv-zoom-container"
