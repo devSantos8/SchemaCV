@@ -12,9 +12,13 @@
   "private": false,
   "scripts": {
     "dev": "next dev",
+    "dev:safe": "npx tsx scripts/healthcheck.ts && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "check": "npx tsx scripts/healthcheck.ts",
+    "healthcheck": "npx tsx scripts/healthcheck.ts",
+    "verify:release": "npx tsx scripts/verify-release.ts",
     "test:ats": "npx tsx scripts/validate-ats.ts",
     "test:pages": "npx tsx scripts/test-page-count.ts",
     "test:prompts": "npx tsx scripts/validate-prompts.ts",

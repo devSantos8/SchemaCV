@@ -41,7 +41,11 @@ jobs:
       - name: Pruebas de esquemas y prompts (Zod)
         run: npm run test:prompts
 
-      # Paso 7: Compilar la aplicación en producción (Next.js Build)
+      # Paso 7: Validar consistencia de SemVer y CHANGELOG
+      - name: Validación de Versión y CHANGELOG
+        run: npm run verify:release
+
+      # Paso 8: Compilar la aplicación en producción (Next.js Build)
       - name: Build de producción (Next.js)
         run: npm run build
         env:
