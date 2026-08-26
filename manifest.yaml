@@ -1,0 +1,43 @@
+name: schemacv
+version: 0.1.0
+description: Plataforma de ingeniería de currículums técnicos y auditoría ATS con editor dual e IA Copilot
+author:
+  name: Joain Monroy Santos
+  email: joainsantos.m@gmail.com
+  url: https://github.com/devSantos8
+
+repository:
+  type: git
+  url: https://github.com/devSantos8/schemacv.git
+
+runtime:
+  framework: nextjs
+  engine: nodejs
+  node_version: "20.x"
+  target: standalone
+
+ats_engine:
+  version: "1.0.0"
+  rules_count: 12
+  supported_templates_count: 12
+  templates:
+    - chile_profesional
+    - harvard_classic
+    - tech_minimalist
+    - modern_executive
+    - skills_first
+    - stanford_clean
+    - compact_swiss
+    - executive_serif
+    - tech_compact
+    - modern_minimal
+    - career_changer
+    - academic_international
+  export_formats:
+    - pdf
+    - docx
+    - html
+
+integrations:
+  database: supabase
+  ai_copilot: google-gemini

@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import fs from "fs";
 import path from "path";
+import yaml from "yaml";
 
 const c = {
   reset: "\x1b[0m",
@@ -15,7 +16,8 @@ const c = {
 export function verifyReleaseConsistency(): { passed: boolean; message: string; details?: string[] } {
   const packageJsonPath = path.resolve(process.cwd(), "package.json");
   const changelogPath = path.resolve(process.cwd(), "CHANGELOG.md");
-  const manifestPath = path.resolve(process.cwd(), "lib/version.ts");
+  const manifestYamlPath = path.resolve(process.cwd(), "manifest.yaml");
+  const versionModulePath = path.resolve(process.cwd(), "lib/version.ts");
 
   const errors: string[] = [];
 
@@ -33,7 +35,35 @@ export function verifyReleaseConsistency(): { passed: boolean; message: string; 
     errors.push(`La versión en package.json ("${version}") no cumple con el estándar Semantic Versioning (X.Y.Z).`);
   }
 
-  // 2. Validar CHANGELOG.md
+  // 2. Validar manifest.yaml
+  if (!fs.existsSync(manifestYamlPath)) {
+    errors.push("No se encontró el archivo manifest.yaml en la raíz.");
+  } else {
+    try {
+      const manifestContent = fs.readFileSync(manifestYamlPath, "utf8");
+      const manifest = yaml.parse(manifestContent);
+
+      if (!manifest || typeof manifest !== "object") {
+        errors.push("manifest.yaml está vacío o no tiene una estructura YAML válida.");
+      } else {
+        if (manifest.version !== version) {
+          errors.push(
+            `Desfase de versión: manifest.yaml tiene '${manifest.version}' pero package.json tiene '${version}'.`
+          );
+        }
+        if (!manifest.name) {
+          errors.push("manifest.yaml debe incluir el campo 'name'.");
+        }
+        if (!manifest.ats_engine || typeof manifest.ats_engine !== "object") {
+          errors.push("manifest.yaml debe incluir la sección 'ats_engine'.");
+        }
+      }
+    } catch (parseErr: any) {
+      errors.push(`Error de sintaxis al parsear manifest.yaml: ${parseErr.message}`);
+    }
+  }
+
+  // 3. Validar CHANGELOG.md
   if (!fs.existsSync(changelogPath)) {
     errors.push("No se encontró el archivo CHANGELOG.md.");
   } else {
@@ -47,28 +77,28 @@ export function verifyReleaseConsistency(): { passed: boolean; message: string; 
     }
   }
 
-  // 3. Validar lib/version.ts (Manifiesto de la aplicación)
-  if (!fs.existsSync(manifestPath)) {
-    errors.push("No se encontró el archivo de manifiesto lib/version.ts.");
+  // 4. Validar lib/version.ts (Módulo TypeScript)
+  if (!fs.existsSync(versionModulePath)) {
+    errors.push("No se encontró el módulo lib/version.ts.");
   }
 
   if (errors.length > 0) {
     return {
       passed: false,
-      message: `Inconsistencia en versión o CHANGELOG (${errors.length} problemas detectados).`,
+      message: `Inconsistencia de versión detectada (${errors.length} error(es)).`,
       details: errors,
     };
   }
 
   return {
     passed: true,
-    message: `Versión v${version} y CHANGELOG.md verificados y sincronizados.`,
+    message: `Versión v${version} sincronizada en package.json, manifest.yaml y CHANGELOG.md.`,
   };
 }
 
 if (require.main === module) {
   console.log(`\n${c.cyan}${c.bold}======================================================================${c.reset}`);
-  console.log(`${c.cyan}${c.bold}            VERIFICACIÓN DE RELEASE, MANIFIESTO Y CHANGELOG           ${c.reset}`);
+  console.log(`${c.cyan}${c.bold}            VERIFICACIÓN DE RELEASE, MANIFEST Y CHANGELOG             ${c.reset}`);
   console.log(`${c.cyan}${c.bold}======================================================================${c.reset}\n`);
 
   const result = verifyReleaseConsistency();
@@ -81,7 +111,7 @@ if (require.main === module) {
     if (result.details) {
       result.details.forEach((d) => console.log(`  ${c.red}- ${d}${c.reset}`));
     }
-    console.log(`\n  ${c.yellow}Actualiza CHANGELOG.md o package.json antes de continuar.${c.reset}\n`);
+    console.log(`\n  ${c.yellow}Asegúrate de que package.json, manifest.yaml y CHANGELOG.md tengan la misma versión.${c.reset}\n`);
     process.exit(1);
   }
 }
