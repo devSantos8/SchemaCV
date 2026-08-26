@@ -225,10 +225,6 @@ export function FloatingAIChatWidget() {
 
   const candidateName = resumeData.name || user?.name || "profesional";
 
-  if (pathname?.startsWith("/editor")) {
-    return null;
-  }
-
   // Comprobar inactividad al abrir el chat
   useEffect(() => {
     if (isOpen) {
@@ -371,6 +367,10 @@ export function FloatingAIChatWidget() {
       handleSendMessage();
     }
   };
+
+  if (pathname?.startsWith("/editor")) {
+    return null;
+  }
 
   return (
     <>
