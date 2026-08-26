@@ -184,7 +184,7 @@ function checkESLint() {
 // ─── 4. Validación de la Capa de Prompts y Schemas Zod ──────────────────────
 function checkAIPromptsAndSchemas() {
   try {
-    const output = execSync("npx tsx scripts/validate-prompts.ts", { stdio: "pipe", encoding: "utf8" });
+    const output = execSync("npx tsx scripts/ai/validate-prompts.ts", { stdio: "pipe", encoding: "utf8" });
     const passedAll = output.includes("TODAS LAS PRUEBAS DE LA CAPA DE PROMPTS PASARON EXITOSAMENTE (10/10)");
     
     return {
@@ -194,7 +194,7 @@ function checkAIPromptsAndSchemas() {
   } catch (err: any) {
     return {
       passed: false,
-      message: "Error al ejecutar 'scripts/validate-prompts.ts'",
+      message: "Error al ejecutar 'scripts/ai/validate-prompts.ts'",
       details: [(err.stdout || "").slice(-300)],
       fileLocation: "lib/ai/prompts.ts",
       fixSuggestion: "Verifica la consistencia entre los esquemas Zod y los builders de prompts.",

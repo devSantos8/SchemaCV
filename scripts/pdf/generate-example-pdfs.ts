@@ -8,11 +8,11 @@
 import fs from "fs";
 import path from "path";
 import puppeteer from "puppeteer";
-import { generateTemplateHtml } from "../lib/exporters/htmlTemplateExporter";
-import { TemplateId, ResumeData } from "../types/resume";
+import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
+import { TemplateId, ResumeData } from "@/types/resume";
 
-const SAMPLE_DATA_PATH = path.join(__dirname, "../examples/sample_junior_dev.json");
-const OUTPUT_DIR = path.join(__dirname, "../examples/pdf");
+const SAMPLE_DATA_PATH = path.resolve(process.cwd(), "examples/sample_junior_dev.json");
+const OUTPUT_DIR = path.resolve(process.cwd(), "examples/pdf");
 
 const ALL_TEMPLATES: { id: TemplateId; filename: string; title: string }[] = [
   { id: "harvard", filename: "01_classic_dense_harvard.pdf", title: "Classic Dense (Harvard)" },

@@ -2,8 +2,8 @@ import puppeteer from "puppeteer";
 import { extractText } from "unpdf";
 import fs from "fs";
 import path from "path";
-import { generateTemplateHtml } from "../lib/exporters/htmlTemplateExporter";
-import { ResumeData, TemplateId } from "../types/resume";
+import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
+import { ResumeData, TemplateId } from "@/types/resume";
 
 const SAMPLE_USER_CV: ResumeData = {
   name: "Joain Matias Monroy Santos",

@@ -1,54 +1,43 @@
-name: CI - Integración Continua
+name: CI - Integracion Continua
 
-# 1. DISPARADOR (Trigger): Cuándo se ejecuta este pipeline
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
 
-# 2. TRABAJOS (Jobs): Tareas que se ejecutarán en paralelo o secuencia
 jobs:
   validate-and-build:
     name: Lint, Typecheck, Tests y Build
-    runs-on: ubuntu-latest # Sistema operativo de la máquina virtual
+    runs-on: ubuntu-latest
 
     steps:
-      # Paso 1: Clonar el código del repositorio en la máquina virtual
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
-      # Paso 2: Instalar Node.js versión 20 y activar caché de npm
       - name: Configurar Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm' # Guarda en caché node_modules para acelerar futuros runs
+          cache: 'npm'
 
-      # Paso 3: Instalar dependencias exactas y limpias
       - name: Instalar dependencias
         run: npm ci
 
-      # Paso 4: Validar tipos de TypeScript sin generar archivos
-      - name: Verificación de tipos TypeScript (tsc)
+      - name: Verificacion de tipos TypeScript (tsc)
         run: npx tsc --noEmit
 
-      # Paso 5: Ejecutar el Linter para revisar calidad de código
-      - name: Análisis de código (ESLint)
+      - name: Analisis de codigo (ESLint)
         run: npm run lint
 
-      # Paso 6: Validar esquemas y prompts de IA
       - name: Pruebas de esquemas y prompts (Zod)
         run: npm run test:prompts
 
-      # Paso 7: Validar consistencia de SemVer y CHANGELOG
-      - name: Validación de Versión y CHANGELOG
+      - name: Validacion de Version y CHANGELOG
         run: npm run verify:release
 
-      # Paso 8: Compilar la aplicación en producción (Next.js Build)
-      - name: Build de producción (Next.js)
+      - name: Build de produccion (Next.js)
         run: npm run build
         env:
-          # Variables ficticias seguras solo para que Next.js compile sin quejarse
           NEXT_PUBLIC_SUPABASE_URL: "https://placeholder-project.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key-for-ci-build"

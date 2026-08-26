@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Script CLI: ats:evaluate
  * Ejecuta la batería de auditoría ATS completa por línea de comandos.
  * 
@@ -9,8 +9,8 @@
 import { readFileSync, existsSync, writeFileSync } from "fs";
 import path from "path";
 import { extractText } from "unpdf";
-import { runATSEvaluationPipeline } from "../lib/ats";
-import type { ResumeData } from "../types/resume";
+import { runATSEvaluationPipeline } from "@/lib/ats";
+import type { ResumeData } from "@/types/resume";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -143,7 +143,7 @@ async function main() {
   // Puntos Críticos
   if (report.criticalPoints.length > 0) {
     console.log("⚠️  PUNTOS CRÍTICOS DETECTADOS:");
-    report.criticalPoints.forEach((cp, idx) => {
+    report.criticalPoints.forEach((cp: any, idx: number) => {
       console.log(`  ${idx + 1}. [${cp.type}] ${cp.title}`);
       console.log(`     Detalle: ${cp.description}`);
       console.log(`     Acción : ${cp.actionPrompt}\n`);
