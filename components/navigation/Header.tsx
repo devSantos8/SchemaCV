@@ -30,10 +30,12 @@ import {
   Cloud,
   Loader2,
   Pencil,
+  Bot,
+  PanelRight,
 } from "lucide-react";
-import { ATSAuditModal } from "@/components/editor/ATSAuditModal";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useAIChatStore } from "@/store/useAIChatStore";
 import { TemplateId, PaperSize } from "@/types/resume";
 import { TEMPLATE_METADATA } from "@/components/templates/TemplateRenderer";
 import { generateResumeDocx } from "@/lib/exporters/docxExporter";
@@ -108,11 +110,11 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
   } = useResumeStore();
 
   const { user, isAuthenticated, setSettingsModalOpen } = useAuthStore();
+  const { isOpen: isChatOpen, toggleOpen: toggleChat } = useAIChatStore();
 
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [isAtsAuditOpen, setIsAtsAuditOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [tempProfileName, setTempProfileName] = useState("");
@@ -620,15 +622,19 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
 
       {/* 3. ZONA DERECHA: ACCIONES PRINCIPALES & EXPORTACIÓN */}
       <div className="flex items-center gap-2">
-        {/* Auditor de Formato ATS */}
+        {/* Toggle Copilot IA Sidebar (GitHub Copilot style) */}
         <button
           type="button"
-          onClick={() => setIsAtsAuditOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all cursor-pointer"
-          title="Auditar cumplimiento de formato ATS para este CV"
+          onClick={toggleChat}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
+            isChatOpen
+              ? "bg-violet-600 text-white border-violet-500 shadow-xs ring-2 ring-violet-500/20"
+              : "text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border-border/60"
+          }`}
+          title={isChatOpen ? "Ocultar Copilot IA" : "Abrir Copilot IA (Sidebar)"}
         >
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden sm:inline">Auditor ATS</span>
+          <Sparkles className={`h-3.5 w-3.5 ${isChatOpen ? "text-amber-300 animate-pulse" : "text-violet-500"}`} />
+          <span className="hidden sm:inline">Copilot IA</span>
         </button>
 
         {/* Ingesta con IA */}
@@ -638,7 +644,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-zinc-800 dark:text-zinc-200 bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 border border-border/60 transition-all"
           title="Importar CV o contenido con IA"
         >
-          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+          <Upload className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="hidden sm:inline">Importar CV</span>
         </button>
 
@@ -793,13 +799,6 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
           {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </button>
       </div>
-
-      {/* Modal de Auditoría ATS */}
-      <ATSAuditModal
-        isOpen={isAtsAuditOpen}
-        onClose={() => setIsAtsAuditOpen(false)}
-        resumeData={resumeData}
-      />
 
       {/* Diálogo para Renombrar Perfil y Asignar Rol Objetivo */}
       <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>

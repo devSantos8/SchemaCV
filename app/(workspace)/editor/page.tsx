@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { Header } from "@/components/navigation/Header";
 import { DualModeEditor } from "@/components/editor/DualModeEditor";
 import { ResumePreview } from "@/components/preview/ResumePreview";
+import { AIChatSidebar } from "@/components/ai/AIChatSidebar";
 import { ImportResumeModal } from "@/components/editor/ImportResumeModal";
 import { ProfileManagerModal } from "@/components/navigation/ProfileManagerModal";
 import { TemplateGalleryModal } from "@/components/templates/TemplateGalleryModal";
@@ -89,17 +90,20 @@ export default function EditorPage() {
         onOpenSettings={() => router.push("/settings")}
       />
 
-      {/* 2. Área de Trabajo Principal Dividida (Editor Dual ⟷ Vista Previa ATS) */}
-      <main className="flex-1 flex flex-col md:flex-row overflow-hidden print:block print:overflow-visible">
+      {/* 2. Área de Trabajo Principal Dividida (Editor Dual ⟷ Vista Previa ATS ⟷ Copilot Sidebar) */}
+      <main className="flex-1 flex flex-col md:flex-row overflow-hidden print:block print:overflow-visible relative">
         {/* Panel Izquierdo: Editor Dual (Visual ⟷ YAML) */}
-        <section className="w-full md:w-[48%] lg:w-[45%] xl:w-[42%] h-1/2 md:h-full shrink-0 flex flex-col print:hidden">
+        <section className="w-full md:w-[48%] lg:w-[45%] xl:w-[40%] 2xl:w-[38%] h-1/2 md:h-full shrink-0 flex flex-col print:hidden border-r border-border/60">
           <DualModeEditor />
         </section>
 
-        {/* Panel Derecho: Vista Previa ATS en Tiempo Real */}
-        <section className="flex-1 h-1/2 md:h-full overflow-hidden print:w-full print:h-auto print:overflow-visible">
+        {/* Panel Central: Vista Previa ATS en Tiempo Real */}
+        <section className="flex-1 h-1/2 md:h-full overflow-hidden print:w-full print:h-auto print:overflow-visible min-w-0 transition-all duration-300">
           <ResumePreview />
         </section>
+
+        {/* Panel Derecho: Copilot IA Sidebar (GitHub Copilot style - Pushes Preview) */}
+        <AIChatSidebar />
       </main>
 
       {/* 3. Modales de Ingesta, Perfiles, Plantillas y Base Maestra */}

@@ -16,8 +16,11 @@ const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutos de inactividad
 interface AIChatState {
   sessions: ChatSession[];
   currentSessionId: string;
+  isOpen: boolean;
 
   // Acciones
+  setIsOpen: (open: boolean) => void;
+  toggleOpen: () => void;
   getCurrentSession: () => ChatSession;
   createSession: (initialTitle?: string) => string;
   switchSession: (sessionId: string) => void;
@@ -45,6 +48,22 @@ export const useAIChatStore = create<AIChatState>()(
     (set, get) => ({
       sessions: [createDefaultSession()],
       currentSessionId: "",
+      isOpen: false,
+
+      setIsOpen(open: boolean) {
+        set({ isOpen: open });
+        if (open) {
+          get().touchActivity();
+        }
+      },
+
+      toggleOpen() {
+        const next = !get().isOpen;
+        set({ isOpen: next });
+        if (next) {
+          get().touchActivity();
+        }
+      },
 
       getCurrentSession() {
         const state = get();
