@@ -1,6 +1,6 @@
 {
   "name": "schemacv",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Plataforma de ingeniería de currículums técnicos y auditoría ATS con editor dual e IA Copilot",
   "author": "Joain Monroy Santos <joainsantos.m@gmail.com> (https://github.com/devSantos8)",
   "license": "MIT",
@@ -19,6 +19,9 @@
     "check": "npx tsx scripts/devops/healthcheck.ts",
     "healthcheck": "npx tsx scripts/devops/healthcheck.ts",
     "verify:release": "npx tsx scripts/devops/verify-release.ts",
+    "bump:patch": "npx tsx scripts/devops/bump-version.ts patch",
+    "bump:minor": "npx tsx scripts/devops/bump-version.ts minor",
+    "bump:major": "npx tsx scripts/devops/bump-version.ts major",
     "test:ats": "npx tsx scripts/ats/validate-ats.ts",
     "test:pages": "npx tsx scripts/pdf/test-page-count.ts",
     "test:prompts": "npx tsx scripts/ai/validate-prompts.ts",

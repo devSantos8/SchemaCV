@@ -7,23 +7,27 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-08-26
+## [1.0.0] - 2026-08-26
 
 ### Added
-- Integración de Copilot IA con Google Gemini y gestión de sesiones contextuales.
-- Motor de auditoría ATS determinista con 12 reglas de verificación.
-- Modal de vista previa ampliada para inspección visual de las 12 plantillas.
-- Pipeline de Integración Continua (CI) en GitHub Actions para validación automática de código.
-- Script de diagnóstico preventivo local (`scripts/healthcheck.ts`).
-- Exportador de currículums a formato Microsoft Word (.docx) nativo.
-- Panel interactivo de comparación entre perfil de candidato y oferta laboral.
+- Lanzamiento oficial de SchemaCV: Plataforma de ingeniería de currículums técnicos y auditoría ATS.
+- Editor dual en tiempo real (Formulario interactivo y editor de código YAML/JSON).
+- Asistente Copilot IA integrado con Google Gemini con prompts estructurados y validación Zod.
+- Motor de auditoría ATS determinista con 12 reglas de verificación exhaustiva.
+- Soporte para 12 plantillas profesionales optimizadas para formato estricto de 1 página.
+- Módulos de exportación nativa a PDF (Puppeteer), DOCX (docx) y HTML semántico.
+- Pipeline de Integración Continua (CI) en GitHub Actions (`.github/workflows/ci.yml`).
+- Manifiesto declarativo `manifest.yaml` y suite de diagnóstico preventivo (`scripts/devops/healthcheck.ts`).
+- Script de automatización de versiones `scripts/devops/bump-version.ts` (`npm run bump:patch`, `bump:minor`, `bump:major`).
+- Módulo de rastreo y gestión de postulaciones laborales con scraping automatizado.
 
 ### Changed
-- Optimización de espaciados y jerarquía semántica en todas las plantillas para formato estricto de 1 página.
+- Reorganización modular de la carpeta `scripts/` en subdirectorios por dominio (`ai`, `ats`, `devops`, `jobs`, `pdf`).
 - Configuración de ESLint flat config para compatibilidad con Next.js 16.
-- Estandarización de tipografías web-safe en los exportadores PDF y HTML.
+- Estandarización de tipografías web-safe y diseño responsive en todo el catálogo de plantillas.
+- Limpieza de comentarios y optimización de ejecución en el pipeline de GitHub Actions.
 
 ### Fixed
 - Corrección de reglas de hooks en páginas de evaluación (`Rules of Hooks`).
-- Normalización de caracteres en encabezados JSX de plantillas compactas.
+- Normalización de literales de comentarios en encabezados JSX de plantillas compactas.
 - Eliminación de falsos positivos en detección de tokens fusionados para URLs técnicas.
