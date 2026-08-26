@@ -10,13 +10,12 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 ## [0.1.1] - 2026-08-26
 
 ### Added
-- 
+- Script de automatización de versiones `scripts/devops/bump-version.ts` (`npm run bump:patch`, `bump:minor`, `bump:major`).
+- Comandos npm dedicados para incremento y sincronización atómica de SemVer.
 
 ### Changed
-- 
-
-### Fixed
-- 
+- Reorganización modular de la carpeta `scripts/` en subdirectorios por dominio (`ai`, `ats`, `devops`, `jobs`, `pdf`).
+- Limpieza de comentarios en `.github/workflows/ci.yml`.
 
 ## [0.1.0] - 2026-08-26
 
