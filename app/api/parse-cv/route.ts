@@ -29,7 +29,7 @@ function normalizeSectionHeading(str: string): string {
 
 const BULLET_START_REGEX = /^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa\u2013\u2014\u25cb\u25e6\u25aa]\s*/;
 
-// Expresión regular para verbos de acción en español e inglés sin dependencia de \b ASCII
+// Verbos de acción en español e inglés sin dependencia de \b ASCII
 const ACTION_VERBS_REGEX =
   /^(?:Constru[ií]|Integr[eé]|Document[eé]|Desarroll[eé]|Automatic[eé]|Optimiz[eé]|Lider[eé]|Dise[nñ][eé]|Cre[eé]|Implement[eé]|Configur[eé]|Mantuve|Gestion[eé]|Coordin[eé]|Particip[eé]|Colabor[eé]|Refactoric[eé]|Administr[eé]|Ejecut[eé]|Supervis[eé]|Program[eé]|Desplegu[eé]|Built|Developed|Designed|Implemented|Created|Led|Managed|Maintained|Automated|Optimized|Architected|Spearheaded|Engineered|Authored|Executed)(?:[\s:.,]|$)/i;
 
@@ -45,11 +45,34 @@ function cleanBulletPrefix(line: string): string {
   return line.replace(BULLET_START_REGEX, "").trim();
 }
 
-const DATE_REGEX =
-  /(?:(Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?|\d{4})\s*(\d{4})?\s*[-–—/]\s*(Presente|Present|Actualidad|Actual|Actualmente|\d{4}|[A-Za-z]+ \d{4}))/i;
+// Regex integral para rangos de fechas (laboral y educación)
+const DATE_RANGE_REGEX =
+  /(?:(?:\b(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s*(?:de\s*)?\d{4}|\d{1,2}[/-]\d{2,4}|\b(?:19|20)\d{2}\b)\s*(?:[-–—/]|a|al|to|hasta)\s*(?:Presente|Present|Actualidad|Actual|Actualmente|Cursando|Ongoing|Current|\b(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s*(?:de\s*)?\d{4}|\d{1,2}[/-]\d{2,4}|\b(?:19|20)\d{2}\b))/i;
+
+// Regex para fechas de certificaciones (incluye En Curso, Presente, Mes Año, Años)
+const CERT_DATE_REGEX =
+  /(?:\((?:En\s+Curso|En\s+Progreso|Cursando|Presente|Present|In\s+Progress|Actualidad|\d{4}(?:\s*[-–—/]\s*(?:Presente|Present|\d{4}))?|(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s*\d{2,4})\)|(?:(?:Emitido|Expira|Vigencia|Fecha|Issued|Expires):\s*)?(?:En\s+Curso|En\s+Progreso|Cursando|Presente|Present|In\s+Progress|Actualidad|(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{4}|\d{1,2}\/\d{4}|\d{4}\s*[-–—]\s*(?:\d{4}|Presente|Present)|\b(?:19|20)\d{2}\b))/i;
 
 const KNOWN_CITIES_COUNTRIES_REGEX =
-  /(?:Santiago|Las Condes|Providencia|Valparaíso|Concepción|Viña del Mar|Remoto|Remote|Madrid|Barcelona|Bogotá|Lima|Buenos Aires|Montevideo|CDMX|México|Mexico|Miami|New York|London|São Paulo|[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+),\s*(?:Chile|Argentina|Colombia|Perú|Peru|México|Mexico|España|Spain|USA|US|Brasil|Brazil|Uruguay)/i;
+  /\b(?:Santiago|Las Condes|Providencia|Valparaíso|Concepción|Viña del Mar|Remoto|Remote|Madrid|Barcelona|Bogotá|Lima|Buenos Aires|Montevideo|CDMX|México|Mexico|Miami|New York|London|São Paulo|[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,15}),\s*(?:Chile|Argentina|Colombia|Perú|Peru|México|Mexico|España|Spain|USA|US|Brasil|Brazil|Uruguay)\b/i;
+
+const KNOWN_ROLE_KEYWORDS_REGEX =
+  /(?:developer|desarrollador|engineer|ingeniero|architect|arquitecto|lead|tech lead|leader|manager|analyst|analista|consultant|consultor|specialist|especialista|cto|coo|ceo|director|practicante|intern|full\s*stack|backend|frontend|devops|cloud|qa|tester|scrum\s*master|product\s*owner|product\s*manager)/i;
+
+const KNOWN_EDU_INSTITUTIONS_REGEX =
+  /(?:universidad|instituto|facultad|duoc|inacap|colegio|liceo|politécnico|politecnico|bootcamp|academy|escuela|pontificia|federico santa mar[ií]a|mit|coursera|platzi|coderhouse|desaf[ií]o latam|42|udemy|edx)/i;
+
+const KNOWN_EDU_DEGREES_REGEX =
+  /(?:ingenier[ií]a|licenciatura|t[eé]cnico|diplomado|master|m[aá]ster|mag[ií]ster|postgrado|doctorado|phd|bachelor|bootcamp|certificaci[oó]n profesional|analista programador|bachiller|profesor)/i;
+
+const EXTENDED_TECH_CATALOG = [
+  "React", "Next.js", "TypeScript", "JavaScript", "Python", "Node.js", "NestJS", "Django", "FastAPI", "Flask",
+  "Tailwind CSS", "HTML5", "CSS3", "Docker", "Kubernetes", "PostgreSQL", "SQL Server", "SQLite", "MySQL", "MongoDB", "Redis",
+  "Prisma", "TypeORM", "Drizzle", "AWS", "GCP", "Azure", "Firebase", "Supabase", "Git", "GitHub Actions", "GitLab CI",
+  "Karate DSL", "Postman", "cURL", "RAG", "OpenAI", "Claude", "Gemini", "GraphQL", "REST APIs", "Vite", "Jest", "Playwright",
+  "Cypress", "Terraform", "Linux", "Nginx", "Figma", "Zustand", "Redux", "TanStack Query", "Radix UI", "Framer Motion", "Bash",
+  "Go", "Golang", "Java", "Spring Boot", "C#", ".NET", "C++", "PHP", "Ruby", "Astro", "Vue", "Angular", "Scrum", "Kanban"
+];
 
 /**
  * Preprocesa el texto dividiendo líneas pegadas por extractores PDF
@@ -102,7 +125,7 @@ function preprocessRawLines(rawText: string): string[] {
 }
 
 /**
- * Parser heurístico avanzado de alta precisión con soporte determinista para CVs técnicos.
+ * Parser heurístico avanzado multi-sección y determinista para CVs técnicos.
  */
 function parseResumeHeuristically(rawText: string): ResumeData {
   const rawLines = preprocessRawLines(rawText);
@@ -117,7 +140,6 @@ function parseResumeHeuristically(rawText: string): ResumeData {
   const linkedinMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_-]+)/i);
   const githubMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_-]+)/i);
 
-  // Extraer website personal excluyendo dominios de correo y redes sociales
   let website: string | undefined = undefined;
   const rawTextWithoutEmail = email ? rawText.replace(email, "") : rawText;
   const websiteRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.(?:dev|io|me|app|cl|co|es|org|site|net|tech|info|com))\b(?:\/[^\s]*)?/gi;
@@ -158,7 +180,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     });
   }
 
-  // 2. Segmentación de Secciones
+  // 2. Segmentación de Secciones Dinámicas
   type SectionType =
     | "header"
     | "summary"
@@ -176,6 +198,10 @@ function parseResumeHeuristically(rawText: string): ResumeData {
       regex: /^(?:resumen|perfil|sobre\s+m|acerca\s+de|summary|about|profile|objetivo)/i,
     },
     {
+      type: "skills",
+      regex: /^(?:competenc|habilid|skill|stack|tecnolog|conocimiento)/i,
+    },
+    {
       type: "experience",
       regex: /^(?:experienc|trayector|historial\s+laboral|work\s+experience|professional\s+experience|employment)/i,
     },
@@ -190,10 +216,6 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     {
       type: "certifications",
       regex: /^(?:certific|licenc|curso|course)/i,
-    },
-    {
-      type: "skills",
-      regex: /^(?:competenc|habilid|skill|stack|tecnolog|conocimiento)/i,
     },
     {
       type: "languages",
@@ -228,7 +250,34 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     sections.push({ type: currentSectionType, lines: currentSectionLines });
   }
 
-  // 3. Procesar Encabezado
+  // Captura dinámica del orden de secciones
+  const STANDARD_ORDER_KEYS = [
+    "summary",
+    "skills",
+    "experience",
+    "projects",
+    "education",
+    "certifications",
+  ];
+  const dynamicSectionOrder: string[] = [];
+  for (const sec of sections) {
+    if (
+      sec.type !== "header" &&
+      sec.type !== "other" &&
+      sec.type !== "languages" &&
+      STANDARD_ORDER_KEYS.includes(sec.type) &&
+      !dynamicSectionOrder.includes(sec.type)
+    ) {
+      dynamicSectionOrder.push(sec.type);
+    }
+  }
+  for (const std of STANDARD_ORDER_KEYS) {
+    if (!dynamicSectionOrder.includes(std)) {
+      dynamicSectionOrder.push(std);
+    }
+  }
+
+  // 3. Encabezado
   const headerLines = sections.find((s) => s.type === "header")?.lines || rawLines.slice(0, 8);
   let name = "";
   let headline = "";
@@ -279,27 +328,44 @@ function parseResumeHeuristically(rawText: string): ResumeData {
   const summaryLines = sections.find((s) => s.type === "summary")?.lines || [];
   const summary = summaryLines.filter((l) => !isBulletStart(l)).join(" ");
 
-  // 5. Experiencia Laboral con Reensamblado Multilínea
+  // 5. Experiencia Laboral Multi-Puesto
   const experienceLines = sections.filter((s) => s.type === "experience").flatMap((s) => s.lines);
   const experience: ExperienceEntry[] = [];
 
   if (experienceLines.length > 0) {
-    interface ExpEntryRaw {
+    interface RawExpBlock {
       header: string;
+      subHeader?: string;
       rawBullets: string[];
     }
-    const entries: ExpEntryRaw[] = [];
-    let currentEntry: ExpEntryRaw | null = null;
+    const entries: RawExpBlock[] = [];
+    let currentEntry: RawExpBlock | null = null;
 
     for (let i = 0; i < experienceLines.length; i++) {
       const line = experienceLines[i].trim();
       if (!line) continue;
 
-      const dateMatch = line.match(DATE_REGEX);
+      const dateMatch = line.match(DATE_RANGE_REGEX);
       const isBullet = isBulletStart(line);
+      const isRoleCandidate = !isBullet && KNOWN_ROLE_KEYWORDS_REGEX.test(line);
 
-      // Si tiene fecha y parece un encabezado de empleo nuevo
-      if (dateMatch && (!isBullet || line.includes("—") || line.includes("–") || line.includes("-"))) {
+      if (dateMatch && (!isBullet || line.includes("—") || line.includes("–") || line.includes("-") || line.includes("|"))) {
+        if (currentEntry && currentEntry.rawBullets.length === 0 && !currentEntry.header.match(DATE_RANGE_REGEX)) {
+          currentEntry.subHeader = line;
+        } else {
+          currentEntry = { header: line, rawBullets: [] };
+          entries.push(currentEntry);
+        }
+        continue;
+      }
+
+      if (isRoleCandidate && !currentEntry) {
+        currentEntry = { header: line, rawBullets: [] };
+        entries.push(currentEntry);
+        continue;
+      }
+
+      if (isRoleCandidate && currentEntry && currentEntry.rawBullets.length > 0) {
         currentEntry = { header: line, rawBullets: [] };
         entries.push(currentEntry);
         continue;
@@ -314,7 +380,6 @@ function parseResumeHeuristically(rawText: string): ResumeData {
       if (isBullet) {
         currentEntry.rawBullets.push(cleanBulletPrefix(line));
       } else {
-        // ¿Es continuación de la viñeta anterior o una nueva viñeta?
         if (currentEntry.rawBullets.length > 0) {
           const lastIdx = currentEntry.rawBullets.length - 1;
           const lastBullet = currentEntry.rawBullets[lastIdx];
@@ -327,25 +392,29 @@ function parseResumeHeuristically(rawText: string): ResumeData {
             currentEntry.rawBullets.push(line);
           }
         } else {
-          currentEntry.rawBullets.push(line);
+          if (!currentEntry.subHeader) {
+            currentEntry.subHeader = line;
+          } else {
+            currentEntry.rawBullets.push(line);
+          }
         }
       }
     }
 
     entries.forEach((ent, idx) => {
-      const dateMatch = ent.header.match(DATE_REGEX);
+      const fullHeader = ent.subHeader ? `${ent.header} | ${ent.subHeader}` : ent.header;
+      const dateMatch = fullHeader.match(DATE_RANGE_REGEX);
       let startDate = "";
       let endDate = "Presente";
 
       if (dateMatch) {
-        const parts = dateMatch[0].split(/[-–—/]/).map((d) => d.trim());
+        const parts = dateMatch[0].split(/[-–—/]|(?:\s+a\s+|\s+al\s+|\s+to\s+)/i).map((d) => d.trim());
         startDate = parts[0] || "";
-        endDate = parts[1] || "Presente";
+        endDate = parts[parts.length - 1] || "Presente";
       }
 
-      let headerWithoutDate = ent.header.replace(DATE_REGEX, "").trim();
+      let headerWithoutDate = fullHeader.replace(DATE_RANGE_REGEX, "").trim();
 
-      // Extraer ubicación: buscar paréntesis que contenga coma (ej: (Las Condes, Chile)) o país/ciudad
       let expLocation = location;
       const locParenMatches = headerWithoutDate.match(/\(([^)]+)\)/g);
       if (locParenMatches) {
@@ -359,14 +428,18 @@ function parseResumeHeuristically(rawText: string): ResumeData {
         }
       }
 
-      // Separar cargo y empresa por guión o barra
       const segs = headerWithoutDate.split(/[-–—|]/).map((s) => s.trim()).filter(Boolean);
       let position = "";
       let company = "";
 
       if (segs.length >= 2) {
-        position = segs[0];
-        company = segs.slice(1).join(" - ");
+        if (KNOWN_ROLE_KEYWORDS_REGEX.test(segs[1]) && !KNOWN_ROLE_KEYWORDS_REGEX.test(segs[0])) {
+          company = segs[0];
+          position = segs.slice(1).join(" - ");
+        } else {
+          position = segs[0];
+          company = segs.slice(1).join(" - ");
+        }
       } else if (segs.length === 1) {
         position = segs[0];
         company = "";
@@ -379,13 +452,13 @@ function parseResumeHeuristically(rawText: string): ResumeData {
         location: expLocation,
         start_date: startDate,
         end_date: endDate,
-        current: /^(presente|present|actual|actualidad)$/i.test(endDate.trim()),
+        current: /^(presente|present|actual|actualidad|ongoing|current)$/i.test(endDate.trim()),
         highlights: ent.rawBullets,
       });
     });
   }
 
-  // 6. Proyectos Destacados
+  // 6. Proyectos Destacados (Multi-Proyecto)
   const projectLines = sections.filter((s) => s.type === "projects").flatMap((s) => s.lines);
   const projects: ProjectEntry[] = [];
 
@@ -403,7 +476,19 @@ function parseResumeHeuristically(rawText: string): ResumeData {
 
       const isBullet = isBulletStart(line);
 
+      const isTitleCandidate =
+        !isBullet &&
+        (line.includes("|") ||
+          line.includes("–") ||
+          line.includes("—") ||
+          line.includes(" - ") ||
+          /^(?:proyectos?|projects?)\s*:/i.test(line) ||
+          (line.length <= 75 && !/[.!?]$/.test(line)));
+
       if (!currentProj) {
+        currentProj = { title: line, lines: [] };
+        projEntries.push(currentProj);
+      } else if (isTitleCandidate && currentProj.lines.length > 0) {
         currentProj = { title: line, lines: [] };
         projEntries.push(currentProj);
       } else if (isBullet) {
@@ -429,95 +514,120 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     projEntries.forEach((pRaw, idx) => {
       const fullText = `${pRaw.title} ${pRaw.lines.join(" ")}`;
       const detectedTechs: string[] = [];
-      const KNOWN_TECHS = [
-        "React", "Next.js", "TypeScript", "JavaScript", "Python", "Node.js", "NestJS", "Django", "Flask",
-        "Tailwind CSS", "HTML5", "CSS3", "Docker", "Kubernetes", "PostgreSQL", "SQL Server", "SQLite",
-        "Prisma", "AWS", "Firebase", "Supabase", "Git", "GitHub Actions", "Karate DSL", "Postman", "cURL",
-        "RAG", "OpenAI", "Claude", "Gemini", "GraphQL", "REST APIs", "PDF/DOCX", "Kanban", "Scrum"
-      ];
-      KNOWN_TECHS.forEach((t) => {
+
+      EXTENDED_TECH_CATALOG.forEach((t) => {
         const reg = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
-        if (reg.test(fullText)) {
+        if (reg.test(fullText) && !detectedTechs.includes(t)) {
           detectedTechs.push(t);
         }
       });
 
+      const githubMatch = fullText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_\-\/]+/i);
+      const urlMatch = fullText.match(/https?:\/\/[a-zA-Z0-9_\-\.\/]+/i);
+
+      let cleanName = pRaw.title.replace(/^proyectos?\s*:\s*/i, "").trim();
+      if (cleanName.includes("|")) {
+        cleanName = cleanName.split("|")[0].trim();
+      }
+
       projects.push({
         id: `proj-${Date.now()}-${idx}`,
-        name: pRaw.title.replace(/^proyectos?\s*:\s*/i, "").trim(),
+        name: cleanName,
         technologies: detectedTechs,
+        github_url: githubMatch ? (githubMatch[0].startsWith("http") ? githubMatch[0] : `https://${githubMatch[0]}`) : undefined,
+        url: urlMatch ? urlMatch[0] : undefined,
         highlights: pRaw.lines,
       });
     });
   }
 
-  // 7. Educación & Formación
+  // 7. Educación & Formación (Multi-Entrada)
   const educationLines = sections.filter((s) => s.type === "education").flatMap((s) => s.lines);
   const education: EducationEntry[] = [];
 
   if (educationLines.length > 0) {
-    let institution = "";
-    let degree = "";
-    let eduLocation = location;
-    let startDate = "";
-    let endDate = "";
-    const highlights: string[] = [];
+    interface EduRawBlock {
+      lines: string[];
+    }
+    const eduBlocks: EduRawBlock[] = [];
+    let currentBlock: EduRawBlock | null = null;
 
     for (let i = 0; i < educationLines.length; i++) {
       const line = educationLines[i].trim();
       if (!line) continue;
 
-      const dateMatch = line.match(DATE_REGEX);
-      if (dateMatch) {
-        const parts = dateMatch[0].split(/[-–—/]/).map((d) => d.trim());
-        startDate = parts[0] || "";
-        endDate = parts[1] || "";
-        const cleanInst = line.replace(DATE_REGEX, "").trim();
-        if (cleanInst && !institution) {
-          institution = cleanInst;
-        }
-        continue;
-      }
+      const isBullet = isBulletStart(line);
+      const isInst = !isBullet && KNOWN_EDU_INSTITUTIONS_REGEX.test(line);
 
-      // Detectar certificados o menciones
-      if (/(?:certificados?\s+acad[eé]micos?|cursos?|distinciones?|menci[oó]n|honores)/i.test(line)) {
-        highlights.push(cleanBulletPrefix(line));
-        continue;
-      }
-
-      // Detectar ubicación al final: "City, Country"
-      const locMatch = line.match(KNOWN_CITIES_COUNTRIES_REGEX);
-      if (locMatch) {
-        eduLocation = locMatch[0].trim();
-        const withoutLoc = line.replace(locMatch[0], "").trim();
-        if (withoutLoc && !degree) {
-          degree = withoutLoc;
-        }
-        continue;
-      }
-
-      if (!institution && line.length < 50 && !line.includes(":")) {
-        institution = line;
-      } else if (!degree && line.length < 80 && !line.includes(":")) {
-        degree = line;
+      if (isInst && (!currentBlock || currentBlock.lines.length >= 2)) {
+        currentBlock = { lines: [line] };
+        eduBlocks.push(currentBlock);
+      } else if (!currentBlock) {
+        currentBlock = { lines: [line] };
+        eduBlocks.push(currentBlock);
       } else {
-        highlights.push(cleanBulletPrefix(line));
+        currentBlock.lines.push(line);
       }
     }
 
-    if (!institution && degree) {
-      institution = "Universidad / Instituto";
-    }
+    eduBlocks.forEach((blk, idx) => {
+      let institution = "";
+      let degree = "";
+      let eduLocation = location;
+      let startDate = "";
+      let endDate = "";
+      const highlights: string[] = [];
 
-    education.push({
-      id: `edu-${Date.now()}-0`,
-      institution,
-      degree,
-      location: eduLocation,
-      start_date: startDate,
-      end_date: endDate,
-      current: /^(presente|present|actual|cursando)$/i.test(endDate.trim()),
-      highlights,
+      for (const line of blk.lines) {
+        const isBullet = isBulletStart(line);
+        let cleanLine = cleanBulletPrefix(line);
+
+        const dateMatch = cleanLine.match(DATE_RANGE_REGEX);
+        if (dateMatch) {
+          const parts = dateMatch[0].split(/[-–—/]|(?:\s+a\s+|\s+al\s+|\s+to\s+)/i).map((d) => d.trim());
+          startDate = parts[0] || "";
+          endDate = parts[parts.length - 1] || "";
+          cleanLine = cleanLine.replace(DATE_RANGE_REGEX, "").trim();
+        }
+
+        const locMatch = cleanLine.match(KNOWN_CITIES_COUNTRIES_REGEX);
+        if (locMatch) {
+          eduLocation = locMatch[0].trim();
+          cleanLine = cleanLine.replace(locMatch[0], "").trim();
+        }
+
+        if (isBullet || /(?:certificados?\s+acad[eé]micos?|cursos?|distinciones?|menci[oó]n|honores|tesis|gpa|promedio)/i.test(line)) {
+          highlights.push(cleanBulletPrefix(line));
+          continue;
+        }
+
+        if (KNOWN_EDU_INSTITUTIONS_REGEX.test(cleanLine) && !institution) {
+          institution = cleanLine;
+        } else if (KNOWN_EDU_DEGREES_REGEX.test(cleanLine) && !degree) {
+          degree = cleanLine;
+        } else if (!institution && cleanLine.length < 55 && !cleanLine.includes(":")) {
+          institution = cleanLine;
+        } else if (!degree && cleanLine.length < 80 && !cleanLine.includes(":")) {
+          degree = cleanLine;
+        } else if (cleanLine) {
+          highlights.push(cleanLine);
+        }
+      }
+
+      if (!institution && degree) {
+        institution = "Universidad / Instituto";
+      }
+
+      education.push({
+        id: `edu-${Date.now()}-${idx}`,
+        institution: institution || "Institución Educativa",
+        degree: degree || "Formación Profesional",
+        location: eduLocation,
+        start_date: startDate,
+        end_date: endDate,
+        current: /^(presente|present|actual|cursando|ongoing)$/i.test(endDate.trim()),
+        highlights,
+      });
     });
   }
 
@@ -528,20 +638,24 @@ function parseResumeHeuristically(rawText: string): ResumeData {
   if (certLines.length > 0) {
     for (let i = 0; i < certLines.length; i++) {
       const line = cleanBulletPrefix(certLines[i].trim());
-      if (!line || line.length < 4) continue;
+      if (!line || line.length < 3) continue;
 
-      const yearMatch = line.match(/\b(20\d{2}|19\d{2})\b/);
-      const certDate = yearMatch ? yearMatch[0] : undefined;
+      const dateMatch = line.match(CERT_DATE_REGEX);
+      let certDate: string | undefined = undefined;
+      let cleanLine = line;
 
-      const cleanLine = line.replace(/\(\s*20\d{2}\s*\)/g, "").trim();
+      if (dateMatch) {
+        certDate = dateMatch[0].replace(/^\(|\)$/g, "").trim();
+        cleanLine = line.replace(dateMatch[0], "").trim();
+      }
 
-      const parts = cleanLine.split(/[-–—:]/).map((p) => p.trim()).filter(Boolean);
+      const parts = cleanLine.split(/[-–—|:]/).map((p) => p.trim()).filter(Boolean);
       let certName = "";
       let issuer = "";
 
       if (parts.length >= 2) {
         certName = parts[0];
-        issuer = parts[1];
+        issuer = parts.slice(1).join(" - ");
       } else {
         certName = cleanLine;
         issuer = "Certificación Oficial";
@@ -549,8 +663,8 @@ function parseResumeHeuristically(rawText: string): ResumeData {
 
       certifications.push({
         id: `cert-${Date.now()}-${i}`,
-        name: certName,
-        issuer,
+        name: certName.replace(/\s+/g, " ").trim(),
+        issuer: issuer.replace(/\s+/g, " ").trim(),
         date: certDate,
       });
     }
@@ -630,14 +744,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     education,
     certifications,
     custom_sections: [],
-    section_order: [
-      "summary",
-      "skills",
-      "experience",
-      "projects",
-      "education",
-      "certifications",
-    ],
+    section_order: dynamicSectionOrder,
   };
 }
 
@@ -684,14 +791,15 @@ export async function POST(req: NextRequest) {
 Analiza el siguiente texto de un currículum o perfil y estructúralo de manera precisa y exhaustiva bajo el esquema JSON tipado.
 
 INSTRUCCIONES CLAVE:
-1. 'name': Extrae el nombre real y completo de la persona (ej. 'Joain Matias Monroy Santos'). NO coloques el titular profesional aquí.
-2. 'headline': Extrae el cargo o titular profesional (ej. 'Software Engineer | Full Stack Developer & DevOps').
-3. 'summary': Extrae el párrafo completo de presentación/resumen profesional sin truncarlo ni omitir oraciones.
-4. 'skills': Extrae las habilidades técnicas categorizadas (Backend, Frontend, DevOps y Metodologías, Bases de Datos, IA y GenAI, Idiomas). NUNCA coloques párrafos ni oraciones en habilidades.
-5. 'experience': Extrae cada puesto laboral con su empresa real, cargo real, fechas, ubicación y lista de logros individuales (highlights) redactados como viñetas de acción.
-6. 'projects': Extrae los proyectos con sus tecnologías y viñetas de logros.
-7. 'education': Extrae institución, grado académico, ubicación y certificados/fechas.
-8. 'certifications': Extrae los cursos y certificaciones individuales con sus emisores y fechas.
+1. 'name': Extrae el nombre real y completo de la persona.
+2. 'headline': Extrae el cargo o titular profesional.
+3. 'summary': Extrae el párrafo completo de presentación/resumen profesional sin truncarlo.
+4. 'skills': Extrae las habilidades técnicas categorizadas.
+5. 'experience': Extrae CADA puesto laboral independiente con su empresa, cargo, fechas, ubicación y lista de logros cuantitativos (highlights).
+6. 'projects': Extrae CADA proyecto independiente con su nombre, tecnologías detectadas y viñetas de logros.
+7. 'education': Extrae CADA grado o estudio independiente como un elemento en el array de educación.
+8. 'certifications': Extrae las certificaciones individuales con sus nombres, emisores y fechas (incluyendo 'En Curso', 'Presente', etc.).
+9. 'section_order': Conserva el orden exacto en que aparecen las secciones en el documento.
 
 Texto del Currículum:
 """
@@ -705,7 +813,7 @@ ${rawText.slice(0, 20000)}
       }
     }
 
-    // 2. Motor Heurístico Avanzado y Determinista con Reensamblado Multilínea (100% Offline y Preciso)
+    // 2. Motor Heurístico Avanzado y Determinista Multi-Sección
     const heuristicData = parseResumeHeuristically(rawText);
     return NextResponse.json({
       success: true,
