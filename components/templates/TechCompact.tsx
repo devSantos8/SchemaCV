@@ -98,7 +98,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
               return (
                 <section key="skills" className="page-break-avoid">
                   <h2 className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 font-mono">
-                    // {labels.skills}
+                    {`// ${labels.skills}`}
                   </h2>
                   <div className="space-y-0.5 text-[8.5pt] pl-0.5">
                     {skills.map((cat) => (
@@ -118,7 +118,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
               return (
                 <section key="experience" className="space-y-1.5">
                   <h2 className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 font-mono">
-                    // {labels.experience}
+                    {`// ${labels.experience}`}
                   </h2>
                   <div className="space-y-1.5 pl-0.5">
                     {experience.map((exp) => (
@@ -167,7 +167,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
               return (
                 <section key="projects" className="space-y-1.5">
                   <h2 className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 font-mono">
-                    // {labels.projects}
+                    {`// ${labels.projects}`}
                   </h2>
                   <div className="space-y-1.5 pl-0.5">
                     {projects.map((proj) => (
@@ -215,7 +215,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
               return (
                 <section key="education" className="page-break-avoid">
                   <h2 className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 font-mono">
-                    // {labels.education}
+                    {`// ${labels.education}`}
                   </h2>
                   <div className="space-y-1 pl-0.5">
                     {education.map((edu) => (
@@ -244,7 +244,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
               return (
                 <section key="summary" className="page-break-avoid">
                   <h2 className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 font-mono">
-                    // {labels.summary}
+                    {`// ${labels.summary}`}
                   </h2>
                   <p className="text-[8.5pt] text-zinc-800 leading-snug pl-0.5">
                     {summary}
@@ -257,7 +257,7 @@ export const TechCompact: React.FC<TemplateProps> = ({ data, paperSize = "letter
               return (
                 <section key="certifications" className="page-break-avoid">
                   <h2 className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1 font-mono">
-                    // {labels.certifications}
+                    {`// ${labels.certifications}`}
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5 pl-0.5 text-[8pt]">
                     {certifications.map((cert) => (
