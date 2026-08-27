@@ -245,7 +245,98 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 7. Viñetas Estándar (Bullets Sin Glifos Rotos) ───────────────────────────
+  // ─── 7. Orden Cronológico Inverso (Workday / Taleo Standard) ────────────────
+  const expList = (resumeData?.experience || []).filter((e) => !e.hidden);
+  let isReverseChronological = true;
+  if (expList.length > 1) {
+    let prevYear = 9999;
+    for (const exp of expList) {
+      const startMatch = (exp.start_date || '').match(/\b(19\d\d|20\d\d)\b/);
+      const year = exp.current ? 9999 : startMatch ? parseInt(startMatch[1], 10) : 0;
+      if (year > prevYear && prevYear !== 9999) {
+        isReverseChronological = false;
+        break;
+      }
+      if (year > 0) prevYear = year;
+    }
+  }
+
+  rules.push({
+    id: 'reverse_chronological',
+    name: 'Orden Cronológico Inverso',
+    category: 'dates',
+    status: isBlankOrEmpty ? 'pass' : isReverseChronological ? 'pass' : 'warning',
+    severity: 'warning',
+    scoreWeight: 5,
+    scoreEarned: isBlankOrEmpty ? 5 : isReverseChronological ? 5 : 2,
+    message: isReverseChronological
+      ? 'Experiencias ordenadas desde la más reciente a la más antigua.'
+      : 'Se detectaron empleos desordenados cronológicamente.',
+    fixGuide: {
+      whyItMatters: 'Los ATS corporativos (Workday, Taleo, Greenhouse) esperan que el empleo más reciente aparezca en primer lugar.',
+      howToFix: 'Ordena tus experiencias laborales de la más reciente a la más antigua.',
+      example: '2024 – Presente (arriba) -> 2022 – 2024 -> 2020 – 2022 (abajo)',
+    },
+  });
+
+  // ─── 8. Cuantificación de Logros (Métricas y Números) ───────────────────────
+  const allHighlights: string[] = [];
+  (resumeData?.experience || []).forEach((e) => (e.highlights || []).forEach((h) => allHighlights.push(h)));
+  (resumeData?.projects || []).forEach((p) => (p.highlights || []).forEach((h) => allHighlights.push(h)));
+
+  const metricRegex = /\b\d+(?:[.,]\d+)?\s*(?:%|x|ms|s|k|m|mil|millones|usd|clp|\$|€|horas|usuarios|users|clientes|transacciones|petabytes|terabytes|gb)\b|\b\d{2,}\b/i;
+  const quantifiedCount = allHighlights.filter((h) => metricRegex.test(h)).length;
+  const totalHighlights = allHighlights.length;
+  const quantifiedRatio = totalHighlights > 0 ? quantifiedCount / totalHighlights : 0;
+  const hasGoodMetrics = totalHighlights >= 2 && (quantifiedRatio >= 0.3 || quantifiedCount >= 2);
+
+  rules.push({
+    id: 'quantified_impact',
+    name: 'Cuantificación de Logros e Impacto',
+    category: 'content',
+    status: isBlankOrEmpty ? 'warning' : hasGoodMetrics ? 'pass' : quantifiedCount > 0 ? 'warning' : 'fail',
+    severity: 'critical',
+    scoreWeight: 10,
+    scoreEarned: isBlankOrEmpty ? 2 : hasGoodMetrics ? 10 : quantifiedCount > 0 ? 5 : 0,
+    message: hasGoodMetrics
+      ? `Logros cuantificados con métricas claras (${quantifiedCount} de ${totalHighlights} viñetas con cifras de impacto).`
+      : quantifiedCount > 0
+      ? `Solo ${quantifiedCount} viñetas contienen métricas medibles. Se recomienda cuantificar al menos el 40% de los logros.`
+      : 'No se detectaron métricas medibles (porcentajes, cifras, tiempos de reducción o volumen) en tus logros.',
+    fixGuide: {
+      whyItMatters: 'Los reclutadores y filtros ATS priorizan candidatos con logros medibles (% de mejora, reducción de latencia, usuarios impactados).',
+      howToFix: 'Añade números concretos a tus responsabilidades usando la fórmula: Logro + Acción + Métrica.',
+      example: '• Reduje la latencia de respuesta en un 65% mediante arquitectura desacoplada.',
+    },
+  });
+
+  // ─── 9. Verbos de Acción Fuertes ─────────────────────────────────────────────
+  const actionVerbRegex = /^\s*(?:[•\-*]\s*)?(?:Desarrollé|Diseñé|Lideré|Implementé|Optimizé|Construí|Automaticé|Migré|Coordiné|Gestioné|Creé|Reduje|Aumenté|Refactoricé|Arquitecté|Evalué|Configuré|Administré|Integré|Desplegué|Encabecé|Supervisé|Ejecuté|Consolidé|Analicé|Built|Designed|Developed|Led|Implemented|Optimized|Migrated|Automated|Created|Architected|Managed|Engineered|Deployed|Spearheaded)\b/i;
+  const actionVerbCount = allHighlights.filter((h) => actionVerbRegex.test(h)).length;
+  const actionVerbRatio = totalHighlights > 0 ? actionVerbCount / totalHighlights : 0;
+  const hasStrongActionVerbs = totalHighlights >= 2 && (actionVerbRatio >= 0.4 || actionVerbCount >= 2);
+
+  rules.push({
+    id: 'action_verbs',
+    name: 'Verbos de Acción al Inicio de Viñetas',
+    category: 'content',
+    status: isBlankOrEmpty ? 'warning' : hasStrongActionVerbs ? 'pass' : actionVerbCount > 0 ? 'warning' : 'fail',
+    severity: 'warning',
+    scoreWeight: 10,
+    scoreEarned: isBlankOrEmpty ? 2 : hasStrongActionVerbs ? 10 : actionVerbCount > 0 ? 5 : 1,
+    message: hasStrongActionVerbs
+      ? `Viñetas redactadas con verbos de acción fuertes (${actionVerbCount} viñetas activas).`
+      : actionVerbCount > 0
+      ? `Solo ${actionVerbCount} viñetas inician con verbos de acción. Evita expresiones pasivas como "Encargado de...".`
+      : 'Inicia cada viñeta con un verbo de acción en primera persona o pasado (ej. "Desarrollé", "Lideré", "Optimizé").',
+    fixGuide: {
+      whyItMatters: 'Los verbos de acción transmiten liderazgo y proactividad, capturando la atención de los reclutadores en los primeros 6 segundos.',
+      howToFix: 'Empieza cada punto con un verbo fuerte en lugar de sustantivos pasivos.',
+      example: '• Lideré la migración hacia microservicios en lugar de "Responsable de la migración".',
+    },
+  });
+
+  // ─── 10. Viñetas Estándar (Bullets Sin Glifos Rotos) ───────────────────────────
   const weirdBulletRegex = /[➔➜➤►▶→⇒✔✓✗✘★☆◆◇■□]/g;
   const hasWeirdBullets = weirdBulletRegex.test(rawText);
 
@@ -270,7 +361,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 8. Codificación UTF-8 Limpia (Sin Mojibake) ─────────────────────────────
+  // ─── 11. Codificación UTF-8 Limpia (Sin Mojibake) ─────────────────────────────
   const hasEncodingIssue = simulation.encodingIssues.hasMojibake;
   rules.push({
     id: 'clean_encoding',
@@ -278,8 +369,8 @@ export function auditATSFormat(input: {
     category: 'encoding',
     status: hasEncodingIssue ? 'fail' : isBlankOrEmpty ? 'warning' : 'pass',
     severity: 'critical',
-    scoreWeight: 10,
-    scoreEarned: hasEncodingIssue ? 0 : isBlankOrEmpty ? 4 : 10,
+    scoreWeight: 5,
+    scoreEarned: hasEncodingIssue ? 0 : isBlankOrEmpty ? 2 : 5,
     message: hasEncodingIssue
       ? `Se detectaron caracteres corruptos (mojibake): ${simulation.encodingIssues.corruptedCharacters.slice(0, 5).join(', ')}.`
       : isBlankOrEmpty
@@ -292,7 +383,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 9. Densidad de Texto y Seleccionabilidad (Copy-Paste Test) ──────────────
+  // ─── 12. Densidad de Texto y Seleccionabilidad (Copy-Paste Test) ──────────────
   const isSelectable = simulation.ocrConfidence >= 80;
   const hasGoodWordCount = wordCount >= 180;
   const isModerateWordCount = wordCount >= 70;
@@ -307,14 +398,14 @@ export function auditATSFormat(input: {
       ? 'pass'
       : 'warning',
     severity: 'critical',
-    scoreWeight: 10,
+    scoreWeight: 5,
     scoreEarned: isBlankOrEmpty || wordCount < 40
       ? 0
       : hasGoodWordCount && isSelectable
-      ? 10
-      : isModerateWordCount
       ? 5
-      : 2,
+      : isModerateWordCount
+      ? 3
+      : 1,
     message: isBlankOrEmpty || wordCount < 40
       ? `Contenido insuficiente (${wordCount} palabras). Un CV profesional para ATS requiere entre 250 y 650 palabras.`
       : hasGoodWordCount
@@ -327,48 +418,7 @@ export function auditATSFormat(input: {
     },
   });
 
-  // ─── 10. Sin Elementos Gráficos ni Fotos Innecesarias ────────────────────────
-  const hasPhotoRisk = sourceType === 'uploaded_pdf' && rawText.length < 250;
-  rules.push({
-    id: 'no_graphics_photos',
-    name: 'Sin Gráficos, Barras de Progreso ni Fotos',
-    category: 'layout',
-    status: hasPhotoRisk ? 'warning' : isBlankOrEmpty ? 'warning' : 'pass',
-    severity: 'info',
-    scoreWeight: 5,
-    scoreEarned: hasPhotoRisk || isBlankOrEmpty ? 2 : 5,
-    message: isBlankOrEmpty
-      ? 'Pendiente de contenido estructurado.'
-      : hasPhotoRisk
-      ? 'Precaución: asegúrate de no incluir fotos o barras porcentuales de habilidades.'
-      : 'Formato limpio de texto sin elementos gráficos que obstaculicen la lectura.',
-    fixGuide: {
-      whyItMatters: 'Las barras de habilidades (ej: "Python 80%") son ilegibles para el ATS y restan espacio valioso.',
-      howToFix: 'Agrupa tus habilidades por categorías en texto plano.',
-      example: 'Backend: Python, Node.js, PostgreSQL, Docker.',
-    },
-  });
-
-  // ─── 11. Tipografía Web-Safe y Legible ────────────────────────────────────────
-  rules.push({
-    id: 'web_safe_typography',
-    name: 'Tipografía Estándar y Alto Contraste',
-    category: 'typography',
-    status: isBlankOrEmpty ? 'warning' : 'pass',
-    severity: 'info',
-    scoreWeight: 5,
-    scoreEarned: isBlankOrEmpty ? 2 : 5,
-    message: isBlankOrEmpty
-      ? 'Tipografía base configurada.'
-      : 'Fuentes estándar compatibles con renderizado vectorial limpio.',
-    fixGuide: {
-      whyItMatters: 'Fuentes decorativas o no estándar pueden no estar embebidas y causar caracteres invisibles en el ATS.',
-      howToFix: 'Usa familias tipográficas estándar (EB Garamond, Calibri, Arial, Helvetica, Georgia).',
-      example: 'EB Garamond para perfiles clásicos, Segoe UI / Arial para perfiles técnicos.',
-    },
-  });
-
-  // ─── 12. Completitud Esencial de Secciones ──────────────────────────────────
+  // ─── 13. Completitud Esencial de Secciones ──────────────────────────────────
   const canonicalNames = new Set(simulation.detectedSections.map((s) => s.canonicalName));
   const hasExperience = (resumeData?.experience?.filter((e) => !e.hidden)?.length ?? 0) > 0 || canonicalNames.has('experience');
   const hasSkills = (resumeData?.skills?.filter((s) => !s.hidden)?.length ?? 0) > 0 || canonicalNames.has('skills');

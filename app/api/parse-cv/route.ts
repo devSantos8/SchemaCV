@@ -28,7 +28,7 @@ function normalizeSectionHeading(str: string): string {
     .trim();
 }
 
-const BULLET_START_REGEX = /^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa\u2013\u2014\u25cb\u25e6\u25aa]\s*/;
+const BULLET_START_REGEX = /^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa\u2013\u2014\u25cb\u25e6\u25aa➢>v➔➜➤►▶→⇒✔✓]\s*/;
 
 // Verbos de acción en español e inglés sin dependencia de \b ASCII
 const ACTION_VERBS_REGEX =
@@ -130,7 +130,15 @@ function preprocessRawLines(rawText: string): string[] {
 /**
  * Parser heurístico avanzado multi-sección y determinista para CVs técnicos.
  */
-function parseResumeHeuristically(rawText: string): ResumeData {
+function parseResumeHeuristically(rawInputText: string): ResumeData {
+  // Normalizar ligaduras tipográficas OCR
+  const rawText = rawInputText
+    .replace(/ﬁ/g, "fi")
+    .replace(/ﬂ/g, "fl")
+    .replace(/ﬀ/g, "ff")
+    .replace(/ﬃ/g, "ffi")
+    .replace(/ﬄ/g, "ffl");
+
   const rawLines = preprocessRawLines(rawText);
 
   // 1. Detección de Contacto Global
@@ -360,7 +368,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
 
       if (dateMatch && (!isBullet || line.includes("—") || line.includes("–") || line.includes("-") || line.includes("|"))) {
         if (currentEntry && currentEntry.rawBullets.length === 0 && !currentEntry.header.match(DATE_RANGE_REGEX)) {
-          currentEntry.subHeader = line;
+          currentEntry.subHeader = currentEntry.subHeader ? `${currentEntry.subHeader} | ${line}` : line;
         } else {
           currentEntry = { header: line, rawBullets: [] };
           entries.push(currentEntry);

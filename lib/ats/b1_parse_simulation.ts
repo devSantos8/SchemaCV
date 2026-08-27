@@ -1,4 +1,4 @@
-﻿import type { ResumeData } from '@/types/resume';
+import type { ResumeData } from '@/types/resume';
 import type { ATSParsedSimulation, ATSDetectedSection } from '@/types/evaluator';
 
 // Patrones comunes de mojibake (texto corrupto por codificación ISO-8859 / UTF-8 rota)
@@ -24,10 +24,12 @@ const SECTION_CANONICAL_PATTERNS: { canonical: string; pattern: RegExp; isStanda
   { canonical: 'education', pattern: /^(?:educaci[oó]n|formaci[oó]n|educaci[oó]n & formaci[oó]n|education|academic background|estudios|formaci[oó]n acad[eé]mica)$/i, isStandard: true },
   { canonical: 'projects', pattern: /^(?:proyectos|proyectos destacados|key projects|projects|personal projects|portfolio)$/i, isStandard: true },
   { canonical: 'certifications', pattern: /^(?:certificaciones|certificados|cursos|certifications|credentials|licenses|certifications & credentials)$/i, isStandard: true },
+  { canonical: 'references', pattern: /^(?:referencias|referencias laborales|references|professional references)$/i, isStandard: true },
   // Nombres creativos o no estándar (penalizados en ATS)
   { canonical: 'experience', pattern: /^(?:mi camino|trayectoria|d[oó]nde he estado|lo que he hecho|where i've been|career journey)$/i, isStandard: false },
   { canonical: 'skills', pattern: /^(?:mi caja de herramientas|superpoderes|stack m[aá]gico|my toolbox|superpowers|wizardry)$/i, isStandard: false },
   { canonical: 'education', pattern: /^(?:conocimiento adquirido|estudiando la vida|alma mater)$/i, isStandard: false },
+  { canonical: 'references', pattern: /^(?:qui[eé]nes conf[ií]an en m[ií]|mis avales|gente que me conoce|testimonios)$/i, isStandard: false },
 ];
 
 /**
@@ -51,7 +53,7 @@ export function resumeDataToRawText(data: ResumeData): string {
   lines.push('');
 
   // Secciones en orden
-  const order = data.section_order || ['summary', 'skills', 'experience', 'projects', 'education', 'certifications'];
+  const order = data.section_order || ['summary', 'skills', 'experience', 'projects', 'education', 'certifications', 'references'];
   const hidden = new Set(data.hidden_sections || []);
 
   for (const secKey of order) {
@@ -115,6 +117,19 @@ export function resumeDataToRawText(data: ResumeData): string {
           data.certifications.filter((c) => !c.hidden).forEach((c) => {
             const dateStr = c.date ? ` (${c.date})` : '';
             lines.push(`${c.name} - ${c.issuer}${dateStr}`);
+          });
+          lines.push('');
+        }
+        break;
+      case 'references':
+        if (data.references && data.references.length > 0) {
+          lines.push('REFERENCIAS LABORALES');
+          data.references.filter((r) => !r.hidden).forEach((r) => {
+            const relStr = r.relationship ? ` (${r.relationship})` : '';
+            const companyStr = r.company ? ` | ${r.company}` : '';
+            const contactParts = [r.email, r.phone].filter(Boolean).join(' | ');
+            lines.push(`${r.name} - ${r.position}${companyStr}${relStr}`);
+            if (contactParts) lines.push(contactParts);
           });
           lines.push('');
         }
