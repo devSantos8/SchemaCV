@@ -81,7 +81,24 @@ const REAL_TEST_DATA: ResumeData = {
       highlights: [],
     },
   ],
-  projects: [],
+  projects: [
+    {
+      id: "p1",
+      name: "SchemaCV",
+      technologies: ["Next.js", "TypeScript"],
+      highlights: ["Diseño de arquitectura escalable."],
+    },
+  ],
+  references: [
+    {
+      id: "r1",
+      name: "Carlos Mendoza",
+      position: "Tech Lead",
+      company: "DevOps Tech",
+      email: "carlos@devops.com",
+      phone: "+56 9 8765 4321",
+    },
+  ],
   custom_sections: [],
   hidden_sections: [],
   section_order: [
@@ -91,6 +108,7 @@ const REAL_TEST_DATA: ResumeData = {
     "projects",
     "education",
     "certifications",
+    "references",
   ],
   certifications: [
     { id: "c1", name: "Cloud Architecture", issuer: "Google", date: "2026" },
@@ -189,6 +207,22 @@ async function runAtsSuite() {
           name: "A6: Separadores sin fusión (no 'Ingeniero I+DevOps')",
           passed: !/Ingeniero I\+DevOps/i.test(pureText) && !/Ingeniero I\+DevOps/i.test(reactText),
           detail: "Cargo y Empresa separados correctamente",
+        },
+        {
+          name: "A7: Sección de Referencias extraída con nombre y contacto",
+          passed:
+            pureText.includes("Carlos Mendoza") &&
+            reactText.includes("Carlos Mendoza") &&
+            pureText.includes("carlos@devops.com") &&
+            reactText.includes("carlos@devops.com"),
+          detail: "Referencias y datos de contacto de referentes legibles por ATS",
+        },
+        {
+          name: "A8: Proyectos técnicos con nombre 'SchemaCV' identificado",
+          passed:
+            pureText.includes("SchemaCV") &&
+            reactText.includes("SchemaCV"),
+          detail: "Nombres de proyectos técnicos extraídos limpiamente",
         },
       ];
 

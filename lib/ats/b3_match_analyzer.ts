@@ -74,10 +74,12 @@ function analyzeExperienceYears(
     let totalMonths = 0;
     for (const exp of resumeData.experience) {
       if (exp.hidden) continue;
-      const startYear = parseInt((exp.start_date || '').slice(0, 4), 10);
+      const startMatch = (exp.start_date || '').match(/\b(19\d\d|20\d\d)\b/);
+      const startYear = startMatch ? parseInt(startMatch[1], 10) : parseInt((exp.start_date || '').slice(0, 4), 10);
       let endYear = new Date().getFullYear();
       if (exp.end_date && exp.end_date !== 'Presente' && exp.end_date !== 'Present') {
-        const parsed = parseInt(exp.end_date.slice(0, 4), 10);
+        const endMatch = exp.end_date.match(/\b(19\d\d|20\d\d)\b/);
+        const parsed = endMatch ? parseInt(endMatch[1], 10) : parseInt(exp.end_date.slice(0, 4), 10);
         if (!isNaN(parsed)) endYear = parsed;
       }
       if (!isNaN(startYear) && endYear >= startYear) {
