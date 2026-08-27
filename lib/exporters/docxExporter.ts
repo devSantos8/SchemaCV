@@ -119,6 +119,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
     "projects",
     "education",
     "certifications",
+    "references",
   ];
 
   sectionOrder.forEach((sectionKey) => {
@@ -426,6 +427,52 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                 ],
               })
             );
+          });
+        }
+        break;
+
+      case "references":
+        if (resume.references && resume.references.length > 0) {
+          children.push(createSectionHeader(labels.references));
+          resume.references.forEach((ref) => {
+            const contactRuns: TextRun[] = [];
+            if (ref.email) {
+              contactRuns.push(new TextRun({ text: ref.email, size: 18, color: "555555", font: "Arial" }));
+            }
+            if (ref.phone) {
+              if (contactRuns.length > 0) {
+                contactRuns.push(new TextRun({ text: "  |  ", size: 18, color: "888888", font: "Arial" }));
+              }
+              contactRuns.push(new TextRun({ text: ref.phone, size: 18, color: "555555", font: "Arial" }));
+            }
+
+            children.push(
+              new Paragraph({
+                spacing: { before: 80, after: 20 },
+                children: [
+                  new TextRun({
+                    text: ref.name,
+                    bold: true,
+                    size: 20,
+                    font: "Arial",
+                  }),
+                  new TextRun({
+                    text: ` – ${ref.position}${ref.company ? ` (${ref.company})` : ""}${ref.relationship ? ` [${ref.relationship}]` : ""}`,
+                    size: 20,
+                    font: "Arial",
+                  }),
+                ],
+              })
+            );
+
+            if (contactRuns.length > 0) {
+              children.push(
+                new Paragraph({
+                  spacing: { before: 0, after: 40 },
+                  children: contactRuns,
+                })
+              );
+            }
           });
         }
         break;

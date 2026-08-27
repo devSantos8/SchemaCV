@@ -82,6 +82,20 @@ export const CertificationEntrySchema = z.object({
 
 export type CertificationEntry = z.infer<typeof CertificationEntrySchema>;
 
+// Entrada de Referencia Laboral / Profesional
+export const ReferenceEntrySchema = z.object({
+  id: z.string(),
+  name: z.string().describe("Nombre del referente profesional"),
+  position: z.string().describe("Cargo o rol del referente (ej. Tech Lead, Engineering Manager)"),
+  company: z.string().describe("Empresa o institución (ej. Banco Bci, Google)"),
+  email: z.string().optional().describe("Correo de contacto profesional"),
+  phone: z.string().optional().describe("Teléfono de contacto"),
+  relationship: z.string().optional().describe("Relación profesional o contexto (ej. Ex-Jefe Directo)"),
+  hidden: z.boolean().default(false).optional().describe("Si es true, se oculta del CV final"),
+});
+
+export type ReferenceEntry = z.infer<typeof ReferenceEntrySchema>;
+
 // Entrada de Publicación o Logro Personalizado
 export const CustomEntrySchema = z.object({
   id: z.string(),
@@ -114,6 +128,7 @@ export type SectionType =
   | "projects"
   | "education"
   | "certifications"
+  | "references"
   | "custom";
 
 export interface SectionMeta {
@@ -135,6 +150,7 @@ export const SECTION_LABELS: Record<
     projects: string;
     education: string;
     certifications: string;
+    references: string;
     present: string;
   }
 > = {
@@ -145,6 +161,7 @@ export const SECTION_LABELS: Record<
     projects: "Proyectos Destacados",
     education: "Educación & Formación",
     certifications: "Certificaciones",
+    references: "Referencias Laborales",
     present: "Presente",
   },
   en: {
@@ -154,6 +171,7 @@ export const SECTION_LABELS: Record<
     projects: "Key Projects",
     education: "Education",
     certifications: "Certifications & Credentials",
+    references: "Professional References",
     present: "Present",
   },
 };
@@ -165,6 +183,7 @@ export const DEFAULT_SECTION_ORDER: string[] = [
   "projects",
   "education",
   "certifications",
+  "references",
 ];
 
 // Estructura completa de CV compatible con RenderCV y optimizada para ATS
@@ -185,7 +204,8 @@ export const ResumeSchema = z.object({
   projects: z.array(ProjectEntrySchema).default([]),
   education: z.array(EducationEntrySchema).default([]),
   certifications: z.array(CertificationEntrySchema).default([]),
-  custom_sections: z.array(CustomSectionSchema).default([]),
+  references: z.array(ReferenceEntrySchema).default([]).optional(),
+  custom_sections: z.array(CustomSectionSchema).default([]).optional(),
   
   // Metadatos de visibilidad y orden de secciones
   hidden_sections: z.array(z.string()).default([]).optional().describe("Lista de IDs de secciones ocultas"),
@@ -195,7 +215,8 @@ export const ResumeSchema = z.object({
     "experience",
     "projects",
     "education",
-    "certifications"
+    "certifications",
+    "references",
   ]),
   section_titles: z.record(z.string(), z.string()).default({}).optional().describe("Títulos personalizados para las secciones"),
 });
@@ -212,6 +233,7 @@ export function getSectionLabels(data: ResumeData): {
   projects: string;
   education: string;
   certifications: string;
+  references: string;
   present: string;
   [key: string]: string;
 } {
@@ -226,6 +248,7 @@ export function getSectionLabels(data: ResumeData): {
     projects: custom.projects?.trim() || defaultLabels.projects,
     education: custom.education?.trim() || defaultLabels.education,
     certifications: custom.certifications?.trim() || defaultLabels.certifications,
+    references: custom.references?.trim() || defaultLabels.references,
     present: defaultLabels.present,
     ...custom,
   };
@@ -315,6 +338,11 @@ export function getVisibleResumeData(data: ResumeData): ResumeData {
       ? data.section_order
       : DEFAULT_SECTION_ORDER;
 
+  // Asegurar que secciones nuevas de DEFAULT_SECTION_ORDER no se pierdan en CVs pre-existentes
+  const existingSet = new Set(baseOrder);
+  const missingDefaults = DEFAULT_SECTION_ORDER.filter((s) => !existingSet.has(s));
+  const mergedOrder = [...baseOrder, ...missingDefaults];
+
   return {
     ...data,
     social_networks: (data.social_networks || []).map((sn) => {
@@ -325,7 +353,7 @@ export function getVisibleResumeData(data: ResumeData): ResumeData {
         username: username || sn.username,
       };
     }),
-    section_order: baseOrder.filter((s) => !hiddenSections.has(s)),
+    section_order: mergedOrder.filter((s) => !hiddenSections.has(s)),
     skills: (data.skills || []).filter((item) => !item.hidden),
     experience: (data.experience || []).filter((item) => !item.hidden).map((exp) => {
       const isCurrent = Boolean(exp.current) || /^(presente|present|actual|actualidad)$/i.test((exp.end_date || "").trim());
@@ -345,6 +373,7 @@ export function getVisibleResumeData(data: ResumeData): ResumeData {
       };
     }),
     certifications: (data.certifications || []).filter((item) => !item.hidden),
+    references: (data.references || []).filter((item) => !item.hidden),
     section_titles: data.section_titles || {},
     custom_sections: (data.custom_sections || [])
       .filter((sec) => !sec.hidden)

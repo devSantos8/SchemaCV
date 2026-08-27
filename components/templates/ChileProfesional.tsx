@@ -21,6 +21,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
     projects = [],
     education = [],
     certifications = [],
+    references = [],
     custom_sections = [],
     section_order = [
       "summary",
@@ -29,6 +30,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
       "skills",
       "projects",
       "certifications",
+      "references",
     ],
   } = data;
 
@@ -279,7 +281,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
             case "certifications":
               if (certifications.length === 0) return null;
               return (
-                <section key="certifications" className="space-y-1">
+                <section key="certifications" className="space-y-1 page-break-avoid">
                   <h2 className="text-[10pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
                     {labels.certifications}
                   </h2>
@@ -289,6 +291,33 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                         <span className="font-semibold text-zinc-900">
                           {cert.name}{cert.issuer ? ` — ${cert.issuer}` : ""}{cert.date ? ` (${cert.date})` : ""}
                         </span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+
+            case "references":
+              if (references.length === 0) return null;
+              return (
+                <section key="references" className="space-y-1 page-break-avoid">
+                  <h2 className="text-[10pt] font-black text-zinc-950 uppercase tracking-wider border-b border-zinc-300 pb-0.5">
+                    {labels.references}
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[9pt]">
+                    {references.map((ref) => (
+                      <div key={ref.id} className="space-y-0.5">
+                        <div className="font-bold text-zinc-900">{ref.name}</div>
+                        <div className="text-zinc-700">
+                          {ref.position}{ref.company ? ` — ${ref.company}` : ""}
+                          {ref.relationship ? ` (${ref.relationship})` : ""}
+                        </div>
+                        {(ref.email || ref.phone) && (
+                          <div className="text-[8pt] text-zinc-600 font-mono flex flex-wrap gap-x-2">
+                            {ref.email && <a href={`mailto:${ref.email}`} className="hover:underline hover:text-blue-800">{ref.email}</a>}
+                            {ref.phone && <span>{ref.phone}</span>}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

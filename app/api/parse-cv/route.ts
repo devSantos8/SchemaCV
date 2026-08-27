@@ -7,6 +7,7 @@ import {
   EducationEntry,
   ProjectEntry,
   CertificationEntry,
+  ReferenceEntry,
   SkillCategory,
 } from "@/types/resume";
 import { COMMON_SKILLS_TAXONOMY, classifySkillsIntoCategories } from "@/lib/taxonomy/skillsTaxonomy";
@@ -95,6 +96,8 @@ function preprocessRawLines(rawText: string): string[] {
     "HABILIDADES TÉCNICAS",
     "HABILIDADES",
     "CERTIFICACIONES",
+    "REFERENCIAS LABORALES",
+    "REFERENCIAS",
     "IDIOMAS",
   ];
 
@@ -188,6 +191,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     | "projects"
     | "education"
     | "certifications"
+    | "references"
     | "skills"
     | "languages"
     | "other";
@@ -216,6 +220,10 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     {
       type: "certifications",
       regex: /^(?:certific|licenc|curso|course)/i,
+    },
+    {
+      type: "references",
+      regex: /^(?:referenc|referee)/i,
     },
     {
       type: "languages",
@@ -258,6 +266,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     "projects",
     "education",
     "certifications",
+    "references",
   ];
   const dynamicSectionOrder: string[] = [];
   for (const sec of sections) {
@@ -670,7 +679,44 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     }
   }
 
-  // 9. Competencias Técnicas
+  // 9. Referencias Laborales
+  const refLines = sections.filter((s) => s.type === "references").flatMap((s) => s.lines);
+  const references: ReferenceEntry[] = [];
+
+  if (refLines.length > 0) {
+    for (let i = 0; i < refLines.length; i++) {
+      const line = cleanBulletPrefix(refLines[i].trim());
+      if (!line || line.length < 3) continue;
+
+      const refEmailMatch = line.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+      const refEmail = refEmailMatch ? refEmailMatch[0] : undefined;
+
+      const refPhoneMatch = line.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,9}/);
+      const refPhone = refPhoneMatch ? refPhoneMatch[0] : undefined;
+
+      let cleanedLine = line;
+      if (refEmail) cleanedLine = cleanedLine.replace(refEmail, "").trim();
+      if (refPhone) cleanedLine = cleanedLine.replace(refPhone, "").trim();
+
+      const parts = cleanedLine.split(/[-–—|•,]/).map((p) => p.trim()).filter(Boolean);
+      const name = parts[0] || "Referente Profesional";
+      const position = parts[1] || "Contacto Profesional";
+      const company = parts[2] || "";
+      const relationship = parts[3] || undefined;
+
+      references.push({
+        id: `ref-${Date.now()}-${i}`,
+        name: name.replace(/\s+/g, " ").trim(),
+        position: position.replace(/\s+/g, " ").trim(),
+        company: company.replace(/\s+/g, " ").trim(),
+        email: refEmail,
+        phone: refPhone,
+        relationship,
+      });
+    }
+  }
+
+  // 10. Competencias Técnicas
   const skillLines = sections.filter((s) => s.type === "skills").flatMap((s) => s.lines);
   const skills: SkillCategory[] = [];
 
@@ -743,6 +789,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     projects,
     education,
     certifications,
+    references,
     custom_sections: [],
     section_order: dynamicSectionOrder,
   };
@@ -799,7 +846,8 @@ INSTRUCCIONES CLAVE:
 6. 'projects': Extrae CADA proyecto independiente con su nombre, tecnologías detectadas y viñetas de logros.
 7. 'education': Extrae CADA grado o estudio independiente como un elemento en el array de educación.
 8. 'certifications': Extrae las certificaciones individuales con sus nombres, emisores y fechas (incluyendo 'En Curso', 'Presente', etc.).
-9. 'section_order': Conserva el orden exacto en que aparecen las secciones en el documento.
+9. 'references': Extrae las referencias profesionales con su nombre, cargo, empresa, email y teléfono si están presentes.
+10. 'section_order': Conserva el orden exacto en que aparecen las secciones en el documento.
 
 Texto del Currículum:
 """

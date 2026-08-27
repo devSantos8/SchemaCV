@@ -26,6 +26,7 @@ import {
   FolderGit2,
   GraduationCap,
   Award,
+  Users,
   RotateCcw,
   Sparkles,
   Eye,
@@ -37,7 +38,7 @@ import {
 import { useResumeStore } from "@/store/useResumeStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SECTION_LABELS, ResumeLanguage } from "@/types/resume";
+import { SECTION_LABELS, DEFAULT_SECTION_ORDER, ResumeLanguage } from "@/types/resume";
 
 const SECTION_CONFIG: Record<
   string,
@@ -72,6 +73,11 @@ const SECTION_CONFIG: Record<
     defaultKey: "certifications",
     description: "Acreditaciones técnicas oficiales",
     icon: Award,
+  },
+  references: {
+    defaultKey: "references",
+    description: "Contactos y referencias laborales profesionales",
+    icon: Users,
   },
 };
 
@@ -293,14 +299,11 @@ function SortableItem({
 
 export const SectionOrganizer: React.FC = () => {
   const { resumeData, setSectionOrder, setResumeData } = useResumeStore();
-  const sections = resumeData.section_order || [
-    "summary",
-    "skills",
-    "experience",
-    "projects",
-    "education",
-    "certifications",
-  ];
+  const rawSections = resumeData.section_order || DEFAULT_SECTION_ORDER;
+  // Asegurar que secciones nuevas no se pierdan en CVs pre-existentes
+  const existingSet = new Set(rawSections);
+  const missingDefaults = DEFAULT_SECTION_ORDER.filter((s) => !existingSet.has(s));
+  const sections = [...rawSections, ...missingDefaults];
   const hiddenSections = new Set(resumeData.hidden_sections || []);
   const customTitles = resumeData.section_titles || {};
 
@@ -361,6 +364,7 @@ export const SectionOrganizer: React.FC = () => {
       "projects",
       "education",
       "certifications",
+      "references",
     ]);
     setResumeData({ section_titles: {} });
   };

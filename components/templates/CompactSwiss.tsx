@@ -21,6 +21,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
     projects = [],
     education = [],
     certifications = [],
+    references = [],
     section_order = [
       "summary",
       "experience",
@@ -28,6 +29,7 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
       "projects",
       "skills",
       "certifications",
+      "references",
     ],
   } = data;
 
@@ -333,6 +335,40 @@ export const CompactSwiss: React.FC<TemplateProps> = ({ data, paperSize = "lette
                           <span className="font-semibold text-zinc-900">
                             {cert.name}{cert.issuer ? ` — ${cert.issuer}` : ""}{cert.date ? ` (${cert.date})` : ""}
                           </span>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                );
+              }
+
+              case "references": {
+                if (!references || references.length === 0) return null;
+                sectionCounter++;
+                const secNum = String(sectionCounter).padStart(2, "0");
+                return (
+                  <section key="references" className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[8.5pt] font-black uppercase tracking-widest text-zinc-950 font-mono bg-zinc-100 px-1.5 py-0.5 rounded">
+                        {secNum}. {labels.references}
+                      </span>
+                      <div className="flex-1 h-[1px] bg-zinc-200" />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1 pl-1 text-[8pt]">
+                      {references.map((ref) => (
+                        <div key={ref.id} className="space-y-0.5">
+                          <div className="font-bold text-zinc-900">{ref.name}</div>
+                          <div className="text-zinc-700">
+                            {ref.position}{ref.company ? ` — ${ref.company}` : ""}
+                            {ref.relationship ? ` (${ref.relationship})` : ""}
+                          </div>
+                          {(ref.email || ref.phone) && (
+                            <div className="text-[7.5pt] text-zinc-500 font-mono flex flex-wrap gap-x-2">
+                              {ref.email && <a href={`mailto:${ref.email}`} className="hover:underline">{ref.email}</a>}
+                              {ref.phone && <span>{ref.phone}</span>}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

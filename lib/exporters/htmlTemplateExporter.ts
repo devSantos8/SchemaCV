@@ -10,6 +10,7 @@ interface TemplateStyleConfig {
   headlineWeight: string;
   headlineTransform: string;
   contactSeparator: string;
+  contactFontSize?: string;
   sectionTitleBorder: string;
   sectionTitleColor: string;
   sectionTitleTransform: string;
@@ -17,224 +18,329 @@ interface TemplateStyleConfig {
   sectionTitleLetterSpacing: string;
   sectionTitleSize: string;
   isSerif: boolean;
+  padding: string;
+  baseFontSize: string;
+  headerAlign: "left" | "center" | "between";
+  headerBorderBottom?: string;
+  sectionMargin: string;
+  entryTitleSize: string;
+  entryDateSize: string;
+  bulletSize: string;
 }
 
 const TEMPLATE_STYLES: Record<TemplateId, TemplateStyleConfig> = {
   academic_international: {
     fontFamily: "'Segoe UI', Calibri, Arial, -apple-system, BlinkMacSystemFont, sans-serif",
     nameTransform: "uppercase",
-    nameSize: "18px",
+    nameSize: "18pt",
     nameWeight: "700",
     headlineColor: "#3f3f46",
-    headlineSize: "11px",
+    headlineSize: "10.5pt",
     headlineWeight: "500",
     headlineTransform: "none",
     contactSeparator: " • ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1px solid #a1a1aa",
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "700",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10pt",
     isSerif: false,
+    padding: "0.42in 0.52in",
+    baseFontSize: "9.5pt",
+    headerAlign: "center",
+    sectionMargin: "8.5px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   harvard: {
     fontFamily: "'Times New Roman', Times, Georgia, serif",
     nameTransform: "uppercase",
-    nameSize: "18px",
+    nameSize: "17pt",
     nameWeight: "700",
     headlineColor: "#3f3f46",
-    headlineSize: "11px",
+    headlineSize: "9.5pt",
     headlineWeight: "500",
     headlineTransform: "none",
     contactSeparator: " • ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1px solid #18181b",
     sectionTitleColor: "#18181b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "700",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10pt",
     isSerif: true,
+    padding: "0.4in 0.5in",
+    baseFontSize: "9.5pt",
+    headerAlign: "center",
+    sectionMargin: "8px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   chile_profesional: {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     nameTransform: "uppercase",
-    nameSize: "19px",
-    nameWeight: "800",
-    headlineColor: "#18181b",
-    headlineSize: "11.5px",
+    nameSize: "20pt",
+    nameWeight: "900",
+    headlineColor: "#1e40af",
+    headlineSize: "10.5pt",
     headlineWeight: "700",
     headlineTransform: "none",
     contactSeparator: " | ",
-    sectionTitleBorder: "2px solid #18181b",
+    contactFontSize: "8.5pt",
+    sectionTitleBorder: "1px solid #d4d4d8",
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
-    sectionTitleWeight: "800",
+    sectionTitleWeight: "900",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "11px",
+    sectionTitleSize: "9.5pt",
     isSerif: false,
+    padding: "0.42in 0.52in",
+    baseFontSize: "9.2pt",
+    headerAlign: "left",
+    headerBorderBottom: "2px solid #18181b",
+    sectionMargin: "9px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   tech_minimalist: {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     nameTransform: "none",
-    nameSize: "19px",
+    nameSize: "19pt",
     nameWeight: "800",
     headlineColor: "#2563eb",
-    headlineSize: "11.5px",
+    headlineSize: "11pt",
     headlineWeight: "600",
     headlineTransform: "none",
-    contactSeparator: " | ",
+    contactSeparator: " / ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1px solid #e4e4e7",
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "700",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10pt",
     isSerif: false,
+    padding: "0.45in 0.55in",
+    baseFontSize: "9.5pt",
+    headerAlign: "between",
+    sectionMargin: "8px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   modern_executive: {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     nameTransform: "none",
-    nameSize: "19px",
+    nameSize: "20pt",
     nameWeight: "800",
     headlineColor: "#0284c7",
-    headlineSize: "11.5px",
+    headlineSize: "11pt",
     headlineWeight: "600",
     headlineTransform: "none",
     contactSeparator: " • ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1.5px solid #0284c7",
     sectionTitleColor: "#0f172a",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "800",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10.5pt",
     isSerif: false,
+    padding: "0.45in 0.5in",
+    baseFontSize: "9.5pt",
+    headerAlign: "left",
+    sectionMargin: "9px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   compact_swiss: {
     fontFamily: "Helvetica, Arial, system-ui, sans-serif",
     nameTransform: "uppercase",
-    nameSize: "18px",
+    nameSize: "18pt",
     nameWeight: "900",
     headlineColor: "#3f3f46",
-    headlineSize: "10.5px",
+    headlineSize: "10pt",
     headlineWeight: "700",
     headlineTransform: "uppercase",
     contactSeparator: " / ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1.5px solid #09090b",
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "900",
     sectionTitleLetterSpacing: "0.08em",
-    sectionTitleSize: "10px",
+    sectionTitleSize: "9.5pt",
     isSerif: false,
+    padding: "0.38in 0.45in",
+    baseFontSize: "9pt",
+    headerAlign: "left",
+    sectionMargin: "7px",
+    entryTitleSize: "9pt",
+    entryDateSize: "8pt",
+    bulletSize: "8.5pt",
   },
   stanford_clean: {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     nameTransform: "uppercase",
-    nameSize: "18px",
+    nameSize: "19pt",
     nameWeight: "900",
     headlineColor: "#52525b",
-    headlineSize: "10.5px",
+    headlineSize: "10.5pt",
     headlineWeight: "600",
     headlineTransform: "none",
     contactSeparator: " • ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1px solid #d4d4d8",
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "800",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10pt",
     isSerif: false,
+    padding: "0.42in 0.52in",
+    baseFontSize: "9.5pt",
+    headerAlign: "left",
+    sectionMargin: "8.5px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   skills_first: {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     nameTransform: "none",
-    nameSize: "19px",
+    nameSize: "19pt",
     nameWeight: "800",
     headlineColor: "#059669",
-    headlineSize: "11.5px",
+    headlineSize: "11pt",
     headlineWeight: "600",
     headlineTransform: "none",
     contactSeparator: " | ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1.5px solid #059669",
     sectionTitleColor: "#064e3b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "800",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10pt",
     isSerif: false,
+    padding: "0.42in 0.52in",
+    baseFontSize: "9.2pt",
+    headerAlign: "left",
+    sectionMargin: "8.5px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   executive_serif: {
     fontFamily: "'Times New Roman', Georgia, 'EB Garamond', serif",
     nameTransform: "uppercase",
-    nameSize: "18px",
+    nameSize: "19pt",
     nameWeight: "800",
     headlineColor: "#52525b",
-    headlineSize: "10px",
+    headlineSize: "10pt",
     headlineWeight: "600",
     headlineTransform: "uppercase",
     contactSeparator: " • ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1px solid #d4d4d8",
     sectionTitleColor: "#18181b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "700",
     sectionTitleLetterSpacing: "0.08em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10.5pt",
     isSerif: true,
+    padding: "0.42in 0.52in",
+    baseFontSize: "9.5pt",
+    headerAlign: "center",
+    sectionMargin: "9px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   tech_compact: {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     nameTransform: "none",
-    nameSize: "18px",
+    nameSize: "18pt",
     nameWeight: "800",
     headlineColor: "#4f46e5",
-    headlineSize: "10.5px",
+    headlineSize: "10pt",
     headlineWeight: "600",
     headlineTransform: "none",
     contactSeparator: " | ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1px solid #e4e4e7",
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "700",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "9.5pt",
     isSerif: false,
+    padding: "0.38in 0.45in",
+    baseFontSize: "9pt",
+    headerAlign: "between",
+    sectionMargin: "7px",
+    entryTitleSize: "9pt",
+    entryDateSize: "8pt",
+    bulletSize: "8.5pt",
   },
   modern_minimal: {
     fontFamily: "Arial, Helvetica, system-ui, sans-serif",
     nameTransform: "none",
-    nameSize: "18px",
+    nameSize: "19pt",
     nameWeight: "900",
     headlineColor: "#52525b",
-    headlineSize: "10.5px",
+    headlineSize: "10.5pt",
     headlineWeight: "500",
     headlineTransform: "none",
     contactSeparator: " / ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "none",
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "800",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10.5pt",
     isSerif: false,
+    padding: "0.45in 0.55in",
+    baseFontSize: "9.5pt",
+    headerAlign: "left",
+    sectionMargin: "9px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
   career_changer: {
     fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     nameTransform: "none",
-    nameSize: "19px",
+    nameSize: "19pt",
     nameWeight: "800",
     headlineColor: "#d97706",
-    headlineSize: "11.5px",
+    headlineSize: "11pt",
     headlineWeight: "600",
     headlineTransform: "none",
     contactSeparator: " • ",
+    contactFontSize: "8.5pt",
     sectionTitleBorder: "1.5px solid #d97706",
     sectionTitleColor: "#78350f",
     sectionTitleTransform: "uppercase",
     sectionTitleWeight: "800",
     sectionTitleLetterSpacing: "0.05em",
-    sectionTitleSize: "10.5px",
+    sectionTitleSize: "10pt",
     isSerif: false,
+    padding: "0.42in 0.52in",
+    baseFontSize: "9.5pt",
+    headerAlign: "left",
+    sectionMargin: "8.5px",
+    entryTitleSize: "9.5pt",
+    entryDateSize: "8.5pt",
+    bulletSize: "9pt",
   },
 };
 
@@ -283,6 +389,7 @@ export function generateTemplateHtml(
     "projects",
     "education",
     "certifications",
+    "references",
   ];
 
   let sectionsHtml = "";
@@ -437,9 +544,38 @@ export function generateTemplateHtml(
             .join("");
 
           sectionsHtml += `
-            <div class="section-block">
+            <div class="section-block page-break-avoid">
               <h2 class="section-title">${labels.certifications}</h2>
               <div class="certs-container">${certList}</div>
+            </div>
+          `;
+        }
+        break;
+
+      case "references":
+        if (data.references && data.references.length > 0) {
+          const refList = data.references
+            .map((ref) => {
+              const contactParts = [];
+              if (ref.email) contactParts.push(`<a href="mailto:${ref.email}" style="color: inherit; text-decoration: underline;">${ref.email}</a>`);
+              if (ref.phone) contactParts.push(ref.phone);
+              const contactStr = contactParts.length ? `<div style="font-size: 8.5px; color: #52525b; font-family: monospace;">${contactParts.join(" &nbsp;|&nbsp; ")}</div>` : "";
+              const relStr = ref.relationship ? ` (${ref.relationship})` : "";
+
+              return `
+                <div class="ref-entry page-break-avoid" style="margin-bottom: 4px;">
+                  <div style="font-weight: 700; color: #09090b; font-size: 9.5px;">${ref.name}</div>
+                  <div style="color: #3f3f46; font-size: 9px;">${ref.position}${ref.company ? ` — ${ref.company}` : ""}${relStr}</div>
+                  ${contactStr}
+                </div>
+              `;
+            })
+            .join("");
+
+          sectionsHtml += `
+            <div class="section-block page-break-avoid">
+              <h2 class="section-title">${labels.references}</h2>
+              <div class="references-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px;">${refList}</div>
             </div>
           `;
         }
@@ -447,8 +583,38 @@ export function generateTemplateHtml(
     }
   });
 
+  let headerHtml = "";
+  if (styleConfig.headerAlign === "between") {
+    headerHtml = `
+      <div class="cv-header header-between" style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: ${styleConfig.sectionMargin};">
+        <div style="flex: 1;">
+          <h1 class="header-title" style="text-align: left; margin: 0; padding: 0;">${data.name || "Nombre Completo"}</h1>
+          ${data.headline ? `<p class="header-headline" style="text-align: left; margin: 1px 0 0 0;">${data.headline}</p>` : ""}
+        </div>
+        ${contactLine ? `<div class="header-contact" style="text-align: right; margin: 0; font-size: ${styleConfig.contactFontSize || "8.5pt"};">${contactLine}</div>` : ""}
+      </div>
+    `;
+  } else if (styleConfig.headerAlign === "left") {
+    headerHtml = `
+      <div class="cv-header header-left" style="margin-bottom: ${styleConfig.sectionMargin}; ${styleConfig.headerBorderBottom ? `border-bottom: ${styleConfig.headerBorderBottom}; padding-bottom: 6px;` : ""}">
+        <h1 class="header-title" style="text-align: left; margin: 0; padding: 0;">${data.name || "Nombre Completo"}</h1>
+        ${data.headline ? `<p class="header-headline" style="text-align: left; margin: 2px 0 3px 0;">${data.headline}</p>` : ""}
+        ${contactLine ? `<div class="header-contact" style="text-align: left; margin: 2px 0 0 0; font-size: ${styleConfig.contactFontSize || "8.5pt"};">${contactLine}</div>` : ""}
+      </div>
+    `;
+  } else {
+    // Centered default
+    headerHtml = `
+      <div class="cv-header header-center" style="text-align: center; margin-bottom: ${styleConfig.sectionMargin};">
+        <h1 class="header-title" style="text-align: center; margin: 0; padding: 0;">${data.name || "Nombre Completo"}</h1>
+        ${data.headline ? `<p class="header-headline" style="text-align: center; margin: 2px 0 2px 0;">${data.headline}</p>` : ""}
+        ${contactLine ? `<div class="header-contact" style="text-align: center; margin: 2px 0 0 0; font-size: ${styleConfig.contactFontSize || "8.5pt"};">${contactLine}</div>` : ""}
+      </div>
+    `;
+  }
+
   return `
-    <div class="cv-document ${templateId} ${styleConfig.isSerif ? "font-serif" : "font-sans"}" style="padding: 10mm 12mm; color: #09090b; line-height: 1.35; font-size: 10px;">
+    <div class="cv-document ${templateId} ${styleConfig.isSerif ? "font-serif" : "font-sans"}" style="padding: ${styleConfig.padding}; color: #09090b; line-height: 1.35; font-size: ${styleConfig.baseFontSize};">
       <style>
         .cv-document {
           font-family: ${styleConfig.fontFamily};
@@ -457,34 +623,29 @@ export function generateTemplateHtml(
         .header-title {
           font-size: ${styleConfig.nameSize};
           font-weight: ${styleConfig.nameWeight};
-          text-align: center;
-          margin: 0;
-          padding: 0;
           letter-spacing: -0.02em;
           display: block;
           text-transform: ${styleConfig.nameTransform};
           color: #09090b;
+          line-height: 1.1;
         }
         .header-headline {
           font-size: ${styleConfig.headlineSize};
-          text-align: center;
           color: ${styleConfig.headlineColor};
-          margin: 2px 0 3px 0;
-          padding: 0;
           font-weight: ${styleConfig.headlineWeight};
           text-transform: ${styleConfig.headlineTransform};
           display: block;
+          line-height: 1.25;
         }
         .header-contact {
-          font-size: 9px;
-          text-align: center;
-          color: #52525b;
-          margin: 0 0 8px 0;
+          font-size: ${styleConfig.contactFontSize || "8.5pt"};
+          color: #4b5563;
           display: block;
           font-weight: 500;
+          line-height: 1.3;
         }
         .section-block {
-          margin-bottom: 7px;
+          margin-bottom: ${styleConfig.sectionMargin};
         }
         .section-title {
           font-size: ${styleConfig.sectionTitleSize};
@@ -492,21 +653,22 @@ export function generateTemplateHtml(
           text-transform: ${styleConfig.sectionTitleTransform};
           letter-spacing: ${styleConfig.sectionTitleLetterSpacing};
           border-bottom: ${styleConfig.sectionTitleBorder};
-          padding-bottom: 1px;
-          margin: 0 0 3px 0;
+          padding-bottom: 2px;
+          margin: 0 0 4px 0;
           color: ${styleConfig.sectionTitleColor};
+          line-height: 1.2;
         }
         .section-text {
           margin: 0;
-          font-size: 9.5px;
-          line-height: 1.35;
+          font-size: ${styleConfig.baseFontSize};
+          line-height: 1.38;
           color: #27272a;
           text-align: justify;
         }
         .skill-row {
           display: block;
-          font-size: 9.5px;
-          margin-bottom: 1px;
+          font-size: ${styleConfig.baseFontSize};
+          margin-bottom: 2px;
           line-height: 1.35;
         }
         .skill-cat {
@@ -518,64 +680,65 @@ export function generateTemplateHtml(
           color: #27272a;
         }
         .entry-block {
-          margin-bottom: 5px;
+          margin-bottom: 6px;
         }
         .entry-header {
           display: flex;
           justify-content: space-between;
           align-items: baseline;
-          font-size: 10px;
-          margin-bottom: 1px;
+          font-size: ${styleConfig.entryTitleSize};
+          margin-bottom: 1.5px;
         }
         .entry-title {
           color: #09090b;
+          font-weight: 700;
         }
         .entry-subtitle {
           color: #3f3f46;
+          font-weight: 500;
         }
         .entry-dates {
-          font-size: 9px;
+          font-size: ${styleConfig.entryDateSize};
           color: #52525b;
-          font-family: ${templateId === "tech_minimalist" || templateId === "tech_compact" ? "monospace" : "inherit"};
+          font-family: ${templateId === "tech_minimalist" || templateId === "tech_compact" || templateId === "chile_profesional" ? "monospace" : "inherit"};
           white-space: nowrap;
+          font-weight: 600;
         }
         .entry-summary {
-          margin: 1px 0 2px 0;
-          font-size: 9px;
+          margin: 1.5px 0 2px 0;
+          font-size: ${styleConfig.baseFontSize};
           color: #3f3f46;
+          font-style: italic;
         }
         .entry-bullets {
-          margin: 1px 0 0 0;
+          margin: 2px 0 0 0;
           padding-left: 18px;
           list-style-type: disc !important;
-          font-size: 9.5px;
+          font-size: ${styleConfig.bulletSize};
           color: #27272a;
+          line-height: 1.35;
         }
         .entry-bullets li {
           display: list-item !important;
           list-style-type: disc !important;
-          margin-bottom: 1px;
+          margin-bottom: 1.5px;
           line-height: 1.35;
         }
         /* Certifications: inline text with separator */
         .cert-row {
           display: block;
-          font-size: 9px;
-          margin-bottom: 1.5px;
+          font-size: ${styleConfig.baseFontSize};
+          margin-bottom: 2px;
           line-height: 1.35;
         }
         .proj-tech {
-          font-size: 9px;
+          font-size: ${styleConfig.entryDateSize};
           font-family: monospace;
           color: #52525b;
         }
       </style>
 
-      <div class="cv-header">
-        <h1 class="header-title">${data.name || "Nombre Completo"}</h1>
-        ${data.headline ? `<p class="header-headline">${data.headline}</p>` : ""}
-        ${contactLine ? `<p class="header-contact">${contactLine}</p>` : ""}
-      </div>
+      ${headerHtml}
 
       <div class="cv-body">
         ${sectionsHtml}

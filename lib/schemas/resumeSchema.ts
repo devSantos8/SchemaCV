@@ -1,4 +1,3 @@
-import { z } from "zod";
 import {
   ResumeSchema,
   ResumeData,
@@ -7,6 +6,7 @@ import {
   SkillCategory,
   ProjectEntry,
   CertificationEntry,
+  ReferenceEntry,
   SocialNetwork,
   normalizeSocialUrl,
 } from "@/types/resume";
@@ -181,6 +181,23 @@ export function mapRenderCvToSchemaCv(renderCvData: any): Partial<ResumeData> {
     });
   }
 
+  // Mapeo de Referencias
+  const references: ReferenceEntry[] = [];
+  const rawRefs = sections.references || sections.referees || [];
+  if (Array.isArray(rawRefs)) {
+    rawRefs.forEach((ref: any, idx: number) => {
+      references.push({
+        id: `ref-${Date.now()}-${idx}`,
+        name: ref.name || ref.title || "Nombre Referente",
+        position: ref.position || ref.role || "Cargo",
+        company: ref.company || ref.organization || "Empresa",
+        email: ref.email || undefined,
+        phone: ref.phone || undefined,
+        relationship: ref.relationship || ref.context || undefined,
+      });
+    });
+  }
+
   return {
     name: cv.name || "Tu Nombre",
     headline: cv.headline || cv.title || "",
@@ -195,6 +212,7 @@ export function mapRenderCvToSchemaCv(renderCvData: any): Partial<ResumeData> {
     projects,
     education,
     certifications,
+    references,
     section_titles: renderCvData?.meta?.section_titles || {},
     hidden_sections: renderCvData?.meta?.hidden_sections || [],
     section_order: renderCvData?.meta?.section_order || [
@@ -204,6 +222,7 @@ export function mapRenderCvToSchemaCv(renderCvData: any): Partial<ResumeData> {
       "projects",
       "education",
       "certifications",
+      "references",
     ],
   };
 }

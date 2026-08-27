@@ -21,6 +21,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
     projects = [],
     education = [],
     certifications = [],
+    references = [],
     section_order = [
       "summary",
       "skills",
@@ -28,6 +29,7 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
       "experience",
       "education",
       "certifications",
+      "references",
     ],
   } = data;
 
@@ -263,6 +265,33 @@ export const SkillsFirstBuilder: React.FC<TemplateProps> = ({ data, paperSize = 
                         <strong className="text-zinc-900">{cert.name}</strong>
                         <span className="text-zinc-600"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                       </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            );
+
+          case "references":
+            if (!references || references.length === 0) return null;
+            return (
+              <section key="references" className="mb-2 page-break-avoid">
+                <h2 className="text-[8.5pt] font-black uppercase tracking-wider text-zinc-950 bg-zinc-100 px-2 py-0.5 mb-1.5 border-l-2 border-zinc-900">
+                  {labels.references}
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[8pt]">
+                  {references.map((ref) => (
+                    <div key={ref.id} className="space-y-0.5">
+                      <div className="font-bold text-zinc-900">{ref.name}</div>
+                      <div className="text-zinc-700">
+                        {ref.position}{ref.company ? ` — ${ref.company}` : ""}
+                        {ref.relationship ? ` (${ref.relationship})` : ""}
+                      </div>
+                      {(ref.email || ref.phone) && (
+                        <div className="text-[7.5pt] text-zinc-600 font-mono flex flex-wrap gap-x-2">
+                          {ref.email && <a href={`mailto:${ref.email}`} className="hover:underline">{ref.email}</a>}
+                          {ref.phone && <span>{ref.phone}</span>}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
