@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateNativeResumePdf } from "@/lib/exporters/reactPdf/renderPdf";
+import puppeteer from "puppeteer";
 import { generateTemplateHtml } from "@/lib/exporters/htmlTemplateExporter";
 import type { ResumeData, TemplateId, PaperSize } from "@/types/resume";
 
@@ -25,36 +25,25 @@ export async function POST(req: NextRequest) {
     const pdfDocumentTitle =
       title || (candidateClean ? `CV_${candidateClean}` : "Curriculum_Vitae");
 
-    // 1. MOTOR PRIMARIO: Generación Nativa con @react-pdf/renderer (Vectorial, 100% ATS, <100ms)
+    let componentHtml = "";
     if (resumeData) {
-      const pdfBuffer = await generateNativeResumePdf({
-        data: resumeData as ResumeData,
-        templateId: templateId as TemplateId,
-        paperSize: paperSize as PaperSize,
-        title: pdfDocumentTitle,
-      });
-
-      return new Response(pdfBuffer as unknown as BodyInit, {
-        status: 200,
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="${pdfDocumentTitle}.pdf"`,
-          "X-PDF-Engine": "React-PDF-Native-ATS",
-        },
-      });
+      componentHtml = generateTemplateHtml(
+        resumeData as ResumeData,
+        templateId as TemplateId,
+        paperSize as PaperSize
+      );
+    } else if (html && typeof html === "string" && html.trim().length > 20) {
+      componentHtml = html;
     }
 
-    // 2. FALLBACK LEGACY: Puppeteer para strings HTML personalizados
-    let documentHtml = html;
-    if (!documentHtml || typeof documentHtml !== "string" || documentHtml.trim().length < 20) {
+    if (!componentHtml) {
       return NextResponse.json(
         { error: "Se requiere 'resumeData' o 'html' para compilar el PDF." },
         { status: 400 }
       );
     }
 
-    const puppeteer = await import("puppeteer");
-    browser = await puppeteer.default.launch({
+    browser = await puppeteer.launch({
       headless: true,
       args: [
         "--no-sandbox",
@@ -73,6 +62,7 @@ export async function POST(req: NextRequest) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pdfDocumentTitle}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @page {
         size: ${isA4 ? "A4 portrait" : "letter portrait"};
@@ -88,19 +78,13 @@ export async function POST(req: NextRequest) {
         padding: 0;
         background-color: white !important;
         color: #09090b !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       }
-      ul.list-disc, .list-disc, .entry-bullets, ul {
+      ul.list-disc, .list-disc, ul {
         list-style-type: disc !important;
       }
       li {
         display: list-item !important;
-      }
-      .list-inside {
-        list-style-position: inside !important;
-      }
-      .list-outside {
-        list-style-position: outside !important;
       }
       .page-break-avoid {
         break-inside: avoid !important;
@@ -116,7 +100,7 @@ export async function POST(req: NextRequest) {
   </head>
   <body>
     <div id="print-root" style="width: 100%; margin: 0; padding: 0;">
-      ${documentHtml}
+      ${componentHtml}
     </div>
   </body>
 </html>`;
@@ -141,7 +125,7 @@ export async function POST(req: NextRequest) {
     await browser.close();
     browser = null;
 
-    return new Response(pdfBuffer as BodyInit, {
+    return new Response(pdfBuffer as unknown as BodyInit, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
@@ -154,7 +138,7 @@ export async function POST(req: NextRequest) {
     }
     console.error("Error al compilar PDF vectorial en el servidor:", error);
     return NextResponse.json(
-      { error: "Error interno al generar el PDF vectorial con Puppeteer." },
+      { error: "Error interno al generar el PDF vectorial." },
       { status: 500 }
     );
   }
