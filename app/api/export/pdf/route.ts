@@ -17,16 +17,14 @@ export async function POST(req: NextRequest) {
 
     let documentHtml = "";
 
-    // Priorizar el HTML directo renderizado en el navegador para fidelidad visual 1:1 exacta,
-    // o compilar con el exportador semántico como fallback
-    if (html && typeof html === "string" && html.trim().length > 50) {
-      documentHtml = html;
-    } else if (resumeData) {
+    if (resumeData) {
       documentHtml = generateTemplateHtml(
         resumeData as ResumeData,
         templateId as TemplateId,
         paperSize as PaperSize
       );
+    } else if (html && typeof html === "string" && html.trim().length > 50) {
+      documentHtml = html;
     }
 
     if (!documentHtml) {
@@ -65,28 +63,7 @@ export async function POST(req: NextRequest) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${pdfDocumentTitle}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-              mono: ['Geist Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
-              serif: ['EB Garamond', 'Georgia', 'Times New Roman', 'serif'],
-            }
-          }
-        }
-      }
-    </script>
     <style>
-      :root {
-        --font-geist-sans: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-geist-mono: 'Geist Mono', monospace;
-      }
       @page {
         size: ${isA4 ? "A4 portrait" : "letter portrait"};
         margin: 0;
@@ -101,7 +78,7 @@ export async function POST(req: NextRequest) {
         padding: 0;
         background-color: white !important;
         color: #09090b !important;
-        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       }
       ul.list-disc, .list-disc, .entry-bullets, ul {
         list-style-type: disc !important;
@@ -136,10 +113,8 @@ export async function POST(req: NextRequest) {
 
     await page.setContent(fullHtml, {
       waitUntil: "domcontentloaded",
-      timeout: 30000,
+      timeout: 15000,
     });
-
-    await page.evaluateHandle("document.fonts.ready");
 
     const pdfBuffer = await page.pdf({
       format: isA4 ? "A4" : "Letter",
@@ -156,7 +131,7 @@ export async function POST(req: NextRequest) {
     await browser.close();
     browser = null;
 
-    return new NextResponse(pdfBuffer as any, {
+    return new Response(pdfBuffer as BodyInit, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
