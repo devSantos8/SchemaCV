@@ -8,9 +8,8 @@ import {
   Send,
   Bot,
   User,
-  RefreshCw,
   Loader2,
-  ChevronDown,
+  ChevronRight,
   MessageSquare,
   Zap,
   Briefcase,
@@ -21,6 +20,8 @@ import {
   Trash2,
   Clock,
   History,
+  PanelRightClose,
+  PanelRightOpen,
 } from "lucide-react";
 import { useResumeStore } from "@/store/useResumeStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -29,7 +30,6 @@ import { useAIChatStore } from "@/store/useAIChatStore";
 import { buildResumeContext } from "@/lib/ai/prompts";
 import { Button } from "@/components/ui/button";
 import type { ChatMessage } from "@/types/jobs";
-import { usePathname } from "next/navigation";
 
 const QUICK_PROMPTS = [
   {
@@ -114,12 +114,12 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
         const trimmed = line.trim();
         if (!trimmed) return <div key={idx} className="h-0.5" />;
 
-        // Divisores horizontales (---, --, ***, ___)
+        // Divisores horizontales
         if (/^(\-{2,}|_{2,}|\*{3,})$/.test(trimmed)) {
           return <div key={idx} className="my-1.5 border-b border-border/40" />;
         }
 
-        // Encabezados (# Titulo, ## Titulo, ### Titulo)
+        // Encabezados
         if (/^#{1,4}\s+/.test(trimmed)) {
           const headingText = trimmed.replace(/^#{1,4}\s+/, "");
           return (
@@ -134,7 +134,7 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
           );
         }
 
-        // Citas / Blockquotes (> texto)
+        // Citas / Blockquotes
         if (trimmed.startsWith(">")) {
           const quoteText = trimmed.replace(/^>\s*/, "");
           return (
@@ -147,7 +147,7 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
           );
         }
 
-        // Viñetas (- item, • item, * item)
+        // Viñetas
         if (/^[-•*]\s+/.test(trimmed)) {
           const bulletText = trimmed.replace(/^[-•*]\s+/, "");
           return (
@@ -158,7 +158,7 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
           );
         }
 
-        // Listas numeradas (1. item o 1) item)
+        // Listas numeradas
         const numMatch = trimmed.match(/^(\d+)[\.\)]\s*(.+)/);
         if (numMatch) {
           return (
@@ -185,10 +185,8 @@ function MarkdownMessageRenderer({ content, isUser }: { content: string; isUser?
   );
 }
 
-export function FloatingAIChatWidget() {
-  const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+export function AIChatSidebar() {
+  const { isOpen, setIsOpen, toggleOpen } = useAIChatStore();
   const [showHistory, setShowHistory] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -196,17 +194,12 @@ export function FloatingAIChatWidget() {
   const [error, setError] = useState<string | null>(null);
   const [inactivityNotice, setInactivityNotice] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const { resumeData } = useResumeStore();
   const { user } = useAuthStore();
   const { provider, apiKey } = useAISettingsStore();
 
   const {
     sessions,
-    currentSessionId,
     getCurrentSession,
     createSession,
     switchSession,
@@ -230,7 +223,6 @@ export function FloatingAIChatWidget() {
 
   const candidateName = resumeData.name || user?.name || "profesional";
 
-  // Comprobar inactividad al abrir el chat
   useEffect(() => {
     if (isOpen) {
       const expired = checkInactivity();
@@ -266,14 +258,13 @@ export function FloatingAIChatWidget() {
 
       try {
         if (!apiKey) {
-          // Asistente local inteligente si el usuario aún no configuró API Key
           await new Promise((r) => setTimeout(r, 600));
 
           let responseText = "";
           const lower = textToSend.toLowerCase();
 
           if (lower.includes("ats") || lower.includes("match") || lower.includes("puntaje")) {
-            responseText = `Para maximizar tu compatibilidad ATS en SchemaCV:\n\n1. **Alinea la Taxonomía:** Asegúrate de incluir las tecnologías exactas en tu sección de habilidades.\n2. **Cuantifica logros:** Utiliza la fórmula *[Verbo de acción] + [Métrica de impacto] + [Tecnología utilizada]*.\n3. **Plantillas ATS Validadas:** Nuestras plantillas Harvard y Tech Minimalist garantizan 100% de lectura secuencial para los robots.\n\n💡 *(Para respuestas con razonamiento profundo y personalización total, conecta tu clave de Gemini / OpenAI en Ajustes).*`;
+            responseText = `Para maximizar tu compatibilidad ATS en SchemaCV:\n\n1. **Alinea la Taxonomía:** Asegúrate de incluir las tecnologías exactas en tu sección de habilidades.\n2. **Cuantifica logros:** Utiliza la fórmula *[Verbo de acción] + [Métrica de impacto] + [Tecnología utilizada]*.\n3. **Plantillas ATS Validadas:** Nuestras plantillas garantizan 100% de lectura secuencial para sistemas ATS.\n\n💡 *(Para respuestas con razonamiento profundo y personalización total, conecta tu clave de Gemini / OpenAI en Ajustes).*`;
           } else if (lower.includes("entrevista") || lower.includes("pregunta")) {
             responseText = `Preguntas clave recomendadas para tu perfil de **${resumeData.headline || "Ingeniería de Software"}**:\n\n1. *¿Cuál ha sido el proyecto o arquitectura de mayor impacto en el que has participado y cuáles fueron tus métricas de éxito?*\n2. *Cuéntame sobre una ocasión donde optimizaste el rendimiento o resolviste un cuello de botella crítico.*\n3. *¿Cómo gestionas la deuda técnica y los requerimientos cambiantes en equipos ágiles?*\n\n💡 **Tip STAR:** Estructura tus respuestas en: Situación, Tarea, Acción y Resultado.`;
           } else if (lower.includes("resumen") || lower.includes("perfil")) {
@@ -373,65 +364,56 @@ export function FloatingAIChatWidget() {
     }
   };
 
-  if (!mounted || !pathname || pathname.startsWith("/editor") || pathname.includes("/editor/")) {
-    return null;
-  }
-
   return (
     <>
-      {/* ─── BOTÓN FLOTANTE PERMANENTE EN LA ESQUINA INFERIOR DERECHA ─── */}
-      <div className="fixed bottom-6 right-6 z-40">
-        <motion.button
+      {/* ─── BOTÓN COLAPSADO FLOTANTE/PESTANA EN EL BORDE DERECHO CUANDO ESTÁ CERRADO ─── */}
+      {!isOpen && (
+        <button
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="group relative flex items-center gap-2.5 h-12 px-4 rounded-full bg-gradient-to-r from-violet-600 via-indigo-600 to-emerald-600 text-white shadow-xl shadow-indigo-500/25 hover:shadow-2xl hover:shadow-indigo-500/35 border border-white/20 transition-all cursor-pointer"
+          onClick={toggleOpen}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center gap-1 px-2 py-3 rounded-l-xl bg-gradient-to-b from-violet-600 to-indigo-600 text-white shadow-xl hover:px-2.5 transition-all cursor-pointer border border-r-0 border-white/20 group"
+          title="Abrir Copilot IA (GitHub Copilot style)"
         >
-          <div className="relative flex items-center justify-center">
-            <Sparkles className="h-5 w-5 animate-pulse text-amber-200" />
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white dark:border-zinc-950" />
-          </div>
-
-          <span className="text-xs font-bold tracking-tight pr-0.5">
-            {isOpen ? "Ocultar Copilot" : "Copilot IA"}
+          <Sparkles className="w-4 h-4 text-amber-300 group-hover:scale-110 transition-transform" />
+          <span className="text-[10px] font-bold vertical-writing uppercase tracking-wider py-1 select-none">
+            Copilot
           </span>
-        </motion.button>
-      </div>
+        </button>
+      )}
 
-      {/* ─── PANEL LATERAL (DRAWER) ─── */}
-      <AnimatePresence>
+      {/* ─── SIDEBAR INTEGRADO QUE EMPUJA EL PREVIEW (GITHUB COPILOT APP STYLE) ─── */}
+      <aside
+        className={`h-full shrink-0 border-l border-border/70 bg-card/95 backdrop-blur-xl flex flex-col transition-all duration-300 ease-in-out print:hidden ${
+          isOpen
+            ? "w-full md:w-[300px] lg:w-[320px] xl:w-[340px] 2xl:w-[360px] opacity-100"
+            : "w-0 opacity-0 overflow-hidden border-l-0"
+        }`}
+      >
         {isOpen && (
-          <motion.div
-            initial={{ x: "100%", opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: "100%", opacity: 0 }}
-            transition={{ type: "spring", stiffness: 320, damping: 32 }}
-            className="fixed top-3 right-3 bottom-3 w-[92vw] sm:w-[420px] z-50 flex flex-col rounded-3xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl shadow-black/25 overflow-hidden"
-          >
-            {/* Header del Drawer */}
-            <div className="flex items-center justify-between px-4 py-3.5 border-b border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/80 dark:bg-zinc-900/60 backdrop-blur-md shrink-0">
+          <div className="flex flex-col h-full w-full min-w-[280px]">
+            {/* Header del Sidebar estilo Copilot */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-muted/40 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
-                  <Bot className="w-4.5 h-4.5" />
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-xs shrink-0">
+                  <Sparkles className="w-4 h-4 text-amber-200" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-xs font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5 truncate">
+                  <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 truncate">
                     SchemaCV Copilot
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
                   </h3>
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate">
+                  <p className="text-[10px] text-muted-foreground truncate">
                     {currentSession.title}
                   </p>
                 </div>
               </div>
 
-              {/* Acciones de Cabecera: Nueva Sesión, Historial, Cerrar */}
+              {/* Acciones: Nueva Sesión, Historial, Minimizar / Cerrar */}
               <div className="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
                   onClick={() => createSession("Nueva conversación")}
-                  className="p-1.5 rounded-xl text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   title="Nueva sesión de chat"
                 >
                   <Plus className="w-4 h-4" />
@@ -440,10 +422,10 @@ export function FloatingAIChatWidget() {
                 <button
                   type="button"
                   onClick={() => setShowHistory(!showHistory)}
-                  className={`p-1.5 rounded-xl transition-colors cursor-pointer relative ${
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer relative ${
                     showHistory
-                      ? "bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300"
-                      : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-200/60 dark:hover:bg-zinc-800"
+                      ? "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
+                      : "text-muted-foreground hover:text-foreground hover:bg-zinc-200/60 dark:hover:bg-zinc-800"
                   }`}
                   title="Historial de sesiones"
                 >
@@ -458,10 +440,10 @@ export function FloatingAIChatWidget() {
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  title="Cerrar Copilot"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  title="Ocultar Copilot (Shift Sidebar)"
                 >
-                  <X className="w-4 h-4" />
+                  <PanelRightClose className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -474,11 +456,11 @@ export function FloatingAIChatWidget() {
               </div>
             )}
 
-            {/* Vista Principal o Historial de Sesiones */}
+            {/* Historial o Conversación */}
             {showHistory ? (
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                  <span className="text-xs font-bold text-zinc-900 dark:text-zinc-100">
+                <div className="flex items-center justify-between pb-2 border-b border-border/60">
+                  <span className="text-xs font-bold text-foreground">
                     Historial de Conversaciones
                   </span>
                   {sessions.length > 1 && (
@@ -505,10 +487,10 @@ export function FloatingAIChatWidget() {
                     return (
                       <div
                         key={sess.id}
-                        className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-2 ${
+                        className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-2 ${
                           isCurrent
-                            ? "border-violet-500/40 bg-violet-50/50 dark:bg-violet-950/20 shadow-2xs"
-                            : "border-zinc-200/80 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-900/40"
+                            ? "border-violet-500/50 bg-violet-500/10 shadow-2xs"
+                            : "border-border/60 hover:border-border bg-muted/30"
                         }`}
                       >
                         <button
@@ -519,10 +501,10 @@ export function FloatingAIChatWidget() {
                           }}
                           className="flex-1 text-left min-w-0 cursor-pointer"
                         >
-                          <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+                          <p className="text-xs font-semibold text-foreground truncate">
                             {sess.title}
                           </p>
-                          <p className="text-[10px] text-zinc-400 mt-0.5">
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
                             {msgCount} mensajes · Última actividad {dateStr}
                           </p>
                         </button>
@@ -532,7 +514,7 @@ export function FloatingAIChatWidget() {
                             <button
                               type="button"
                               onClick={() => deleteSession(sess.id)}
-                              className="p-1 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                              className="p-1 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                               title="Eliminar sesión"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -546,9 +528,8 @@ export function FloatingAIChatWidget() {
               </div>
             ) : (
               <>
-                {/* Cuerpo del Chat / Mensajes */}
+                {/* Lista de Mensajes con Scroll */}
                 <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 text-xs">
-                  {/* Mensaje de Bienvenida Inicial */}
                   {messages.length === 0 && (
                     <motion.div
                       key={`static-welcome-${currentSession.id}`}
@@ -559,9 +540,9 @@ export function FloatingAIChatWidget() {
                       <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-xs">
                         <Sparkles className="w-3 h-3" />
                       </div>
-                      <div className="max-w-[85%] p-3.5 rounded-2xl leading-relaxed bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-tl-xs border border-zinc-200/60 dark:border-zinc-800/80">
+                      <div className="max-w-[88%] p-3.5 rounded-2xl leading-relaxed bg-muted/60 text-foreground rounded-tl-xs border border-border/60">
                         <MarkdownMessageRenderer
-                          content={`¡Hola ${candidateName}! 👋 Soy tu Copilot de carrera y optimización ATS en SchemaCV.\n\nTengo acceso a tu CV completo y a tus postulaciones. Puedo ayudarte a:\n• Mejorar la redacción de tu experiencia con métricas de impacto.\n• Auditar la compatibilidad de tu CV con ofertas de empleo.\n• Simular entrevistas técnicas con la metodología STAR.\n\n¿En qué te gustaría trabajar hoy?`}
+                          content={`¡Hola ${candidateName}! 👋 Soy tu Copilot ATS en SchemaCV.\n\nTengo sincronizado tu CV en tiempo real. Puedo ayudarte a:\n• Mejorar la redacción de tus viñetas con impacto cuantitativo.\n• Proponer optimizaciones para roles de ${resumeData.headline || "Ingeniería"}.\n• Resolver dudas sobre compatibilidad ATS.\n\n¿En qué te gustaría trabajar hoy?`}
                         />
                       </div>
                     </motion.div>
@@ -580,7 +561,7 @@ export function FloatingAIChatWidget() {
                         <div
                           className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5 ${
                             isUser
-                              ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900"
+                              ? "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-950"
                               : "bg-gradient-to-br from-violet-600 to-indigo-600 text-white"
                           }`}
                         >
@@ -588,10 +569,10 @@ export function FloatingAIChatWidget() {
                         </div>
 
                         <div
-                          className={`max-w-[85%] p-3.5 rounded-2xl leading-relaxed ${
+                          className={`max-w-[88%] p-3.5 rounded-2xl leading-relaxed ${
                             isUser
-                              ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 rounded-tr-xs font-medium shadow-xs"
-                              : "bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-tl-xs border border-zinc-200/60 dark:border-zinc-800/80"
+                              ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 rounded-tr-xs font-medium shadow-xs"
+                              : "bg-muted/60 text-foreground rounded-tl-xs border border-border/60"
                           }`}
                         >
                           <MarkdownMessageRenderer content={msg.content} isUser={isUser} />
@@ -600,13 +581,13 @@ export function FloatingAIChatWidget() {
                     );
                   })}
 
-                  {/* Streaming Content */}
+                  {/* Streaming en vivo */}
                   {streamingContent && (
                     <div className="flex items-start gap-2.5">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5">
                         <Sparkles className="w-3 h-3" />
                       </div>
-                      <div className="max-w-[85%] p-3.5 rounded-2xl rounded-tl-xs bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border border-zinc-200/60 dark:border-zinc-800 leading-relaxed">
+                      <div className="max-w-[88%] p-3.5 rounded-2xl rounded-tl-xs bg-muted/60 text-foreground border border-border/60 leading-relaxed">
                         <MarkdownMessageRenderer content={streamingContent} />
                         <motion.span
                           animate={{ opacity: [1, 0] }}
@@ -617,7 +598,6 @@ export function FloatingAIChatWidget() {
                     </div>
                   )}
 
-                  {/* Typing indicator */}
                   {isLoading && !streamingContent && (
                     <div className="flex items-start gap-2.5">
                       <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5">
@@ -639,7 +619,7 @@ export function FloatingAIChatWidget() {
 
                 {/* Chips de Preguntas Rápidas */}
                 {messages.length <= 2 && (
-                  <div className="px-4 py-2 border-t border-zinc-100 dark:border-zinc-800/80 bg-zinc-50/50 dark:bg-zinc-950 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                  <div className="px-4 py-2 border-t border-border/60 bg-muted/20 flex items-center gap-1.5 overflow-x-auto no-scrollbar shrink-0">
                     {QUICK_PROMPTS.map((chip, idx) => {
                       const Icon = chip.icon;
                       return (
@@ -647,7 +627,7 @@ export function FloatingAIChatWidget() {
                           key={idx}
                           type="button"
                           onClick={() => handleSendMessage(chip.text)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-violet-500/60 dark:hover:border-violet-500/60 transition-colors whitespace-nowrap cursor-pointer shrink-0 shadow-2xs"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[11px] font-medium bg-background text-foreground border border-border/80 hover:border-violet-500/60 transition-colors whitespace-nowrap cursor-pointer shrink-0 shadow-2xs"
                         >
                           <Icon className="w-3 h-3 text-violet-500" />
                           <span>{chip.text}</span>
@@ -658,23 +638,23 @@ export function FloatingAIChatWidget() {
                 )}
 
                 {/* Input Bar */}
-                <div className="p-3.5 border-t border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950 shrink-0 space-y-1.5">
-                  <div className="flex items-end gap-2 bg-zinc-100/80 dark:bg-zinc-900 rounded-2xl p-1.5 border border-zinc-200/80 dark:border-zinc-800 focus-within:border-violet-500/60 focus-within:ring-2 focus-within:ring-violet-500/10 transition-all">
+                <div className="p-3 border-t border-border/60 bg-card shrink-0 space-y-1.5">
+                  <div className="flex items-end gap-2 bg-muted/50 rounded-xl p-1.5 border border-border/80 focus-within:border-violet-500/60 focus-within:ring-2 focus-within:ring-violet-500/10 transition-all">
                     <textarea
                       ref={textareaRef}
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={handleKeyDown}
                       rows={1}
-                      placeholder="Pregúntale algo sobre tu CV o vacantes..."
-                      className="flex-1 bg-transparent px-2.5 py-1.5 text-xs text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 resize-none focus:outline-none max-h-24 leading-relaxed"
+                      placeholder="Pregúntale algo a Copilot..."
+                      className="flex-1 bg-transparent px-2.5 py-1 text-xs text-foreground placeholder:text-muted-foreground resize-none focus:outline-none max-h-24 leading-relaxed"
                     />
 
                     <Button
                       size="icon"
                       onClick={() => handleSendMessage()}
                       disabled={!input.trim() || isLoading}
-                      className="h-8 w-8 rounded-xl bg-violet-600 hover:bg-violet-700 text-white shrink-0 cursor-pointer shadow-xs disabled:opacity-40"
+                      className="h-7 w-7 rounded-lg bg-violet-600 hover:bg-violet-700 text-white shrink-0 cursor-pointer shadow-xs disabled:opacity-40"
                     >
                       {isLoading ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -688,21 +668,20 @@ export function FloatingAIChatWidget() {
                     <button
                       type="button"
                       onClick={clearCurrentSession}
-                      className="text-[10px] text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                      className="text-[10px] text-muted-foreground hover:text-red-500 transition-colors cursor-pointer"
                     >
-                      Limpiar chat actual
+                      Limpiar chat
                     </button>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                    <p className="text-[10px] text-muted-foreground">
                       Enter para enviar • Shift+Enter para salto
                     </p>
                   </div>
                 </div>
               </>
             )}
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </aside>
     </>
   );
 }
-

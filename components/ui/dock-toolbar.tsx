@@ -30,16 +30,16 @@ export const DockToolbar: React.FC<DockToolbarProps> = ({
   };
 
   return (
-    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1.5 px-3 rounded-full bg-zinc-900/90 dark:bg-zinc-800/90 text-zinc-100 shadow-2xl backdrop-blur-md border border-zinc-700/50 print:hidden transition-all hover:scale-105">
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 max-w-[calc(100%-2rem)] flex items-center gap-1 sm:gap-1.5 p-1 sm:p-1.5 px-2.5 sm:px-3 rounded-full bg-zinc-900/90 dark:bg-zinc-800/90 text-zinc-100 shadow-2xl backdrop-blur-md border border-zinc-700/50 print:hidden transition-all">
       {/* Botón Explorador de Plantillas */}
       <button
         type="button"
         onClick={() => setTemplateGalleryOpen(true)}
-        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition-all"
+        className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 border border-emerald-500/30 transition-all"
         title="Abrir Catálogo de Plantillas ATS"
       >
         <LayoutGrid className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Plantillas</span>
+        <span className="hidden xl:inline">Plantillas</span>
       </button>
 
       <div className="h-4 w-[1px] bg-zinc-700 mx-0.5" />

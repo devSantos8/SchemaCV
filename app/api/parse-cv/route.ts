@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { extractText } from "unpdf";
-import { ResumeData, ResumeSchema, ExperienceEntry, EducationEntry, ProjectEntry, CertificationEntry, SkillCategory } from "@/types/resume";
+import {
+  ResumeData,
+  ResumeSchema,
+  ExperienceEntry,
+  EducationEntry,
+  ProjectEntry,
+  CertificationEntry,
+  SkillCategory,
+} from "@/types/resume";
 import { COMMON_SKILLS_TAXONOMY, classifySkillsIntoCategories } from "@/lib/taxonomy/skillsTaxonomy";
 import { generateObject } from "ai";
-import { google } from "@ai-sdk/google";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
 /**
  * Normaliza encabezados quitando acentos, símbolos y convirtiendo '&' a 'y'.
@@ -19,27 +27,52 @@ function normalizeSectionHeading(str: string): string {
     .trim();
 }
 
-const isBullet = (l: string) => {
-  const t = l.trim();
-  return (
-    /^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa.\u2013\u2014\u25cb\u25e6\u25aa]\s*/.test(t) ||
-    t.startsWith("•") ||
-    t.startsWith("-") ||
-    t.startsWith("*") ||
-    t.startsWith("·") ||
-    t.startsWith("–") ||
-    t.startsWith("—") ||
-    /^(?:Constru[ií]|Integr[eé]|Document[eé]|Desarroll[eé]|Automatic[eé]|Optimiz[eé]|Lider[eé]|Dise[nñ][eé]|Cre[eé]|Implement[eé]|Configur[eé]|Mantuve|Gestion[eé]|Coordin[eé]|Particip[eé]|Built|Developed|Designed|Implemented|Created|Led|Managed|Maintained|Automated|Optimized)\b/i.test(t)
-  );
-};
+const BULLET_START_REGEX = /^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa\u2013\u2014\u25cb\u25e6\u25aa]\s*/;
 
-const cleanBullet = (l: string) =>
-  l.replace(/^[•\-*·\u2022\u25cf\u00b7\u2219\u25aa.\u2013\u2014\u25cb\u25e6\u25aa]\s*/, "").trim();
+// Verbos de acción en español e inglés sin dependencia de \b ASCII
+const ACTION_VERBS_REGEX =
+  /^(?:Constru[ií]|Integr[eé]|Document[eé]|Desarroll[eé]|Automatic[eé]|Optimiz[eé]|Lider[eé]|Dise[nñ][eé]|Cre[eé]|Implement[eé]|Configur[eé]|Mantuve|Gestion[eé]|Coordin[eé]|Particip[eé]|Colabor[eé]|Refactoric[eé]|Administr[eé]|Ejecut[eé]|Supervis[eé]|Program[eé]|Desplegu[eé]|Built|Developed|Designed|Implemented|Created|Led|Managed|Maintained|Automated|Optimized|Architected|Spearheaded|Engineered|Authored|Executed)(?:[\s:.,]|$)/i;
 
-const DATE_REGEX =
-  /(?:(Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\s*(\d{4})?\s*[-–—]\s*(Presente|Present|Actualidad|\d{4}|[A-Za-z]+ \d{4}))/i;
+function isBulletStart(line: string): boolean {
+  const t = line.trim();
+  if (!t) return false;
+  if (BULLET_START_REGEX.test(t)) return true;
+  if (ACTION_VERBS_REGEX.test(t)) return true;
+  return false;
+}
 
-const SINGLE_YEAR_OR_DATE = /\b(20\d{2}|19\d{2}|(?:Ene|Feb|Mar|Abr|May|Jun|Jul|Ago|Sep|Oct|Nov|Dic|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s*\d{4})\b/i;
+function cleanBulletPrefix(line: string): string {
+  return line.replace(BULLET_START_REGEX, "").trim();
+}
+
+// Regex integral para rangos de fechas (laboral y educación)
+const DATE_RANGE_REGEX =
+  /(?:(?:\b(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s*(?:de\s*)?\d{4}|\d{1,2}[/-]\d{2,4}|\b(?:19|20)\d{2}\b)\s*(?:[-–—/]|a|al|to|hasta)\s*(?:Presente|Present|Actualidad|Actual|Actualmente|Cursando|Ongoing|Current|\b(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s*(?:de\s*)?\d{4}|\d{1,2}[/-]\d{2,4}|\b(?:19|20)\d{2}\b))/i;
+
+// Regex para fechas de certificaciones (incluye En Curso, Presente, Mes Año, Años)
+const CERT_DATE_REGEX =
+  /(?:\((?:En\s+Curso|En\s+Progreso|Cursando|Presente|Present|In\s+Progress|Actualidad|\d{4}(?:\s*[-–—/]\s*(?:Presente|Present|\d{4}))?|(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s*\d{2,4})\)|(?:(?:Emitido|Expira|Vigencia|Fecha|Issued|Expires):\s*)?(?:En\s+Curso|En\s+Progreso|Cursando|Presente|Present|In\s+Progress|Actualidad|(?:Ene(?:ro)?|Feb(?:rero)?|Mar(?:zo)?|Abr(?:il)?|May(?:o)?|Jun(?:io)?|Jul(?:io)?|Ago(?:sto)?|Sep(?:tiembre)?|Sept(?:iembre)?|Oct(?:ubre)?|Nov(?:iembre)?|Dic(?:iembre)?|Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Sept(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+\d{4}|\d{1,2}\/\d{4}|\d{4}\s*[-–—]\s*(?:\d{4}|Presente|Present)|\b(?:19|20)\d{2}\b))/i;
+
+const KNOWN_CITIES_COUNTRIES_REGEX =
+  /\b(?:Santiago|Las Condes|Providencia|Valparaíso|Concepción|Viña del Mar|Remoto|Remote|Madrid|Barcelona|Bogotá|Lima|Buenos Aires|Montevideo|CDMX|México|Mexico|Miami|New York|London|São Paulo|[A-ZÁÉÍÓÚÑ][a-záéíóúñ]{2,15}),\s*(?:Chile|Argentina|Colombia|Perú|Peru|México|Mexico|España|Spain|USA|US|Brasil|Brazil|Uruguay)\b/i;
+
+const KNOWN_ROLE_KEYWORDS_REGEX =
+  /(?:developer|desarrollador|engineer|ingeniero|architect|arquitecto|lead|tech lead|leader|manager|analyst|analista|consultant|consultor|specialist|especialista|cto|coo|ceo|director|practicante|intern|full\s*stack|backend|frontend|devops|cloud|qa|tester|scrum\s*master|product\s*owner|product\s*manager)/i;
+
+const KNOWN_EDU_INSTITUTIONS_REGEX =
+  /(?:universidad|instituto|facultad|duoc|inacap|colegio|liceo|politécnico|politecnico|bootcamp|academy|escuela|pontificia|federico santa mar[ií]a|mit|coursera|platzi|coderhouse|desaf[ií]o latam|42|udemy|edx)/i;
+
+const KNOWN_EDU_DEGREES_REGEX =
+  /(?:ingenier[ií]a|licenciatura|t[eé]cnico|diplomado|master|m[aá]ster|mag[ií]ster|postgrado|doctorado|phd|bachelor|bootcamp|certificaci[oó]n profesional|analista programador|bachiller|profesor)/i;
+
+const EXTENDED_TECH_CATALOG = [
+  "React", "Next.js", "TypeScript", "JavaScript", "Python", "Node.js", "NestJS", "Django", "FastAPI", "Flask",
+  "Tailwind CSS", "HTML5", "CSS3", "Docker", "Kubernetes", "PostgreSQL", "SQL Server", "SQLite", "MySQL", "MongoDB", "Redis",
+  "Prisma", "TypeORM", "Drizzle", "AWS", "GCP", "Azure", "Firebase", "Supabase", "Git", "GitHub Actions", "GitLab CI",
+  "Karate DSL", "Postman", "cURL", "RAG", "OpenAI", "Claude", "Gemini", "GraphQL", "REST APIs", "Vite", "Jest", "Playwright",
+  "Cypress", "Terraform", "Linux", "Nginx", "Figma", "Zustand", "Redux", "TanStack Query", "Radix UI", "Framer Motion", "Bash",
+  "Go", "Golang", "Java", "Spring Boot", "C#", ".NET", "C++", "PHP", "Ruby", "Astro", "Vue", "Angular", "Scrum", "Kanban"
+];
 
 /**
  * Preprocesa el texto dividiendo líneas pegadas por extractores PDF
@@ -92,17 +125,42 @@ function preprocessRawLines(rawText: string): string[] {
 }
 
 /**
- * Parser heurístico avanzado de alta precisión con soporte completo de líneas multilínea/envueltas.
+ * Parser heurístico avanzado multi-sección y determinista para CVs técnicos.
  */
 function parseResumeHeuristically(rawText: string): ResumeData {
   const rawLines = preprocessRawLines(rawText);
 
   // 1. Detección de Contacto Global
   const emailMatch = rawText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  const email = emailMatch ? emailMatch[0] : "";
+
   const phoneMatch = rawText.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,9}/);
+  const phone = phoneMatch ? phoneMatch[0] : "";
+
   const linkedinMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/([a-zA-Z0-9_-]+)/i);
   const githubMatch = rawText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/([a-zA-Z0-9_-]+)/i);
-  const websiteMatch = rawText.match(/(?:https?:\/\/)?([a-zA-Z0-9-]+\.(?:dev|io|me|app|cl|co|es|com|org))(?:\/[^\s]*)?/i);
+
+  let website: string | undefined = undefined;
+  const rawTextWithoutEmail = email ? rawText.replace(email, "") : rawText;
+  const websiteRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.(?:dev|io|me|app|cl|co|es|org|site|net|tech|info|com))\b(?:\/[^\s]*)?/gi;
+  let match: RegExpExecArray | null;
+  while ((match = websiteRegex.exec(rawTextWithoutEmail)) !== null) {
+    const candidate = match[0].trim().toLowerCase();
+    if (
+      !candidate.includes("linkedin.com") &&
+      !candidate.includes("github.com") &&
+      !candidate.includes("gmail.com") &&
+      !candidate.includes("hotmail.com") &&
+      !candidate.includes("outlook.com") &&
+      !candidate.includes("yahoo.com") &&
+      !candidate.includes("google.com") &&
+      !candidate.startsWith("linkedin.co") &&
+      !candidate.startsWith("github.co")
+    ) {
+      website = match[0].trim();
+      break;
+    }
+  }
 
   const social_networks: { network: string; username: string; url: string; icon?: string }[] = [];
   if (linkedinMatch) {
@@ -122,7 +180,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     });
   }
 
-  // 2. Segmentación Robusta de Secciones
+  // 2. Segmentación de Secciones Dinámicas
   type SectionType =
     | "header"
     | "summary"
@@ -137,31 +195,31 @@ function parseResumeHeuristically(rawText: string): ResumeData {
   const NORMALIZED_SECTION_PATTERNS: { type: SectionType; regex: RegExp }[] = [
     {
       type: "summary",
-      regex: /(?:resumen|perfil|sobre\s+m|acerca\s+de|summary|about|profile|objetivo)/i,
-    },
-    {
-      type: "experience",
-      regex: /(?:experienc|trayector|historial\s+laboral|work\s+experience|professional\s+experience|employment)/i,
-    },
-    {
-      type: "projects",
-      regex: /(?:proyect|project)/i,
-    },
-    {
-      type: "education",
-      regex: /(?:educac|formac|estudio|academic|education)/i,
-    },
-    {
-      type: "certifications",
-      regex: /(?:certific|licenc|curso|course)/i,
+      regex: /^(?:resumen|perfil|sobre\s+m|acerca\s+de|summary|about|profile|objetivo)/i,
     },
     {
       type: "skills",
-      regex: /(?:competenc|habilid|skill|stack|tecnolog|conocimiento)/i,
+      regex: /^(?:competenc|habilid|skill|stack|tecnolog|conocimiento)/i,
+    },
+    {
+      type: "experience",
+      regex: /^(?:experienc|trayector|historial\s+laboral|work\s+experience|professional\s+experience|employment)/i,
+    },
+    {
+      type: "projects",
+      regex: /^(?:proyect|project)/i,
+    },
+    {
+      type: "education",
+      regex: /^(?:educac|formac|estudio|academic|education)/i,
+    },
+    {
+      type: "certifications",
+      regex: /^(?:certific|licenc|curso|course)/i,
     },
     {
       type: "languages",
-      regex: /(?:idioma|language)/i,
+      regex: /^(?:idioma|language)/i,
     },
   ];
 
@@ -192,11 +250,38 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     sections.push({ type: currentSectionType, lines: currentSectionLines });
   }
 
-  // 3. Procesar Encabezado (Nombre, Titular, Ubicación)
+  // Captura dinámica del orden de secciones
+  const STANDARD_ORDER_KEYS = [
+    "summary",
+    "skills",
+    "experience",
+    "projects",
+    "education",
+    "certifications",
+  ];
+  const dynamicSectionOrder: string[] = [];
+  for (const sec of sections) {
+    if (
+      sec.type !== "header" &&
+      sec.type !== "other" &&
+      sec.type !== "languages" &&
+      STANDARD_ORDER_KEYS.includes(sec.type) &&
+      !dynamicSectionOrder.includes(sec.type)
+    ) {
+      dynamicSectionOrder.push(sec.type);
+    }
+  }
+  for (const std of STANDARD_ORDER_KEYS) {
+    if (!dynamicSectionOrder.includes(std)) {
+      dynamicSectionOrder.push(std);
+    }
+  }
+
+  // 3. Encabezado
   const headerLines = sections.find((s) => s.type === "header")?.lines || rawLines.slice(0, 8);
   let name = "";
   let headline = "";
-  let location = "Santiago, Chile";
+  let location = "";
 
   for (const line of headerLines) {
     if (
@@ -204,10 +289,10 @@ function parseResumeHeuristically(rawText: string): ResumeData {
       line.includes("http") ||
       line.includes("linkedin") ||
       line.includes("github") ||
-      phoneMatch?.[0]?.includes(line)
+      (phone && phone.includes(line))
     ) {
       const locMatch = line.match(/(?:[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)*,\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+)/);
-      if (locMatch) {
+      if (locMatch && !location) {
         location = locMatch[0];
       }
       continue;
@@ -216,7 +301,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     if (
       !headline &&
       (line.includes("|") ||
-        /(?:engineer|ingeniero|developer|desarrollador|architect|lead|analista|consultor)/i.test(line))
+        /(?:engineer|ingeniero|developer|desarrollador|architect|lead|analista|consultor|full\s*stack|devops)/i.test(line))
     ) {
       headline = line;
       continue;
@@ -224,7 +309,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
 
     if (
       !name &&
-      line.length >= 4 &&
+      line.length >= 3 &&
       line.length <= 50 &&
       !/(?:ingeniero|developer|curriculum|resumen|software|engineer|contacto|perfil)/i.test(line) &&
       line.split(/\s+/).length >= 2 &&
@@ -235,289 +320,357 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     }
   }
 
-  if (!name) {
-    name = headerLines.find(
-      (l) =>
-        l.length > 3 &&
-        l.length < 45 &&
-        !l.includes("@") &&
-        !l.includes("http") &&
-        !l.includes("+") &&
-        !l.includes("|")
-    ) || "Joain Matias Monroy Santos";
+  if (!name && headerLines.length > 0) {
+    name = headerLines[0];
   }
 
-  if (!headline) {
-    headline = "Ingeniero en Informática | Software Engineer | Full Stack & DevOps";
-  }
-
-  // 4. Resumen Profesional Completo
+  // 4. Resumen Profesional
   const summaryLines = sections.find((s) => s.type === "summary")?.lines || [];
-  let summary = "";
-  if (summaryLines.length > 0) {
-    summary = summaryLines.filter((l) => !isBullet(l)).join(" ");
-  } else {
-    const potentialSummary = rawLines.find(
-      (l) => l.length > 90 && !l.includes("@") && !isBullet(l)
-    );
-    summary = potentialSummary || `${headline} especializado en desarrollo de software de alta calidad.`;
-  }
+  const summary = summaryLines.filter((l) => !isBulletStart(l)).join(" ");
 
-  // 5. Experiencia Laboral con Reensamblaje de Viñetas Multilínea
+  // 5. Experiencia Laboral Multi-Puesto
   const experienceLines = sections.filter((s) => s.type === "experience").flatMap((s) => s.lines);
   const experience: ExperienceEntry[] = [];
 
   if (experienceLines.length > 0) {
-    interface ExpBlock {
-      headerParts: string[];
-      bullets: string[];
+    interface RawExpBlock {
+      header: string;
+      subHeader?: string;
+      rawBullets: string[];
     }
-    const blocks: ExpBlock[] = [];
-    let currentBlock: ExpBlock | null = null;
+    const entries: RawExpBlock[] = [];
+    let currentEntry: RawExpBlock | null = null;
 
-    for (const line of experienceLines) {
-      const bullet = isBullet(line);
-      const dateMatch = line.match(DATE_REGEX);
+    for (let i = 0; i < experienceLines.length; i++) {
+      const line = experienceLines[i].trim();
+      if (!line) continue;
 
-      if (bullet) {
-        if (!currentBlock) {
-          currentBlock = { headerParts: [], bullets: [] };
-          blocks.push(currentBlock);
-        }
-        currentBlock.bullets.push(cleanBullet(line));
-      } else if (dateMatch && currentBlock && currentBlock.bullets.length > 0 && line.length < 75) {
-        // Nuevo puesto laboral legítimo con fecha
-        currentBlock = { headerParts: [line], bullets: [] };
-        blocks.push(currentBlock);
-      } else if (currentBlock && currentBlock.bullets.length > 0) {
-        // Continuación de viñeta previa
-        const lastIdx = currentBlock.bullets.length - 1;
-        currentBlock.bullets[lastIdx] = `${currentBlock.bullets[lastIdx]} ${line.trim()}`;
-      } else {
-        if (!currentBlock) {
-          currentBlock = { headerParts: [line], bullets: [] };
-          blocks.push(currentBlock);
+      const dateMatch = line.match(DATE_RANGE_REGEX);
+      const isBullet = isBulletStart(line);
+      const isRoleCandidate = !isBullet && KNOWN_ROLE_KEYWORDS_REGEX.test(line);
+
+      if (dateMatch && (!isBullet || line.includes("—") || line.includes("–") || line.includes("-") || line.includes("|"))) {
+        if (currentEntry && currentEntry.rawBullets.length === 0 && !currentEntry.header.match(DATE_RANGE_REGEX)) {
+          currentEntry.subHeader = line;
         } else {
-          currentBlock.headerParts.push(line);
+          currentEntry = { header: line, rawBullets: [] };
+          entries.push(currentEntry);
+        }
+        continue;
+      }
+
+      if (isRoleCandidate && !currentEntry) {
+        currentEntry = { header: line, rawBullets: [] };
+        entries.push(currentEntry);
+        continue;
+      }
+
+      if (isRoleCandidate && currentEntry && currentEntry.rawBullets.length > 0) {
+        currentEntry = { header: line, rawBullets: [] };
+        entries.push(currentEntry);
+        continue;
+      }
+
+      if (!currentEntry) {
+        currentEntry = { header: line, rawBullets: [] };
+        entries.push(currentEntry);
+        continue;
+      }
+
+      if (isBullet) {
+        currentEntry.rawBullets.push(cleanBulletPrefix(line));
+      } else {
+        if (currentEntry.rawBullets.length > 0) {
+          const lastIdx = currentEntry.rawBullets.length - 1;
+          const lastBullet = currentEntry.rawBullets[lastIdx];
+          const isLowerStart = /^[a-z0-9,;()]/i.test(line) && !/^[A-ZÁÉÍÓÚÑ]/.test(line);
+          const prevNotFinished = !/[.!?]$/.test(lastBullet.trim());
+
+          if (isLowerStart || prevNotFinished) {
+            currentEntry.rawBullets[lastIdx] = `${lastBullet} ${line}`;
+          } else {
+            currentEntry.rawBullets.push(line);
+          }
+        } else {
+          if (!currentEntry.subHeader) {
+            currentEntry.subHeader = line;
+          } else {
+            currentEntry.rawBullets.push(line);
+          }
         }
       }
     }
 
-    blocks.forEach((block, bIdx) => {
-      const combinedHeader = block.headerParts.join(" – ");
-      const dateMatch = combinedHeader.match(DATE_REGEX);
+    entries.forEach((ent, idx) => {
+      const fullHeader = ent.subHeader ? `${ent.header} | ${ent.subHeader}` : ent.header;
+      const dateMatch = fullHeader.match(DATE_RANGE_REGEX);
+      let startDate = "";
+      let endDate = "Presente";
 
-      let startDate = "Mar 2026";
-      let endDate = "presente";
       if (dateMatch) {
-        const parts = dateMatch[0].split(/[-–—]/).map((d) => d.trim());
-        startDate = parts[0] || "Mar 2026";
-        endDate = parts[1] || "presente";
+        const parts = dateMatch[0].split(/[-–—/]|(?:\s+a\s+|\s+al\s+|\s+to\s+)/i).map((d) => d.trim());
+        startDate = parts[0] || "";
+        endDate = parts[parts.length - 1] || "Presente";
       }
 
-      const cleanHeader = combinedHeader.replace(DATE_REGEX, "").trim();
-      const segments = cleanHeader.split(/[-–—|,]/).map((s) => s.trim()).filter(Boolean);
+      let headerWithoutDate = fullHeader.replace(DATE_RANGE_REGEX, "").trim();
 
+      let expLocation = location;
+      const locParenMatches = headerWithoutDate.match(/\(([^)]+)\)/g);
+      if (locParenMatches) {
+        for (const paren of locParenMatches) {
+          const inside = paren.slice(1, -1).trim();
+          if (inside.includes(",") || /(?:Chile|Santiago|Condes|Remoto|Remote|Argentina|Mexico|México|USA|España)/i.test(inside)) {
+            expLocation = inside;
+            headerWithoutDate = headerWithoutDate.replace(paren, "").trim();
+            break;
+          }
+        }
+      }
+
+      const segs = headerWithoutDate.split(/[-–—|]/).map((s) => s.trim()).filter(Boolean);
       let position = "";
       let company = "";
-      let expLocation = location;
 
-      segments.forEach((seg) => {
-        if (/(?:Santiago|Chile|Remoto|Madrid|Buenos Aires)/i.test(seg)) {
-          expLocation = seg;
-        } else if (/(?:engineer|desarrollador|developer|consultor|analista|ingeniero|devops|lead|architect)/i.test(seg)) {
-          if (!position) position = seg;
-        } else if (/(?:Banco|Empresa|Company|Bci|Santander|LATAM|SpA|Ltda|Inc|Corp)/i.test(seg)) {
-          if (!company) company = seg;
-        } else if (!company && seg.length > 2) {
-          company = seg;
+      if (segs.length >= 2) {
+        if (KNOWN_ROLE_KEYWORDS_REGEX.test(segs[1]) && !KNOWN_ROLE_KEYWORDS_REGEX.test(segs[0])) {
+          company = segs[0];
+          position = segs.slice(1).join(" - ");
+        } else {
+          position = segs[0];
+          company = segs.slice(1).join(" - ");
+        }
+      } else if (segs.length === 1) {
+        position = segs[0];
+        company = "";
+      }
+
+      experience.push({
+        id: `exp-${Date.now()}-${idx}`,
+        company: company.replace(/\s+/g, " ").trim(),
+        position: position.replace(/\s+/g, " ").trim(),
+        location: expLocation,
+        start_date: startDate,
+        end_date: endDate,
+        current: /^(presente|present|actual|actualidad|ongoing|current)$/i.test(endDate.trim()),
+        highlights: ent.rawBullets,
+      });
+    });
+  }
+
+  // 6. Proyectos Destacados (Multi-Proyecto)
+  const projectLines = sections.filter((s) => s.type === "projects").flatMap((s) => s.lines);
+  const projects: ProjectEntry[] = [];
+
+  if (projectLines.length > 0) {
+    interface ProjRaw {
+      title: string;
+      lines: string[];
+    }
+    const projEntries: ProjRaw[] = [];
+    let currentProj: ProjRaw | null = null;
+
+    for (let i = 0; i < projectLines.length; i++) {
+      const line = projectLines[i].trim();
+      if (!line) continue;
+
+      const isBullet = isBulletStart(line);
+
+      const isTitleCandidate =
+        !isBullet &&
+        (line.includes("|") ||
+          line.includes("–") ||
+          line.includes("—") ||
+          line.includes(" - ") ||
+          /^(?:proyectos?|projects?)\s*:/i.test(line) ||
+          (line.length <= 75 && !/[.!?]$/.test(line)));
+
+      if (!currentProj) {
+        currentProj = { title: line, lines: [] };
+        projEntries.push(currentProj);
+      } else if (isTitleCandidate && currentProj.lines.length > 0) {
+        currentProj = { title: line, lines: [] };
+        projEntries.push(currentProj);
+      } else if (isBullet) {
+        currentProj.lines.push(cleanBulletPrefix(line));
+      } else {
+        if (currentProj.lines.length > 0) {
+          const lastIdx = currentProj.lines.length - 1;
+          const lastLine = currentProj.lines[lastIdx];
+          const isLowerStart = /^[a-z0-9,;()]/i.test(line) && !/^[A-ZÁÉÍÓÚÑ]/.test(line);
+          const prevNotFinished = !/[.!?]$/.test(lastLine.trim());
+
+          if (isLowerStart || prevNotFinished) {
+            currentProj.lines[lastIdx] = `${lastLine} ${line}`;
+          } else {
+            currentProj.lines.push(line);
+          }
+        } else {
+          currentProj.lines.push(line);
+        }
+      }
+    }
+
+    projEntries.forEach((pRaw, idx) => {
+      const fullText = `${pRaw.title} ${pRaw.lines.join(" ")}`;
+      const detectedTechs: string[] = [];
+
+      EXTENDED_TECH_CATALOG.forEach((t) => {
+        const reg = new RegExp(`\\b${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+        if (reg.test(fullText) && !detectedTechs.includes(t)) {
+          detectedTechs.push(t);
         }
       });
 
-      if (!position) position = "Ingeniero I+DevOps (Práctica Profesional)";
-      if (!company) company = "Banco de Crédito e Inversiones (Bci)";
+      const githubMatch = fullText.match(/(?:https?:\/\/)?(?:www\.)?github\.com\/[a-zA-Z0-9_\-\/]+/i);
+      const urlMatch = fullText.match(/https?:\/\/[a-zA-Z0-9_\-\.\/]+/i);
 
-      const highlights = block.bullets.length > 0
-        ? block.bullets
-        : ["Desarrollo y optimización de soluciones técnicas de alto impacto."];
+      let cleanName = pRaw.title.replace(/^proyectos?\s*:\s*/i, "").trim();
+      if (cleanName.includes("|")) {
+        cleanName = cleanName.split("|")[0].trim();
+      }
 
-      experience.push({
-        id: `exp-${Date.now()}-${bIdx}`,
-        company,
-        position,
+      projects.push({
+        id: `proj-${Date.now()}-${idx}`,
+        name: cleanName,
+        technologies: detectedTechs,
+        github_url: githubMatch ? (githubMatch[0].startsWith("http") ? githubMatch[0] : `https://${githubMatch[0]}`) : undefined,
+        url: urlMatch ? urlMatch[0] : undefined,
+        highlights: pRaw.lines,
+      });
+    });
+  }
+
+  // 7. Educación & Formación (Multi-Entrada)
+  const educationLines = sections.filter((s) => s.type === "education").flatMap((s) => s.lines);
+  const education: EducationEntry[] = [];
+
+  if (educationLines.length > 0) {
+    interface EduRawBlock {
+      lines: string[];
+    }
+    const eduBlocks: EduRawBlock[] = [];
+    let currentBlock: EduRawBlock | null = null;
+
+    for (let i = 0; i < educationLines.length; i++) {
+      const line = educationLines[i].trim();
+      if (!line) continue;
+
+      const isBullet = isBulletStart(line);
+      const isInst = !isBullet && KNOWN_EDU_INSTITUTIONS_REGEX.test(line);
+
+      if (isInst && (!currentBlock || currentBlock.lines.length >= 2)) {
+        currentBlock = { lines: [line] };
+        eduBlocks.push(currentBlock);
+      } else if (!currentBlock) {
+        currentBlock = { lines: [line] };
+        eduBlocks.push(currentBlock);
+      } else {
+        currentBlock.lines.push(line);
+      }
+    }
+
+    eduBlocks.forEach((blk, idx) => {
+      let institution = "";
+      let degree = "";
+      let eduLocation = location;
+      let startDate = "";
+      let endDate = "";
+      const highlights: string[] = [];
+
+      for (const line of blk.lines) {
+        const isBullet = isBulletStart(line);
+        let cleanLine = cleanBulletPrefix(line);
+
+        const dateMatch = cleanLine.match(DATE_RANGE_REGEX);
+        if (dateMatch) {
+          const parts = dateMatch[0].split(/[-–—/]|(?:\s+a\s+|\s+al\s+|\s+to\s+)/i).map((d) => d.trim());
+          startDate = parts[0] || "";
+          endDate = parts[parts.length - 1] || "";
+          cleanLine = cleanLine.replace(DATE_RANGE_REGEX, "").trim();
+        }
+
+        const locMatch = cleanLine.match(KNOWN_CITIES_COUNTRIES_REGEX);
+        if (locMatch) {
+          eduLocation = locMatch[0].trim();
+          cleanLine = cleanLine.replace(locMatch[0], "").trim();
+        }
+
+        if (isBullet || /(?:certificados?\s+acad[eé]micos?|cursos?|distinciones?|menci[oó]n|honores|tesis|gpa|promedio)/i.test(line)) {
+          highlights.push(cleanBulletPrefix(line));
+          continue;
+        }
+
+        if (KNOWN_EDU_INSTITUTIONS_REGEX.test(cleanLine) && !institution) {
+          institution = cleanLine;
+        } else if (KNOWN_EDU_DEGREES_REGEX.test(cleanLine) && !degree) {
+          degree = cleanLine;
+        } else if (!institution && cleanLine.length < 55 && !cleanLine.includes(":")) {
+          institution = cleanLine;
+        } else if (!degree && cleanLine.length < 80 && !cleanLine.includes(":")) {
+          degree = cleanLine;
+        } else if (cleanLine) {
+          highlights.push(cleanLine);
+        }
+      }
+
+      if (!institution && degree) {
+        institution = "Universidad / Instituto";
+      }
+
+      education.push({
+        id: `edu-${Date.now()}-${idx}`,
+        institution: institution || "Institución Educativa",
+        degree: degree || "Formación Profesional",
+        location: eduLocation,
         start_date: startDate,
         end_date: endDate,
-        current: endDate.toLowerCase().includes("present") || endDate.toLowerCase().includes("actual"),
-        location: expLocation,
+        current: /^(presente|present|actual|cursando|ongoing)$/i.test(endDate.trim()),
         highlights,
       });
     });
   }
 
-  // 6. Proyectos con Reensamblaje Multilínea Robusto
-  const projectLines = sections.filter((s) => s.type === "projects").flatMap((s) => s.lines);
-  const projects: ProjectEntry[] = [];
-
-  if (projectLines.length > 0) {
-    interface ProjBlock {
-      header: string;
-      bullets: string[];
-    }
-    const projBlocks: ProjBlock[] = [];
-    let currentProjBlock: ProjBlock | null = null;
-
-    for (const line of projectLines) {
-      const bullet = isBullet(line);
-
-      if (bullet) {
-        if (!currentProjBlock) {
-          currentProjBlock = { header: "Pulsar - Panel de Control y Telemetría", bullets: [] };
-          projBlocks.push(currentProjBlock);
-        }
-        currentProjBlock.bullets.push(cleanBullet(line));
-      } else {
-        const hasDate = Boolean(line.match(SINGLE_YEAR_OR_DATE) || line.match(DATE_REGEX));
-        const isHeaderLike = (line.includes("–") || line.includes("—") || line.includes("|") || hasDate) && line.length < 80;
-
-        if (isHeaderLike && currentProjBlock && currentProjBlock.bullets.length > 0) {
-          currentProjBlock = { header: line, bullets: [] };
-          projBlocks.push(currentProjBlock);
-        } else if (currentProjBlock && currentProjBlock.bullets.length > 0) {
-          const lastIdx = currentProjBlock.bullets.length - 1;
-          currentProjBlock.bullets[lastIdx] = `${currentProjBlock.bullets[lastIdx]} ${line.trim()}`;
-        } else if (currentProjBlock) {
-          currentProjBlock.header += ` ${line}`;
-        } else {
-          currentProjBlock = { header: line, bullets: [] };
-          projBlocks.push(currentProjBlock);
-        }
-      }
-    }
-
-    projBlocks.forEach((pb, pIdx) => {
-      const parts = pb.header.split(/[-–—|]/).map((p) => p.trim()).filter(Boolean);
-      const name = parts[0]?.replace(/^proyectos?\s*:?\s*/i, "").trim() || "Pulsar - Panel de Control y Telemetría";
-
-      const fullText = `${pb.header} ${pb.bullets.join(" ")}`;
-      const detectedTechs: string[] = [];
-      [
-        "Docker",
-        "GitHub Actions",
-        "OAuth 2.0",
-        "Prisma",
-        "TypeScript",
-        "React",
-        "Next.js",
-        "Node.js",
-        "Vercel",
-        "API de GitHub",
-        "Python",
-        "AWS",
-        "PostgreSQL",
-      ].forEach((tech) => {
-        if (fullText.toLowerCase().includes(tech.toLowerCase())) {
-          detectedTechs.push(tech);
-        }
-      });
-
-      const dateMatch = pb.header.match(SINGLE_YEAR_OR_DATE);
-
-      projects.push({
-        id: `proj-${Date.now()}-${pIdx}`,
-        name,
-        description: pb.bullets.length === 0 ? pb.header : "",
-        technologies: detectedTechs.length > 0 ? detectedTechs : ["Docker", "GitHub Actions", "Prisma"],
-        highlights: pb.bullets,
-        start_date: dateMatch ? dateMatch[0] : undefined,
-      });
-    });
-  }
-
-  // 7. Educación con Reensamblaje Multilínea
-  const educationLines = sections.filter((s) => s.type === "education").flatMap((s) => s.lines);
-  const education: EducationEntry[] = [];
-
-  if (educationLines.length > 0) {
-    const eduBullets: string[] = [];
-    for (const line of educationLines) {
-      if (isBullet(line)) {
-        eduBullets.push(cleanBullet(line));
-      } else if (eduBullets.length > 0) {
-        eduBullets[eduBullets.length - 1] += ` ${line.trim()}`;
-      }
-    }
-
-    const fullEduText = educationLines.join(" ");
-    const dateMatch = fullEduText.match(DATE_REGEX);
-
-    let startDate = "Mar 2022";
-    let endDate = "Dic 2025";
-    if (dateMatch) {
-      const parts = dateMatch[0].split(/[-–—]/).map((d) => d.trim());
-      startDate = parts[0] || "Mar 2022";
-      endDate = parts[1] || "Dic 2025";
-    }
-
-    const certText = eduBullets.length > 0
-      ? eduBullets.join(" ")
-      : "Certificados Académicos: Desarrollador Full Stack, Arquitectura en la Nube, Diseño de Sistemas Ágiles, Diseño y Gestión de Bases de Datos.";
-
-    education.push({
-      id: `edu-${Date.now()}-1`,
-      institution: "INACAP",
-      degree: "Título Profesional en Ingeniería en Informática",
-      area: certText,
-      start_date: startDate,
-      end_date: endDate,
-      current: false,
-      highlights: eduBullets.length > 0 ? eduBullets : [certText],
-    });
-  }
-
-  // 8. Certificaciones con Reensamblaje Multilínea y Fechas Precisas
+  // 8. Certificaciones
   const certLines = sections.filter((s) => s.type === "certifications").flatMap((s) => s.lines);
   const certifications: CertificationEntry[] = [];
 
   if (certLines.length > 0) {
-    const certBullets: string[] = [];
-    for (const line of certLines) {
-      if (isBullet(line)) {
-        certBullets.push(cleanBullet(line));
-      } else if (certBullets.length > 0) {
-        certBullets[certBullets.length - 1] += ` ${line.trim()}`;
-      } else if (line.length > 3) {
-        certBullets.push(line.trim());
-      }
-    }
+    for (let i = 0; i < certLines.length; i++) {
+      const line = cleanBulletPrefix(certLines[i].trim());
+      if (!line || line.length < 3) continue;
 
-    for (const clean of certBullets) {
-      if (clean.length > 3) {
-        const yearMatch = clean.match(/\b(20\d{2}|19\d{2})\b/);
-        const certDate = yearMatch ? yearMatch[0] : undefined;
-        const cleanWithoutYear = certDate ? clean.replace(/\b(20\d{2}|19\d{2})\b/, "").replace(/[-–—]\s*$/, "").trim() : clean;
+      const dateMatch = line.match(CERT_DATE_REGEX);
+      let certDate: string | undefined = undefined;
+      let cleanLine = line;
 
-        const matchWithIssuer = cleanWithoutYear.match(/^([^(:]+)(?:\(([^)]+)\))?(?::\s*(.+))?$/);
-        if (matchWithIssuer) {
-          certifications.push({
-            id: `cert-${Date.now()}-${certifications.length}`,
-            name: matchWithIssuer[1].trim(),
-            issuer: matchWithIssuer[2]?.trim() || (clean.includes("AWS") ? "AWS" : clean.includes("Coursera") ? "Coursera" : "LinkedIn Learning / DataCamp"),
-            summary: matchWithIssuer[3]?.trim(),
-            date: certDate,
-          });
-        } else {
-          certifications.push({
-            id: `cert-${Date.now()}-${certifications.length}`,
-            name: cleanWithoutYear,
-            issuer: clean.includes("AWS") ? "AWS" : "Oficial",
-            date: certDate,
-          });
-        }
+      if (dateMatch) {
+        certDate = dateMatch[0].replace(/^\(|\)$/g, "").trim();
+        cleanLine = line.replace(dateMatch[0], "").trim();
       }
+
+      const parts = cleanLine.split(/[-–—|:]/).map((p) => p.trim()).filter(Boolean);
+      let certName = "";
+      let issuer = "";
+
+      if (parts.length >= 2) {
+        certName = parts[0];
+        issuer = parts.slice(1).join(" - ");
+      } else {
+        certName = cleanLine;
+        issuer = "Certificación Oficial";
+      }
+
+      certifications.push({
+        id: `cert-${Date.now()}-${i}`,
+        name: certName.replace(/\s+/g, " ").trim(),
+        issuer: issuer.replace(/\s+/g, " ").trim(),
+        date: certDate,
+      });
     }
   }
 
-  // 9. Habilidades Técnicas Estructuradas por Categorías Nativas
+  // 9. Competencias Técnicas
   const skillLines = sections.filter((s) => s.type === "skills").flatMap((s) => s.lines);
   const skills: SkillCategory[] = [];
 
@@ -530,7 +683,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
         const tokens = itemsStr
           .split(/[,|\n;•·]+/)
           .map((t) => t.trim())
-          .filter((t) => t.length >= 2 && t.length <= 35);
+          .filter((t) => t.length >= 1 && t.length <= 60);
 
         if (tokens.length > 0) {
           skills.push({
@@ -543,7 +696,7 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     }
   }
 
-  // Fallback si no había formato 'Categoría: items'
+  // Fallback si no había categorías explícitas con dos puntos
   if (skills.length === 0) {
     const flatTokens: string[] = [];
     skillLines.forEach((sLine) => {
@@ -580,127 +733,18 @@ function parseResumeHeuristically(rawText: string): ResumeData {
     name,
     headline,
     summary,
-    email: emailMatch ? emailMatch[0] : undefined,
-    phone: phoneMatch ? phoneMatch[0] : undefined,
-    location,
-    website: websiteMatch ? websiteMatch[0] : undefined,
+    email: email || undefined,
+    phone: phone || undefined,
+    location: location || undefined,
+    website,
     social_networks,
-    skills: skills.length > 0 ? skills : [
-      {
-        id: "skill-backend",
-        category: "Backend",
-        skills: ["Python", "Node.js", "NestJS", "Django", "TypeScript", "REST APIs"],
-      },
-      {
-        id: "skill-frontend",
-        category: "Frontend",
-        skills: ["React", "Next.js", "JavaScript", "Astro", "Tailwind CSS", "HTML5", "CSS3"],
-      },
-      {
-        id: "skill-devops",
-        category: "DevOps y Metodologías",
-        skills: ["CI/CD", "GitHub Actions", "Docker", "Git", "Scrum", "Agile", "Postman", "AWS", "Firebase"],
-      },
-      {
-        id: "skill-databases",
-        category: "Bases de Datos",
-        skills: ["PostgreSQL", "SQL Server", "SQLite", "Prisma ORM"],
-      },
-      {
-        id: "skill-ai",
-        category: "IA y GenAI",
-        skills: ["APIs de OpenAI", "Gemini CLI", "Ollama", "GitHub Copilot", "Claude Code"],
-      },
-      {
-        id: "skill-languages",
-        category: "Idiomas",
-        skills: ["Español (Nativo)", "Inglés (Lectura técnica)"],
-      },
-    ],
-    experience: experience.length > 0 ? experience : [
-      {
-        id: `exp-${Date.now()}-default`,
-        company: "Banco de Crédito e Inversiones (Bci)",
-        position: "Ingeniero I+DevOps (Práctica Profesional)",
-        start_date: "Mar 2026",
-        end_date: "presente",
-        current: true,
-        location: "Santiago, Chile",
-        highlights: [
-          "Construí un chatbot inteligente con la API de OpenAI para la plataforma interna de GitHub Bci, reduciendo la tasa de fallback del 85% al 15%.",
-          "Integré un módulo de IA contextual en la plataforma interna de innovación del banco para orientar la evaluación y avance de iniciativas tecnológicas.",
-          "Documenté hallazgos, buenas prácticas y herramientas de IA para capacitar al equipo I+DevOps.",
-          "Desarrollé un módulo de gobernanza y visualización de pruebas automatizadas para equipos de QA, facilitando la trazabilidad de calidad.",
-          "Automaticé la conversión de colecciones Postman/cURL a pruebas Karate, validando la conectividad de endpoints y registrándolas en el módulo de gobernanza de QA.",
-          "Optimicé el rendimiento y la navegación en producción de una plataforma interna, reduciendo tiempos de carga de 14 a 4 segundos.",
-        ],
-      },
-    ],
-    projects: projects.length > 0 ? projects : [
-      {
-        id: `proj-${Date.now()}-0`,
-        name: "Pulsar - Panel de Control y Telemetría",
-        description: "",
-        technologies: ["Docker", "GitHub Actions", "OAuth 2.0", "Prisma", "Vercel", "API de GitHub"],
-        highlights: [
-          "Desarrollé un dashboard de telemetría en tiempo real que centraliza repositorios, detecta configuraciones en Vercel y Docker, y monitorea healthchecks vía API de GitHub.",
-          "Implementé autenticación con OAuth 2.0 (GitHub y Google), filtrado interactivo y monitoreo de eventos con latencia menor a 15 ms usando Prisma.",
-          "Contenedoricé con Docker mediante builds multietapa y automaticé CI/CD con GitHub Actions, reduciendo en 60% el tamaño de la imagen.",
-        ],
-        start_date: "Jul 2026",
-      },
-    ],
-    education: education.length > 0 ? education : [
-      {
-        id: `edu-${Date.now()}-1`,
-        institution: "INACAP",
-        degree: "Título Profesional en Ingeniería en Informática",
-        area: "Certificados Académicos: Desarrollador Full Stack, Arquitectura en la Nube, Diseño de Sistemas Ágiles, Diseño y Gestión de Bases de Datos.",
-        start_date: "Mar 2022",
-        end_date: "Dic 2025",
-        current: false,
-        highlights: [
-          "Certificados Académicos: Desarrollador Full Stack, Arquitectura en la Nube, Diseño de Sistemas Ágiles, Diseño y Gestión de Bases de Datos.",
-        ],
-      },
-    ],
-    certifications: certifications.length > 0 ? certifications : [
-      {
-        id: `cert-${Date.now()}-0`,
-        name: "Google AI Essentials",
-        issuer: "Coursera",
-        summary: "Prompting, GenIA e Integración de Modelos de IA",
-        date: undefined,
-      },
-      {
-        id: `cert-${Date.now()}-1`,
-        name: "AWS Academy Graduate",
-        issuer: "AWS",
-        summary: "Cloud Foundations, Cloud Developing, Generative AI Foundations, Machine Learning, NLP",
-        date: undefined,
-      },
-      {
-        id: `cert-${Date.now()}-2`,
-        name: "DevOps Essential",
-        issuer: "LinkedIn Learning",
-        date: undefined,
-      },
-      {
-        id: `cert-${Date.now()}-3`,
-        name: "Git Fundamentals",
-        issuer: "DataCamp",
-        date: undefined,
-      },
-    ],
+    skills,
+    experience,
+    projects,
+    education,
+    certifications,
     custom_sections: [],
-    section_order: [
-      "summary",
-      "skills",
-      "experience",
-      "projects",
-      "education",
-      "certifications",
-    ],
+    section_order: dynamicSectionOrder,
   };
 }
 
@@ -735,25 +779,27 @@ export async function POST(req: NextRequest) {
     }
 
     // 1. Si existe API Key de Google/Gemini configurada en el entorno, procesar con Vercel AI SDK
-    const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
+    const apiKey = (process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY || "").trim();
 
     if (apiKey) {
       try {
+        const google = createGoogleGenerativeAI({ apiKey });
         const { object } = await generateObject({
-          model: google("gemini-1.5-flash"),
+          model: google("gemini-2.5-flash"),
           schema: ResumeSchema,
           prompt: `Eres un asistente de IA especializado en análisis y extracción estructural de currículums (ATS-compliant).
 Analiza el siguiente texto de un currículum o perfil y estructúralo de manera precisa y exhaustiva bajo el esquema JSON tipado.
 
 INSTRUCCIONES CLAVE:
-1. 'name': Extrae el nombre real y completo de la persona (ej. 'Joain Matias Monroy Santos'). NO coloques el titular profesional aquí.
-2. 'headline': Extrae el cargo o titular profesional (ej. 'Ingeniero en Informática | Software Engineer | Full Stack & DevOps').
-3. 'summary': Extrae el párrafo completo de presentación/resumen profesional sin truncarlo ni omitir oraciones.
-4. 'skills': Extrae las habilidades técnicas categorizadas (Backend, Frontend, DevOps y Metodologías, Bases de Datos, IA y GenAI, Idiomas). NUNCA coloques párrafos ni oraciones en habilidades.
-5. 'experience': Extrae cada puesto laboral con su empresa real (ej. 'Banco de Crédito e Inversiones (Bci)'), cargo real (ej. 'Ingeniero I+DevOps (Práctica Profesional)'), fechas, ubicación y lista de logros individuales (highlights) redactados como viñetas de acción.
-6. 'projects': Extrae los proyectos mencionados (ej. 'Pulsar - Panel de Control y Telemetría') con sus tecnologías y viñetas de logros.
-7. 'education': Extrae institución (ej. 'INACAP'), grado académico (ej. 'Título Profesional en Ingeniería en Informática') y certificados/fechas.
-8. 'certifications': Extrae los cursos y certificaciones con sus emisores.
+1. 'name': Extrae el nombre real y completo de la persona.
+2. 'headline': Extrae el cargo o titular profesional.
+3. 'summary': Extrae el párrafo completo de presentación/resumen profesional sin truncarlo.
+4. 'skills': Extrae las habilidades técnicas categorizadas.
+5. 'experience': Extrae CADA puesto laboral independiente con su empresa, cargo, fechas, ubicación y lista de logros cuantitativos (highlights).
+6. 'projects': Extrae CADA proyecto independiente con su nombre, tecnologías detectadas y viñetas de logros.
+7. 'education': Extrae CADA grado o estudio independiente como un elemento en el array de educación.
+8. 'certifications': Extrae las certificaciones individuales con sus nombres, emisores y fechas (incluyendo 'En Curso', 'Presente', etc.).
+9. 'section_order': Conserva el orden exacto en que aparecen las secciones en el documento.
 
 Texto del Currículum:
 """
@@ -767,7 +813,7 @@ ${rawText.slice(0, 20000)}
       }
     }
 
-    // 2. Motor Heurístico Avanzado y Determinista con Reensamblado Multilínea (100% Offline y Preciso)
+    // 2. Motor Heurístico Avanzado y Determinista Multi-Sección
     const heuristicData = parseResumeHeuristically(rawText);
     return NextResponse.json({
       success: true,
@@ -782,3 +828,4 @@ ${rawText.slice(0, 20000)}
     );
   }
 }
+
