@@ -338,6 +338,11 @@ export function getVisibleResumeData(data: ResumeData): ResumeData {
       ? data.section_order
       : DEFAULT_SECTION_ORDER;
 
+  // Asegurar que secciones nuevas de DEFAULT_SECTION_ORDER no se pierdan en CVs pre-existentes
+  const existingSet = new Set(baseOrder);
+  const missingDefaults = DEFAULT_SECTION_ORDER.filter((s) => !existingSet.has(s));
+  const mergedOrder = [...baseOrder, ...missingDefaults];
+
   return {
     ...data,
     social_networks: (data.social_networks || []).map((sn) => {
@@ -348,7 +353,7 @@ export function getVisibleResumeData(data: ResumeData): ResumeData {
         username: username || sn.username,
       };
     }),
-    section_order: baseOrder.filter((s) => !hiddenSections.has(s)),
+    section_order: mergedOrder.filter((s) => !hiddenSections.has(s)),
     skills: (data.skills || []).filter((item) => !item.hidden),
     experience: (data.experience || []).filter((item) => !item.hidden).map((exp) => {
       const isCurrent = Boolean(exp.current) || /^(presente|present|actual|actualidad)$/i.test((exp.end_date || "").trim());
