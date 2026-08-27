@@ -276,23 +276,16 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     URL.revokeObjectURL(url);
   };
 
-  // Exportar PDF Vectorial
+  // Exportar PDF Vectorial y descarga directa
   const handleExportPdf = async () => {
+    const toastId = toast.loading("Compilando PDF vectorial ATS...");
     try {
       setIsExportingPdf(true);
-      const printDoc = document.getElementById("cv-printable-document");
-      if (!printDoc) {
-        window.print();
-        return;
-      }
-
-      const htmlContent = printDoc.outerHTML;
 
       const res = await fetch("/api/export/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          html: htmlContent,
           paperSize,
           resumeData,
           templateId: activeTemplate,
@@ -301,8 +294,8 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       });
 
       if (!res.ok) {
-        window.print();
-        return;
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Error al compilar el archivo PDF en el servidor.");
       }
 
       const blob = await res.blob();
@@ -314,9 +307,14 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      toast.success("¡PDF vectorial descargado con éxito!", { id: toastId });
     } catch (err) {
-      console.warn("Fallo al compilar con Puppeteer, usando impresión de navegador:", err);
-      window.print();
+      console.error("Error al exportar PDF:", err);
+      toast.error(
+        err instanceof Error ? err.message : "No se pudo generar el archivo PDF.",
+        { id: toastId }
+      );
     } finally {
       setIsExportingPdf(false);
     }
