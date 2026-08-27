@@ -108,6 +108,18 @@ export function resumeDataToYaml(data: ResumeData): string {
     }));
   }
 
+  // Referencias Laborales
+  if (data.references && data.references.length > 0) {
+    sections.references = data.references.map((ref) => ({
+      name: ref.name,
+      position: ref.position,
+      company: ref.company,
+      ...(ref.relationship ? { relationship: ref.relationship } : {}),
+      ...(ref.email ? { email: ref.email } : {}),
+      ...(ref.phone ? { phone: ref.phone } : {}),
+    }));
+  }
+
   // Secciones personalizadas
   if (data.custom_sections && data.custom_sections.length > 0) {
     data.custom_sections.forEach((cs) => {

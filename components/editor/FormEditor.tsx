@@ -1,12 +1,12 @@
 "use client";
 
-import React from "react";
 import {
   User,
   Briefcase,
   GraduationCap,
   FolderGit2,
   Award,
+  Users,
   Layers,
   ListOrdered,
   Plus,
@@ -24,6 +24,7 @@ import {
   EducationEntry,
   ProjectEntry,
   CertificationEntry,
+  ReferenceEntry,
   SocialNetwork,
   normalizeSocialUrl,
   getSectionLabels,
@@ -403,6 +404,40 @@ export const FormEditor: React.FC = () => {
     });
   };
 
+  // 6. Manejadores de Referencias Laborales
+  const handleAddReference = () => {
+    const newRef: ReferenceEntry = {
+      id: `ref-${Date.now()}`,
+      name: "",
+      position: "",
+      company: "",
+      email: "",
+      phone: "",
+      relationship: "",
+    };
+    setResumeData({ references: [...(resumeData.references || []), newRef] });
+  };
+
+  const handleUpdateReference = (id: string, updates: Partial<ReferenceEntry>) => {
+    const updated = (resumeData.references || []).map((r) =>
+      r.id === id ? { ...r, ...updates } : r
+    );
+    setResumeData({ references: updated });
+  };
+
+  const handleRemoveReference = (id: string) => {
+    setResumeData({
+      references: (resumeData.references || []).filter((r) => r.id !== id),
+    });
+  };
+
+  const handleToggleReferenceVisibility = (id: string) => {
+    const updated = (resumeData.references || []).map((r) =>
+      r.id === id ? { ...r, hidden: !r.hidden } : r
+    );
+    setResumeData({ references: updated });
+  };
+
   // Reordenamiento de elementos principales dentro de cada sección
   const handleMoveExperience = (index: number, direction: "up" | "down") => {
     const list = [...(resumeData.experience || [])];
@@ -438,6 +473,15 @@ export const FormEditor: React.FC = () => {
     const [moved] = list.splice(index, 1);
     list.splice(targetIndex, 0, moved);
     setResumeData({ certifications: list });
+  };
+
+  const handleMoveReference = (index: number, direction: "up" | "down") => {
+    const list = [...(resumeData.references || [])];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const [moved] = list.splice(index, 1);
+    list.splice(targetIndex, 0, moved);
+    setResumeData({ references: list });
   };
 
   return (
@@ -1783,6 +1827,233 @@ export const FormEditor: React.FC = () => {
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
+                      </div>
+
+                      {/* Live Preview de Extracción ATS */}
+                      <div className="text-[10.5px] text-zinc-500 dark:text-zinc-400 font-mono bg-zinc-100/70 dark:bg-zinc-900/70 px-2 py-0.5 rounded flex items-center gap-1.5">
+                        <span className="text-[9px] uppercase font-bold text-zinc-400">ATS Preview:</span>
+                        <span className="truncate text-zinc-800 dark:text-zinc-200">{previewText}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        {/* 6. REFERENCIAS LABORALES */}
+        <AccordionItem
+          value="references"
+          className={`border rounded-lg overflow-hidden px-4 transition-all ${hiddenSections.has("references")
+            ? "bg-zinc-50/40 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800"
+            : "border-border bg-card"
+            }`}
+        >
+          <AccordionTrigger className="hover:no-underline py-3">
+            <div className="flex items-center justify-between w-full pr-3">
+              <div className="flex items-center gap-2.5 text-sm font-semibold">
+                <div className={`p-1 rounded ${hiddenSections.has("references")
+                  ? "bg-zinc-100 dark:bg-zinc-900 text-zinc-400"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-foreground"
+                  }`}>
+                  <Users className="h-4 w-4" />
+                </div>
+                <span className={hiddenSections.has("references") ? "line-through text-muted-foreground" : ""}>
+                  {sectionLabels.references}
+                </span>
+                <span className="text-[10px] text-muted-foreground font-mono">
+                  ({resumeData.references?.length || 0})
+                </span>
+                {hiddenSections.has("references") && (
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 font-medium">
+                    Sección Oculta
+                  </span>
+                )}
+              </div>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleSectionVisibility("references", e);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    handleToggleSectionVisibility("references");
+                  }
+                }}
+                className={`inline-flex items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer h-6 px-1.5 gap-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 ${hiddenSections.has("references") ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                title={hiddenSections.has("references") ? "Mostrar sección en el CV" : "Ocultar sección del CV"}
+              >
+                {hiddenSections.has("references") ? (
+                  <>
+                    <EyeOff className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Oculta</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-[10px] text-emerald-600 font-medium">Visible</span>
+                  </>
+                )}
+              </span>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pt-2 pb-4 space-y-3">
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddReference}
+                className="h-7 text-xs gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Añadir Referencia
+              </Button>
+            </div>
+
+            {(!resumeData.references || resumeData.references.length === 0) ? (
+              <div className="text-center py-5 px-4 border border-dashed border-border rounded-xl bg-zinc-50/50 dark:bg-zinc-900/30 space-y-2">
+                <Users className="h-5 w-5 text-muted-foreground mx-auto opacity-50" />
+                <p className="text-xs text-muted-foreground">
+                  No has añadido referencias laborales aún.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAddReference}
+                  className="h-7 text-xs gap-1"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>Añadir primera referencia</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {(resumeData.references || []).map((ref, rIdx) => {
+                  const isRefHidden = !!ref.hidden;
+                  const previewText = `${ref.name || "Nombre Referente"}${ref.position ? ` — ${ref.position}` : ""}${ref.company ? ` (${ref.company})` : ""}${ref.email ? ` • ${ref.email}` : ""}${ref.phone ? ` • ${ref.phone}` : ""}`;
+
+                  return (
+                    <div
+                      key={ref.id}
+                      className={`p-3 rounded-lg border space-y-2 transition-all ${isRefHidden
+                        ? "bg-zinc-50/50 dark:bg-zinc-950/40 border-dashed border-zinc-300 dark:border-zinc-800 opacity-60"
+                        : "border-border bg-card hover:border-zinc-300 dark:hover:border-zinc-700"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-2">
+                        <span className="text-xs font-semibold text-foreground truncate">
+                          {ref.name || `Referencia #${rIdx + 1}`}
+                          {ref.company ? ` (${ref.company})` : ""}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={rIdx === 0}
+                            onClick={() => handleMoveReference(rIdx, "up")}
+                            className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 shrink-0 cursor-pointer"
+                            title="Subir referencia"
+                          >
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={rIdx === ((resumeData.references || []).length - 1)}
+                            onClick={() => handleMoveReference(rIdx, "down")}
+                            className="h-7 w-6 p-0 text-muted-foreground hover:text-foreground disabled:opacity-25 shrink-0 cursor-pointer"
+                            title="Bajar referencia"
+                          >
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleToggleReferenceVisibility(ref.id)}
+                            className={`h-7 px-1.5 gap-1 text-[11px] ${isRefHidden ? "text-amber-600 hover:text-amber-700" : "text-muted-foreground hover:text-foreground"
+                              }`}
+                            title={isRefHidden ? "Mostrar referencia en el CV" : "Ocultar referencia del CV"}
+                          >
+                            {isRefHidden ? (
+                              <EyeOff className="h-3.5 w-3.5" />
+                            ) : (
+                              <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveReference(ref.id)}
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
+                            title="Eliminar referencia"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Nombre del Referente *</Label>
+                          <Input
+                            value={ref.name}
+                            onChange={(e) => handleUpdateReference(ref.id, { name: e.target.value })}
+                            placeholder="ej. Dr. Roberto Silva o Ing. Camila Morales"
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Cargo / Rol Profesional *</Label>
+                          <Input
+                            value={ref.position}
+                            onChange={(e) => handleUpdateReference(ref.id, { position: e.target.value })}
+                            placeholder="ej. Tech Lead / Engineering Manager"
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Empresa / Institución *</Label>
+                          <Input
+                            value={ref.company}
+                            onChange={(e) => handleUpdateReference(ref.id, { company: e.target.value })}
+                            placeholder="ej. Banco Bci / Mercado Libre"
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Relación Profesional (Opcional)</Label>
+                          <Input
+                            value={ref.relationship || ""}
+                            onChange={(e) => handleUpdateReference(ref.id, { relationship: e.target.value })}
+                            placeholder="ej. Ex-Jefe Directo / Mentor"
+                            className="h-7 text-xs"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Correo Electrónico (Opcional)</Label>
+                          <Input
+                            type="email"
+                            value={ref.email || ""}
+                            onChange={(e) => handleUpdateReference(ref.id, { email: e.target.value })}
+                            placeholder="contacto@empresa.com"
+                            className="h-7 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[11px]">Teléfono (Opcional)</Label>
+                          <Input
+                            value={ref.phone || ""}
+                            onChange={(e) => handleUpdateReference(ref.id, { phone: e.target.value })}
+                            placeholder="+56 9 8765 4321"
+                            className="h-7 text-xs font-mono"
+                          />
+                        </div>
                       </div>
 
                       {/* Live Preview de Extracción ATS */}

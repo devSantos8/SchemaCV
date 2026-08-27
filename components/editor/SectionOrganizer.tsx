@@ -26,6 +26,7 @@ import {
   FolderGit2,
   GraduationCap,
   Award,
+  Users,
   RotateCcw,
   Sparkles,
   Eye,
@@ -72,6 +73,11 @@ const SECTION_CONFIG: Record<
     defaultKey: "certifications",
     description: "Acreditaciones técnicas oficiales",
     icon: Award,
+  },
+  references: {
+    defaultKey: "references",
+    description: "Contactos y referencias laborales profesionales",
+    icon: Users,
   },
 };
 
@@ -300,6 +306,7 @@ export const SectionOrganizer: React.FC = () => {
     "projects",
     "education",
     "certifications",
+    "references",
   ];
   const hiddenSections = new Set(resumeData.hidden_sections || []);
   const customTitles = resumeData.section_titles || {};
@@ -361,6 +368,7 @@ export const SectionOrganizer: React.FC = () => {
       "projects",
       "education",
       "certifications",
+      "references",
     ]);
     setResumeData({ section_titles: {} });
   };

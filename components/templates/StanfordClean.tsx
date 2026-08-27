@@ -21,6 +21,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
     projects = [],
     education = [],
     certifications = [],
+    references = [],
     section_order = [
       "summary",
       "experience",
@@ -28,6 +29,7 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
       "projects",
       "skills",
       "certifications",
+      "references",
     ],
   } = data;
 
@@ -310,6 +312,34 @@ export const StanfordClean: React.FC<TemplateProps> = ({ data, paperSize = "lett
                           <span className="font-semibold text-zinc-900">{cert.name}</span>
                           <span className="text-zinc-600 text-[8.5pt]"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+
+            case "references":
+              if (!references || references.length === 0) return null;
+              return (
+                <section key="references" className="break-inside-avoid">
+                  <h2 className="text-[10pt] font-extrabold uppercase tracking-wider text-zinc-950 border-b border-zinc-300 pb-0.5 mb-1.5 flex items-center justify-between">
+                    <span>{labels.references}</span>
+                  </h2>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[9pt]">
+                    {references.map((ref) => (
+                      <div key={ref.id} className="space-y-0.5">
+                        <div className="font-bold text-zinc-900">{ref.name}</div>
+                        <div className="text-zinc-700">
+                          {ref.position}{ref.company ? ` — ${ref.company}` : ""}
+                          {ref.relationship ? ` (${ref.relationship})` : ""}
+                        </div>
+                        {(ref.email || ref.phone) && (
+                          <div className="text-[8pt] text-zinc-500 font-mono flex flex-wrap gap-x-2">
+                            {ref.email && <a href={`mailto:${ref.email}`} className="hover:underline">{ref.email}</a>}
+                            {ref.phone && <span>{ref.phone}</span>}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

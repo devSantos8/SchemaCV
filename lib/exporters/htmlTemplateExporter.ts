@@ -283,6 +283,7 @@ export function generateTemplateHtml(
     "projects",
     "education",
     "certifications",
+    "references",
   ];
 
   let sectionsHtml = "";
@@ -437,9 +438,38 @@ export function generateTemplateHtml(
             .join("");
 
           sectionsHtml += `
-            <div class="section-block">
+            <div class="section-block page-break-avoid">
               <h2 class="section-title">${labels.certifications}</h2>
               <div class="certs-container">${certList}</div>
+            </div>
+          `;
+        }
+        break;
+
+      case "references":
+        if (data.references && data.references.length > 0) {
+          const refList = data.references
+            .map((ref) => {
+              const contactParts = [];
+              if (ref.email) contactParts.push(`<a href="mailto:${ref.email}" style="color: inherit; text-decoration: underline;">${ref.email}</a>`);
+              if (ref.phone) contactParts.push(ref.phone);
+              const contactStr = contactParts.length ? `<div style="font-size: 8.5px; color: #52525b; font-family: monospace;">${contactParts.join(" &nbsp;|&nbsp; ")}</div>` : "";
+              const relStr = ref.relationship ? ` (${ref.relationship})` : "";
+
+              return `
+                <div class="ref-entry page-break-avoid" style="margin-bottom: 4px;">
+                  <div style="font-weight: 700; color: #09090b; font-size: 9.5px;">${ref.name}</div>
+                  <div style="color: #3f3f46; font-size: 9px;">${ref.position}${ref.company ? ` — ${ref.company}` : ""}${relStr}</div>
+                  ${contactStr}
+                </div>
+              `;
+            })
+            .join("");
+
+          sectionsHtml += `
+            <div class="section-block page-break-avoid">
+              <h2 class="section-title">${labels.references}</h2>
+              <div class="references-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 6px;">${refList}</div>
             </div>
           `;
         }

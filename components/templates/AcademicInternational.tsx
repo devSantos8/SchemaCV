@@ -21,6 +21,7 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
     projects = [],
     education = [],
     certifications = [],
+    references = [],
     custom_sections = [],
     section_order = [
       "summary",
@@ -29,6 +30,7 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
       "projects",
       "skills",
       "certifications",
+      "references",
     ],
   } = data;
 
@@ -278,6 +280,33 @@ export const AcademicInternational: React.FC<TemplateProps> = ({ data, paperSize
                           <span className="font-bold text-zinc-900">{cert.name}</span>
                           <span className="text-zinc-700"> — {cert.issuer}{cert.date ? ` (${cert.date})` : ""}</span>
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+
+            case "references":
+              if (!references || references.length === 0) return null;
+              return (
+                <section key="references" className="page-break-avoid">
+                  <h2 className="text-[10pt] font-bold uppercase tracking-wider text-zinc-950 border-b border-zinc-400 pb-0.5 mb-1.5">
+                    {labels.references}
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[8.5pt]">
+                    {references.map((ref) => (
+                      <div key={ref.id} className="space-y-0.5">
+                        <div className="font-bold text-zinc-900">{ref.name}</div>
+                        <div className="text-zinc-700">
+                          {ref.position}{ref.company ? ` — ${ref.company}` : ""}
+                          {ref.relationship ? ` (${ref.relationship})` : ""}
+                        </div>
+                        {(ref.email || ref.phone) && (
+                          <div className="text-[8pt] text-zinc-600 font-mono flex flex-wrap gap-x-2">
+                            {ref.email && <a href={`mailto:${ref.email}`} className="hover:underline">{ref.email}</a>}
+                            {ref.phone && <span>{ref.phone}</span>}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
