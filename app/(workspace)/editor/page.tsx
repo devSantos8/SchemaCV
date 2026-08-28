@@ -74,6 +74,8 @@ export default function EditorPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo, canUndo, canRedo]);
 
+  const [mobileView, setMobileView] = React.useState<"editor" | "preview">("editor");
+
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/login");
@@ -94,25 +96,60 @@ export default function EditorPage() {
 
       {/* 2. Área de Trabajo Principal Dividida (Editor Dual ⟷ Vista Previa ATS ⟷ Copilot Sidebar) */}
       <main className="flex-1 flex flex-col md:flex-row overflow-hidden print:block print:overflow-visible relative">
-        {/* Panel Izquierdo: Editor Dual (Visual ⟷ YAML) con ancho dinámico adaptativo */}
+        {/* Panel Izquierdo: Editor Dual (Visual ⟷ YAML) */}
         <section
-          className={`h-1/2 md:h-full shrink-0 flex flex-col print:hidden border-r border-border/60 transition-all duration-300 ease-in-out ${
+          className={`${
+            mobileView === "editor" ? "flex" : "hidden"
+          } md:flex h-full w-full shrink-0 flex-col print:hidden border-r border-border/60 transition-all duration-300 ease-in-out ${
             isChatOpen
-              ? "w-full md:w-[35%] lg:w-[32%] xl:w-[28%] 2xl:w-[26%]"
-              : "w-full md:w-[48%] lg:w-[45%] xl:w-[42%] 2xl:w-[38%]"
+              ? "md:w-[35%] lg:w-[32%] xl:w-[28%] 2xl:w-[26%]"
+              : "md:w-[48%] lg:w-[45%] xl:w-[42%] 2xl:w-[38%]"
           }`}
         >
           <DualModeEditor />
         </section>
 
         {/* Panel Central: Vista Previa ATS en Tiempo Real */}
-        <section className="flex-1 h-1/2 md:h-full overflow-hidden print:w-full print:h-auto print:overflow-visible min-w-0 transition-all duration-300">
+        <section
+          className={`${
+            mobileView === "preview" ? "flex" : "hidden"
+          } md:flex flex-1 h-full w-full overflow-hidden print:w-full print:h-auto print:overflow-visible min-w-0 transition-all duration-300 flex-col`}
+        >
           <ResumePreview />
         </section>
 
-        {/* Panel Derecho: Copilot IA Sidebar (GitHub Copilot style - Pushes Preview) */}
+        {/* Panel Derecho: Copilot IA Sidebar (GitHub Copilot style - Pushes Preview en Desktop / Drawer en Móvil) */}
         <AIChatSidebar />
       </main>
+
+      {/* Barra de Navegación Inferior Móvil (Switcher Editor ⟷ Vista Previa) */}
+      <div className="md:hidden flex items-center justify-around h-12 bg-card/95 backdrop-blur-md border-t border-border/80 px-4 shrink-0 z-20 pb-[env(safe-area-inset-bottom,0px)]">
+        <button
+          type="button"
+          onClick={() => setMobileView("editor")}
+          className={`flex items-center gap-2 px-5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            mobileView === "editor"
+              ? "bg-foreground text-background shadow-xs font-bold"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          <span>Editor & Formulario</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setMobileView("preview")}
+          className={`flex items-center gap-2 px-5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+            mobileView === "preview"
+              ? "bg-foreground text-background shadow-xs font-bold"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          }`}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          <span>Vista Previa CV</span>
+        </button>
+      </div>
 
       {/* 3. Modales de Ingesta, Perfiles, Plantillas y Base Maestra */}
       <ImportResumeModal />

@@ -381,11 +381,19 @@ export function AIChatSidebar() {
         </button>
       )}
 
-      {/* ─── SIDEBAR INTEGRADO QUE EMPUJA EL PREVIEW (GITHUB COPILOT APP STYLE) ─── */}
+      {/* Backdrop overlay para mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-200"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* ─── SIDEBAR INTEGRADO QUE EMPUJA EL PREVIEW (DESKTOP) Y DRAWER (MÓVIL) ─── */}
       <aside
         className={`h-full shrink-0 border-l border-border/70 bg-card/95 backdrop-blur-xl flex flex-col transition-all duration-300 ease-in-out print:hidden ${
           isOpen
-            ? "w-full md:w-[300px] lg:w-[320px] xl:w-[340px] 2xl:w-[360px] opacity-100"
+            ? "fixed inset-y-0 right-0 z-50 w-full sm:w-[380px] md:relative md:inset-auto md:z-auto md:w-[300px] lg:w-[320px] xl:w-[340px] 2xl:w-[360px] opacity-100 shadow-2xl md:shadow-none"
             : "w-0 opacity-0 overflow-hidden border-l-0"
         }`}
       >
@@ -441,9 +449,10 @@ export function AIChatSidebar() {
                   type="button"
                   onClick={() => setIsOpen(false)}
                   className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-zinc-200/60 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-                  title="Ocultar Copilot (Shift Sidebar)"
+                  title="Ocultar Copilot"
                 >
-                  <PanelRightClose className="w-4 h-4" />
+                  <X className="w-4 h-4 md:hidden" />
+                  <PanelRightClose className="w-4 h-4 hidden md:block" />
                 </button>
               </div>
             </div>
