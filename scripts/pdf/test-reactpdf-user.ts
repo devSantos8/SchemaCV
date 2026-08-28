@@ -15,7 +15,6 @@ const USER_DATA: ResumeData = {
     { network: "LinkedIn", username: "jmonroys17", url: "https://linkedin.com/in/jmonroys17" },
     { network: "GitHub", username: "devSantos8", url: "https://github.com/devSantos8" },
   ],
-  certifications: [],
   custom_sections: [],
   hidden_sections: [],
   experience: [
@@ -79,6 +78,16 @@ const USER_DATA: ResumeData = {
     { id: "s1", category: "Backend", skills: ["Python", "Node.js", "NestJS", "Django", "TypeScript", "REST APIs"] },
     { id: "s2", category: "Frontend", skills: ["React", "Next.js", "JavaScript", "Tailwind CSS", "HTML5", "CSS3"] },
     { id: "s3", category: "Base de Datos", skills: ["PostgreSQL", "SQL Server"] },
+    { id: "s4", category: "IA Aplicada y Automatización", skills: ["Claude Code", "GitHub Copilot", "Antigravity CLI", "APIs LLMs", "RAG", "Zapier (basico)"] },
+    { id: "s5", category: "DevOps, CI/CD y Cloud", skills: ["Git", "CI/CD", "GitHub Actions", "Docker", "AWS", "Supabase", "Firebase", "Kubernetes"] },
+    { id: "s6", category: "Idiomas", skills: ["Español (nativo)", "Ingles (Básico - Técnico)"] },
+  ],
+  certifications: [
+    { id: "c1", name: "Google IT Automation with Python", issuer: "Google", date: "En Curso" },
+    { id: "c2", name: "Google AI Essentials", issuer: "Google", date: "2026" },
+    { id: "c3", name: "Introduction to Git and GitHub", issuer: "Google", date: "2026" },
+    { id: "c4", name: "Docker Essentials", issuer: "LinkedIn", date: "2026" },
+    { id: "c5", name: "Cloud Developing & Cloud Foundations", issuer: "AWS Academy Graduate", date: "2024" },
   ],
   section_order: [
     "summary",
@@ -86,6 +95,7 @@ const USER_DATA: ResumeData = {
     "projects",
     "education",
     "skills",
+    "certifications",
   ],
 };
 

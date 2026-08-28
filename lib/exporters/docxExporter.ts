@@ -90,7 +90,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
   const createSectionHeader = (title: string): Paragraph => {
     return new Paragraph({
       heading: HeadingLevel.HEADING_2,
-      spacing: { before: 240, after: 100 },
+      spacing: { before: 140, after: 40 },
       border: {
         bottom: {
           color: "333333",
@@ -103,7 +103,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
         new TextRun({
           text: title.toUpperCase(),
           bold: true,
-          size: 22, // 11pt
+          size: 20, // 10pt
           font: "Arial",
           color: "111111",
         }),
@@ -129,11 +129,12 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
           children.push(createSectionHeader(labels.summary));
           children.push(
             new Paragraph({
-              spacing: { after: 160 },
+              alignment: AlignmentType.JUSTIFIED,
+              spacing: { after: 60 },
               children: [
                 new TextRun({
                   text: resume.summary,
-                  size: 20, // 10pt
+                  size: 18, // 9pt
                   font: "Arial",
                 }),
               ],
@@ -148,17 +149,17 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
           resume.skills.forEach((skillCat) => {
             children.push(
               new Paragraph({
-                spacing: { after: 60 },
+                spacing: { after: 30 },
                 children: [
                   new TextRun({
                     text: `${skillCat.category}: `,
                     bold: true,
-                    size: 20,
+                    size: 18,
                     font: "Arial",
                   }),
                   new TextRun({
                     text: skillCat.skills.join(", "),
-                    size: 20,
+                    size: 18,
                     font: "Arial",
                   }),
                 ],
@@ -185,23 +186,23 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                     position: TabStopPosition.MAX,
                   },
                 ],
-                spacing: { before: 120, after: 40 },
+                spacing: { before: 80, after: 20 },
                 children: [
                   new TextRun({
                     text: exp.position,
                     bold: true,
-                    size: 21,
+                    size: 19,
                     font: "Arial",
                   }),
                   new TextRun({
-                    text: ` | ${exp.company}${exp.location ? `, ${exp.location}` : ""}`,
-                    size: 20,
+                    text: ` — ${exp.company}${exp.location ? ` (${exp.location})` : ""}`,
+                    size: 18,
                     font: "Arial",
                   }),
                   new TextRun({
                     text: `\t${dateStr}`,
                     bold: true,
-                    size: 19,
+                    size: 18,
                     color: "555555",
                     font: "Arial",
                   }),
@@ -215,11 +216,11 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                 children.push(
                   new Paragraph({
                     bullet: { level: 0 },
-                    spacing: { after: 40 },
+                    spacing: { after: 20 },
                     children: [
                       new TextRun({
                         text: hl,
-                        size: 20,
+                        size: 18,
                         font: "Arial",
                       }),
                     ],
@@ -229,11 +230,11 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
             } else if (exp.summary) {
               children.push(
                 new Paragraph({
-                  spacing: { after: 60 },
+                  spacing: { after: 40 },
                   children: [
                     new TextRun({
                       text: exp.summary,
-                      size: 20,
+                      size: 18,
                       font: "Arial",
                     }),
                   ],
@@ -259,18 +260,18 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                     position: TabStopPosition.MAX,
                   },
                 ],
-                spacing: { before: 100, after: 40 },
+                spacing: { before: 80, after: 20 },
                 children: [
                   new TextRun({
                     text: proj.name,
                     bold: true,
-                    size: 20,
+                    size: 19,
                     font: "Arial",
                   }),
                   new TextRun({
                     text: techStr,
                     italics: true,
-                    size: 19,
+                    size: 18,
                     color: "444444",
                     font: "Arial",
                   }),
@@ -278,7 +279,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                     ? [
                         new TextRun({
                           text: `\t${dateStr}`,
-                          size: 19,
+                          size: 18,
                           color: "555555",
                           font: "Arial",
                         }),
@@ -291,11 +292,11 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
             if (proj.description) {
               children.push(
                 new Paragraph({
-                  spacing: { after: 40 },
+                  spacing: { after: 20 },
                   children: [
                     new TextRun({
                       text: proj.description,
-                      size: 20,
+                      size: 18,
                       font: "Arial",
                     }),
                   ],
@@ -308,11 +309,11 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                 children.push(
                   new Paragraph({
                     bullet: { level: 0 },
-                    spacing: { after: 40 },
+                    spacing: { after: 20 },
                     children: [
                       new TextRun({
                         text: hl,
-                        size: 20,
+                        size: 18,
                         font: "Arial",
                       }),
                     ],
@@ -340,17 +341,12 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                     position: TabStopPosition.MAX,
                   },
                 ],
-                spacing: { before: 100, after: 40 },
+                spacing: { before: 80, after: 10 },
                 children: [
                   new TextRun({
-                    text: edu.degree,
+                    text: edu.institution,
                     bold: true,
-                    size: 20,
-                    font: "Arial",
-                  }),
-                  new TextRun({
-                    text: ` | ${edu.institution}${edu.location ? `, ${edu.location}` : ""}`,
-                    size: 20,
+                    size: 19,
                     font: "Arial",
                   }),
                   ...(dateStr
@@ -358,7 +354,36 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                         new TextRun({
                           text: `\t${dateStr}`,
                           bold: true,
-                          size: 19,
+                          size: 18,
+                          color: "555555",
+                          font: "Arial",
+                        }),
+                      ]
+                    : []),
+                ],
+              })
+            );
+
+            children.push(
+              new Paragraph({
+                tabStops: [
+                  {
+                    type: TabStopType.RIGHT,
+                    position: TabStopPosition.MAX,
+                  },
+                ],
+                spacing: { after: 20 },
+                children: [
+                  new TextRun({
+                    text: `${edu.degree}${edu.area ? ` en ${edu.area}` : ""}`,
+                    size: 18,
+                    font: "Arial",
+                  }),
+                  ...(edu.location
+                    ? [
+                        new TextRun({
+                          text: `\t${edu.location}`,
+                          size: 17,
                           color: "555555",
                           font: "Arial",
                         }),
@@ -373,11 +398,11 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                 children.push(
                   new Paragraph({
                     bullet: { level: 0 },
-                    spacing: { after: 40 },
+                    spacing: { after: 20 },
                     children: [
                       new TextRun({
                         text: hl,
-                        size: 20,
+                        size: 18,
                         font: "Arial",
                       }),
                     ],
@@ -401,24 +426,24 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                     position: TabStopPosition.MAX,
                   },
                 ],
-                spacing: { before: 80, after: 40 },
+                spacing: { before: 40, after: 20 },
                 children: [
                   new TextRun({
                     text: cert.name,
                     bold: true,
-                    size: 20,
+                    size: 18,
                     font: "Arial",
                   }),
                   new TextRun({
-                    text: ` – ${cert.issuer}`,
-                    size: 20,
+                    text: ` — ${cert.issuer}`,
+                    size: 18,
                     font: "Arial",
                   }),
                   ...(cert.date
                     ? [
                         new TextRun({
                           text: `\t${cert.date}`,
-                          size: 19,
+                          size: 18,
                           color: "555555",
                           font: "Arial",
                         }),
@@ -437,28 +462,28 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
           resume.references.forEach((ref) => {
             const contactRuns: TextRun[] = [];
             if (ref.email) {
-              contactRuns.push(new TextRun({ text: ref.email, size: 18, color: "555555", font: "Arial" }));
+              contactRuns.push(new TextRun({ text: ref.email, size: 17, color: "555555", font: "Arial" }));
             }
             if (ref.phone) {
               if (contactRuns.length > 0) {
-                contactRuns.push(new TextRun({ text: "  |  ", size: 18, color: "888888", font: "Arial" }));
+                contactRuns.push(new TextRun({ text: "  |  ", size: 17, color: "888888", font: "Arial" }));
               }
-              contactRuns.push(new TextRun({ text: ref.phone, size: 18, color: "555555", font: "Arial" }));
+              contactRuns.push(new TextRun({ text: ref.phone, size: 17, color: "555555", font: "Arial" }));
             }
 
             children.push(
               new Paragraph({
-                spacing: { before: 80, after: 20 },
+                spacing: { before: 60, after: 10 },
                 children: [
                   new TextRun({
                     text: ref.name,
                     bold: true,
-                    size: 20,
+                    size: 18,
                     font: "Arial",
                   }),
                   new TextRun({
-                    text: ` – ${ref.position}${ref.company ? ` (${ref.company})` : ""}${ref.relationship ? ` [${ref.relationship}]` : ""}`,
-                    size: 20,
+                    text: ` — ${ref.position}${ref.company ? ` (${ref.company})` : ""}${ref.relationship ? ` [${ref.relationship}]` : ""}`,
+                    size: 18,
                     font: "Arial",
                   }),
                 ],
@@ -468,7 +493,7 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
             if (contactRuns.length > 0) {
               children.push(
                 new Paragraph({
-                  spacing: { before: 0, after: 40 },
+                  spacing: { before: 0, after: 20 },
                   children: contactRuns,
                 })
               );
@@ -485,10 +510,10 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
         properties: {
           page: {
             margin: {
-              top: convertInchesToTwip(0.6),
-              bottom: convertInchesToTwip(0.6),
-              left: convertInchesToTwip(0.6),
-              right: convertInchesToTwip(0.6),
+              top: convertInchesToTwip(0.45),
+              bottom: convertInchesToTwip(0.45),
+              left: convertInchesToTwip(0.5),
+              right: convertInchesToTwip(0.5),
             },
           },
         },
