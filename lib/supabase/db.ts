@@ -3,9 +3,35 @@ import type { ResumeData, ResumeProfile } from "@/types/resume";
 import type { JobApplication } from "@/types/jobs";
 import type { EvaluationReport } from "@/types/evaluator";
 
+/**
+ * Obtiene y valida el ID del usuario actualmente autenticado en Supabase Auth.
+ * Previene violaciones de políticas RLS (código 42501) asegurando que cualquier
+ * operación de escritura use el auth.uid() real de la sesión activa.
+ */
+async function getValidatedAuthUserId(requestedUserId?: string): Promise<string | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) return null;
+
+    if (requestedUserId && requestedUserId !== session.user.id) {
+      console.warn("[Supabase DB] Discrepancia entre userId local y sesión activa de Supabase:", {
+        requested: requestedUserId,
+        authenticated: session.user.id,
+      });
+      return session.user.id;
+    }
+    return session.user.id;
+  } catch (err) {
+    console.error("[Supabase DB] Error al verificar sesión de autenticación:", err);
+    return null;
+  }
+}
+
 // ─── 1. PERFILES DE USUARIO ───────────────────────────────────────────────────
 export async function getSupabaseProfile(userId: string) {
-  if (!isSupabaseConfigured()) return null;
+  if (!isSupabaseConfigured() || !userId) return null;
   const supabase = createClient();
   const { data, error } = await supabase
     .from("profiles")
@@ -21,12 +47,14 @@ export async function getSupabaseProfile(userId: string) {
 }
 
 export async function updateSupabaseProfile(userId: string, updates: Record<string, any>) {
-  if (!isSupabaseConfigured()) return null;
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return null;
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("profiles")
     .update({ ...updates, updated_at: new Date().toISOString() })
-    .eq("id", userId)
+    .eq("id", authUserId)
     .select()
     .maybeSingle();
 
@@ -38,14 +66,16 @@ export async function updateSupabaseProfile(userId: string, updates: Record<stri
 }
 
 export async function deleteSupabaseUserAccount(userId: string) {
-  if (!isSupabaseConfigured()) return;
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return;
+
   const supabase = createClient();
 
   // 1. Eliminar datos asociados del usuario en la base de datos
-  await supabase.from("resumes").delete().eq("user_id", userId);
-  await supabase.from("job_applications").delete().eq("user_id", userId);
-  await supabase.from("ats_evaluations").delete().eq("user_id", userId);
-  await supabase.from("profiles").delete().eq("id", userId);
+  await supabase.from("resumes").delete().eq("user_id", authUserId);
+  await supabase.from("job_applications").delete().eq("user_id", authUserId);
+  await supabase.from("ats_evaluations").delete().eq("user_id", authUserId);
+  await supabase.from("profiles").delete().eq("id", authUserId);
 
   // 2. Cerrar sesión en el cliente
   await supabase.auth.signOut();
@@ -53,12 +83,14 @@ export async function deleteSupabaseUserAccount(userId: string) {
 
 // ─── 2. CURRÍCULUMS & PERFIL BASE ─────────────────────────────────────────────
 export async function fetchUserResumes(userId: string) {
-  if (!isSupabaseConfigured()) return [];
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return [];
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("resumes")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", authUserId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -79,11 +111,13 @@ export async function upsertResumeToSupabase(
     data: ResumeData;
   }
 ) {
-  if (!isSupabaseConfigured()) return null;
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return null;
+
   const supabase = createClient();
 
   const payload: any = {
-    user_id: userId,
+    user_id: authUserId,
     name: resume.name || "Mi Currículum",
     target_role: resume.targetRole || null,
     template_id: resume.templateId || "harvard",
@@ -117,19 +151,21 @@ export async function upsertResumeToSupabase(
 }
 
 export async function upsertMasterResumeToSupabase(userId: string, data: ResumeData) {
-  if (!isSupabaseConfigured() || !userId) return null;
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return null;
+
   const supabase = createClient();
 
   // Buscar si ya existe un registro de perfil maestro para este usuario
   const { data: existing } = await supabase
     .from("resumes")
     .select("id")
-    .eq("user_id", userId)
+    .eq("user_id", authUserId)
     .eq("is_master", true)
     .maybeSingle();
 
   const payload: any = {
-    user_id: userId,
+    user_id: authUserId,
     name: "Perfil Base Maestro",
     target_role: data?.headline || "Perfil Base",
     template_id: "harvard",
@@ -156,19 +192,21 @@ export async function upsertMasterResumeToSupabase(userId: string, data: ResumeD
 }
 
 export async function deleteResumeFromSupabase(resumeId: string) {
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured() || !resumeId) return;
   const supabase = createClient();
   await supabase.from("resumes").delete().eq("id", resumeId);
 }
 
 // ─── 3. JOB TRACKER POSTULACIONES ─────────────────────────────────────────────
 export async function fetchUserJobs(userId: string) {
-  if (!isSupabaseConfigured()) return [];
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return [];
+
   const supabase = createClient();
   const { data, error } = await supabase
     .from("job_applications")
     .select("*")
-    .eq("user_id", userId)
+    .eq("user_id", authUserId)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -179,11 +217,13 @@ export async function fetchUserJobs(userId: string) {
 }
 
 export async function upsertJobToSupabase(userId: string, job: JobApplication) {
-  if (!isSupabaseConfigured()) return null;
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return null;
+
   const supabase = createClient();
 
   const payload: any = {
-    user_id: userId,
+    user_id: authUserId,
     title: job.title,
     company: job.company,
     status: job.status || "bookmarked",
@@ -223,20 +263,22 @@ export async function upsertJobToSupabase(userId: string, job: JobApplication) {
 }
 
 export async function deleteJobFromSupabase(jobId: string) {
-  if (!isSupabaseConfigured()) return;
+  if (!isSupabaseConfigured() || !jobId) return;
   const supabase = createClient();
   await supabase.from("job_applications").delete().eq("id", jobId);
 }
 
 // ─── 4. EVALUACIONES ATS ──────────────────────────────────────────────────────
 export async function saveATSEvaluationToSupabase(userId: string, report: EvaluationReport) {
-  if (!isSupabaseConfigured()) return null;
+  const authUserId = await getValidatedAuthUserId(userId);
+  if (!authUserId) return null;
+
   const supabase = createClient();
 
   const isJobUuid = report.jobId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(report.jobId);
 
   const payload: any = {
-    user_id: userId,
+    user_id: authUserId,
     job_id: isJobUuid ? report.jobId : null,
     job_title: report.jobTitle,
     company: report.company,

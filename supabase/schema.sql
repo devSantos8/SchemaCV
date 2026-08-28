@@ -79,69 +79,58 @@ ALTER TABLE public.resumes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.job_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ats_evaluations ENABLE ROW LEVEL SECURITY;
 
--- Políticas para profiles
-CREATE POLICY "Los usuarios pueden ver su propio perfil"
-  ON public.profiles FOR SELECT
-  USING (auth.uid() = id);
+-- Limpiar políticas anteriores si existiesen
+DROP POLICY IF EXISTS "Los usuarios pueden ver su propio perfil" ON public.profiles;
+DROP POLICY IF EXISTS "Los usuarios pueden actualizar su propio perfil" ON public.profiles;
+DROP POLICY IF EXISTS "Los usuarios pueden insertar su propio perfil" ON public.profiles;
+DROP POLICY IF EXISTS "Los usuarios pueden eliminar su propio perfil" ON public.profiles;
+DROP POLICY IF EXISTS "Users can manage their own profile" ON public.profiles;
 
-CREATE POLICY "Los usuarios pueden actualizar su propio perfil"
-  ON public.profiles FOR UPDATE
-  USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Los usuarios pueden ver sus propios currículums" ON public.resumes;
+DROP POLICY IF EXISTS "Los usuarios pueden crear currículums" ON public.resumes;
+DROP POLICY IF EXISTS "Los usuarios pueden editar sus currículums" ON public.resumes;
+DROP POLICY IF EXISTS "Los usuarios pueden eliminar sus currículums" ON public.resumes;
+DROP POLICY IF EXISTS "Users can manage their own resumes" ON public.resumes;
 
-CREATE POLICY "Los usuarios pueden insertar su propio perfil"
-  ON public.profiles FOR INSERT
+DROP POLICY IF EXISTS "Los usuarios pueden ver sus postulaciones" ON public.job_applications;
+DROP POLICY IF EXISTS "Los usuarios pueden crear postulaciones" ON public.job_applications;
+DROP POLICY IF EXISTS "Los usuarios pueden editar sus postulaciones" ON public.job_applications;
+DROP POLICY IF EXISTS "Los usuarios pueden eliminar sus postulaciones" ON public.job_applications;
+DROP POLICY IF EXISTS "Users can manage their own job applications" ON public.job_applications;
+
+DROP POLICY IF EXISTS "Los usuarios pueden ver sus evaluaciones ATS" ON public.ats_evaluations;
+DROP POLICY IF EXISTS "Los usuarios pueden guardar evaluaciones ATS" ON public.ats_evaluations;
+DROP POLICY IF EXISTS "Los usuarios pueden eliminar evaluaciones ATS" ON public.ats_evaluations;
+DROP POLICY IF EXISTS "Users can manage their own ats evaluations" ON public.ats_evaluations;
+
+-- Políticas unificadas (FOR ALL) que soportan SELECT, INSERT, UPDATE, DELETE y UPSERT
+CREATE POLICY "Users can manage their own profile"
+  ON public.profiles
+  FOR ALL
+  TO authenticated
+  USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
-CREATE POLICY "Los usuarios pueden eliminar su propio perfil"
-  ON public.profiles FOR DELETE
-  USING (auth.uid() = id);
-
--- Políticas para resumes
-CREATE POLICY "Los usuarios pueden ver sus propios currículums"
-  ON public.resumes FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Los usuarios pueden crear currículums"
-  ON public.resumes FOR INSERT
+CREATE POLICY "Users can manage their own resumes"
+  ON public.resumes
+  FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Los usuarios pueden editar sus currículums"
-  ON public.resumes FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Los usuarios pueden eliminar sus currículums"
-  ON public.resumes FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Políticas para job_applications
-CREATE POLICY "Los usuarios pueden ver sus postulaciones"
-  ON public.job_applications FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Los usuarios pueden crear postulaciones"
-  ON public.job_applications FOR INSERT
+CREATE POLICY "Users can manage their own job applications"
+  ON public.job_applications
+  FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Los usuarios pueden editar sus postulaciones"
-  ON public.job_applications FOR UPDATE
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Los usuarios pueden eliminar sus postulaciones"
-  ON public.job_applications FOR DELETE
-  USING (auth.uid() = user_id);
-
--- Políticas para ats_evaluations
-CREATE POLICY "Los usuarios pueden ver sus evaluaciones ATS"
-  ON public.ats_evaluations FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Los usuarios pueden guardar evaluaciones ATS"
-  ON public.ats_evaluations FOR INSERT
+CREATE POLICY "Users can manage their own ats evaluations"
+  ON public.ats_evaluations
+  FOR ALL
+  TO authenticated
+  USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Los usuarios pueden eliminar evaluaciones ATS"
-  ON public.ats_evaluations FOR DELETE
-  USING (auth.uid() = user_id);
 
 -- ==============================================================================
 -- TRIGGER AUTOMÁTICO: CREAR PERFIL AL REGISTRARSE
