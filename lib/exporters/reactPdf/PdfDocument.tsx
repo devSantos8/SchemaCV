@@ -6,7 +6,6 @@ import {
   View,
   Link,
   StyleSheet,
-  Font,
 } from "@react-pdf/renderer";
 import {
   ResumeData,
@@ -16,34 +15,6 @@ import {
   getSectionLabels,
   formatSocialDisplay,
 } from "@/types/resume";
-
-// 5. REGISTRO DE FUENTES (Esqueleto ATS-friendly)
-// Se registran las fuentes exactas usadas en la web para igualar las métricas de renderizado.
-Font.register({
-  family: "Inter",
-  fonts: [
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf", fontWeight: "normal" },
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-700-normal.ttf", fontWeight: "bold" },
-  ],
-});
-
-Font.register({
-  family: "Roboto",
-  fonts: [
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/roboto@latest/latin-400-normal.ttf", fontWeight: "normal" },
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/roboto@latest/latin-700-normal.ttf", fontWeight: "bold" },
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/roboto@latest/latin-400-italic.ttf", fontStyle: "italic" },
-  ],
-});
-
-Font.register({
-  family: "Merriweather",
-  fonts: [
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/merriweather@latest/latin-400-normal.ttf", fontWeight: "normal" },
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/merriweather@latest/latin-700-normal.ttf", fontWeight: "bold" },
-    { src: "https://cdn.jsdelivr.net/fontsource/fonts/merriweather@latest/latin-400-italic.ttf", fontStyle: "italic" },
-  ],
-});
 
 export interface PdfDocumentProps {
   data: ResumeData;
@@ -57,7 +28,6 @@ interface TemplateConfig {
   isSerif: boolean;
   nameTransform: "uppercase" | "none";
   nameSize: number;
-  nameWeight: "bold" | "normal";
   headlineColor: string;
   headlineSize: number;
   headlineTransform: "uppercase" | "none";
@@ -85,11 +55,10 @@ interface TemplateConfig {
 
 const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
   academic_international: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "uppercase",
     nameSize: 16.0,
-    nameWeight: "bold",
     headlineColor: "#3f3f46",
     headlineSize: 9.0,
     headlineTransform: "none",
@@ -112,11 +81,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.2,
   },
   chile_profesional: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "uppercase",
     nameSize: 17.5,
-    nameWeight: "bold",
     headlineColor: "#1e40af",
     headlineSize: 9.5,
     headlineTransform: "none",
@@ -142,11 +110,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.2,
   },
   harvard: {
-    fontFamily: "Merriweather",
+    fontFamily: "Times-Roman",
     isSerif: true,
     nameTransform: "uppercase",
     nameSize: 16.0,
-    nameWeight: "bold",
     headlineColor: "#3f3f46",
     headlineSize: 9.0,
     headlineTransform: "none",
@@ -169,11 +136,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.4,
   },
   tech_minimalist: {
-    fontFamily: "Roboto",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
     nameSize: 17.0,
-    nameWeight: "bold",
     headlineColor: "#2563eb",
     headlineSize: 9.5,
     headlineTransform: "none",
@@ -196,11 +162,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.2,
   },
   modern_executive: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
     nameSize: 17.5,
-    nameWeight: "bold",
     headlineColor: "#0284c7",
     headlineSize: 9.5,
     headlineTransform: "none",
@@ -223,11 +188,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.2,
   },
   compact_swiss: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "uppercase",
     nameSize: 15.0,
-    nameWeight: "bold",
     headlineColor: "#3f3f46",
     headlineSize: 8.5,
     headlineTransform: "uppercase",
@@ -250,11 +214,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 7.8,
   },
   stanford_clean: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "uppercase",
     nameSize: 16.5,
-    nameWeight: "bold",
     headlineColor: "#52525b",
     headlineSize: 9.0,
     headlineTransform: "none",
@@ -277,11 +240,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.2,
   },
   skills_first: {
-    fontFamily: "Roboto",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
     nameSize: 17.0,
-    nameWeight: "bold",
     headlineColor: "#059669",
     headlineSize: 9.5,
     headlineTransform: "none",
@@ -304,11 +266,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.2,
   },
   executive_serif: {
-    fontFamily: "Merriweather",
+    fontFamily: "Times-Roman",
     isSerif: true,
     nameTransform: "uppercase",
     nameSize: 16.5,
-    nameWeight: "bold",
     headlineColor: "#52525b",
     headlineSize: 9.0,
     headlineTransform: "uppercase",
@@ -331,11 +292,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.4,
   },
   tech_compact: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
     nameSize: 15.0,
-    nameWeight: "bold",
     headlineColor: "#4f46e5",
     headlineSize: 8.5,
     headlineTransform: "none",
@@ -358,11 +318,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 7.8,
   },
   modern_minimal: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
     nameSize: 17.0,
-    nameWeight: "bold",
     headlineColor: "#52525b",
     headlineSize: 9.5,
     headlineTransform: "none",
@@ -385,11 +344,10 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     bulletSize: 8.2,
   },
   career_changer: {
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
     nameSize: 17.0,
-    nameWeight: "bold",
     headlineColor: "#d97706",
     headlineSize: 9.5,
     headlineTransform: "none",
@@ -442,7 +400,8 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
   });
 
   const baseFont = config.fontFamily;
-  const boldFont = config.fontFamily; // we use the same family, weights are handled by Font.register! Wait, react-pdf Font.register allows you to specify fontWeight: 'bold' on the same family. So we can just set `fontFamily: config.fontFamily` and `fontWeight: 'bold'`.
+  const boldFont = config.isSerif ? "Times-Bold" : "Helvetica-Bold";
+  const italicFont = config.isSerif ? "Times-Italic" : "Helvetica-Oblique";
   const monoFont = "Courier";
 
   const styles = StyleSheet.create({
@@ -451,7 +410,6 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       paddingBottom: config.paddingBottom,
       paddingHorizontal: config.paddingHorizontal,
       fontFamily: baseFont,
-      fontWeight: "normal",
       color: "#09090b",
       lineHeight: 1.22,
     },
@@ -471,8 +429,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
     name: {
       fontSize: config.nameSize,
-      fontFamily: baseFont,
-      fontWeight: "bold",
+      fontFamily: boldFont,
       textTransform: config.nameTransform,
       color: "#09090b",
       letterSpacing: -0.3,
@@ -480,8 +437,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
     headline: {
       fontSize: config.headlineSize,
-      fontFamily: baseFont,
-      fontWeight: "bold",
+      fontFamily: boldFont,
       color: config.headlineColor,
       textTransform: config.headlineTransform,
       marginBottom: 1.0,
@@ -492,10 +448,6 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       alignItems: "center",
       justifyContent: config.headerAlign === "center" ? "center" : "flex-start",
       marginTop: 0.5,
-    },
-    contactItemWrapper: {
-      flexDirection: "row",
-      alignItems: "center",
     },
     contactItem: {
       fontSize: config.contactFontSize,
@@ -519,8 +471,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
     sectionTitleText: {
       fontSize: config.sectionTitleSize,
-      fontFamily: baseFont,
-      fontWeight: "bold",
+      fontFamily: boldFont,
       color: config.sectionTitleColor,
       textTransform: config.sectionTitleTransform,
       letterSpacing: 0.4,
@@ -538,8 +489,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       lineHeight: 1.22,
     },
     skillCat: {
-      fontFamily: baseFont,
-      fontWeight: "bold",
+      fontFamily: boldFont,
       color: "#09090b",
       marginRight: 2.5,
     },
@@ -548,61 +498,54 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       flex: 1,
     },
     entryBlock: {
-      marginBottom: 4.0,
+      marginBottom: 3.0,
     },
     entryHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "flex-start",
+      alignItems: "baseline",
       marginBottom: 0.5,
     },
     entryHeaderLeft: {
       flex: 1,
-      flexDirection: "row",
-      flexWrap: "wrap",
       paddingRight: 10,
-    },
-    entryHeaderRight: {
-      alignItems: "flex-end",
-      flexShrink: 0,
     },
     entryTitle: {
       fontSize: config.entryTitleSize,
-      fontFamily: baseFont,
-      fontWeight: "bold",
+      fontFamily: boldFont,
       color: "#09090b",
     },
     entrySubtitle: {
       fontSize: config.entryTitleSize,
       color: "#3f3f46",
     },
-    entryDates: {
-      fontSize: config.entryDateSize,
-      fontFamily: (templateId === "tech_minimalist" || templateId === "tech_compact" || templateId === "chile_profesional") ? monoFont : baseFont,
-      color: "#52525b",
-    },
     entryLocation: {
       fontSize: config.entryDateSize,
       color: "#52525b",
     },
+    entryDates: {
+      fontSize: config.entryDateSize,
+      fontFamily: (templateId === "tech_minimalist" || templateId === "tech_compact" || templateId === "chile_profesional") ? monoFont : baseFont,
+      color: "#52525b",
+      flexShrink: 0,
+    },
     entrySummary: {
       fontSize: config.baseFontSize,
       color: "#3f3f46",
-      fontFamily: baseFont,
-      fontStyle: "italic",
-      marginBottom: 2.0,
+      fontFamily: italicFont,
+      marginVertical: 0.5,
     },
     bulletRow: {
       flexDirection: "row",
       alignItems: "flex-start",
-      marginBottom: 1.5,
+      marginBottom: 0.6,
       paddingLeft: 6.0,
     },
     bulletDot: {
-      width: 10,
+      width: 9,
       fontSize: config.bulletSize,
       color: "#27272a",
-      lineHeight: 1.22,
+      lineHeight: 1.2,
     },
     bulletText: {
       flex: 1,
@@ -619,8 +562,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       lineHeight: 1.22,
     },
     certName: {
-      fontFamily: baseFont,
-      fontWeight: "bold",
+      fontFamily: boldFont,
       color: "#09090b",
     },
     certIssuer: {
@@ -637,8 +579,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
     refName: {
       fontSize: config.entryTitleSize,
-      fontFamily: baseFont,
-      fontWeight: "bold",
+      fontFamily: boldFont,
       color: "#09090b",
     },
     refDetails: {
@@ -681,7 +622,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
           {contactItems.length > 0 && (
             <View style={[styles.contactContainer, { justifyContent: "flex-end", maxWidth: "50%" }]}>
               {contactItems.map((item, idx) => (
-                <View key={idx} style={styles.contactItemWrapper}>
+                <React.Fragment key={idx}>
                   {item.url ? (
                     <Link src={item.url} style={styles.contactLink}>
                       {item.label}
@@ -692,7 +633,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
                   {idx < contactItems.length - 1 && (
                     <Text style={styles.contactSeparator}>{config.contactSeparator}</Text>
                   )}
-                </View>
+                </React.Fragment>
               ))}
             </View>
           )}
@@ -709,7 +650,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         {contactItems.length > 0 && (
           <View style={styles.contactContainer}>
             {contactItems.map((item, idx) => (
-              <View key={idx} style={styles.contactItemWrapper}>
+              <React.Fragment key={idx}>
                 {item.url ? (
                   <Link src={item.url} style={styles.contactLink}>
                     {item.label}
@@ -720,7 +661,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
                 {idx < contactItems.length - 1 && (
                   <Text style={styles.contactSeparator}>{config.contactSeparator}</Text>
                 )}
-              </View>
+              </React.Fragment>
             ))}
           </View>
         )}
@@ -774,16 +715,14 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
               return (
                 <View key={exp.id} style={styles.entryBlock} wrap={false}>
                   <View style={styles.entryHeader}>
-                    <View style={styles.entryHeaderLeft}>
+                    <Text style={styles.entryHeaderLeft}>
                       <Text style={styles.entryTitle}>{exp.position}</Text>
                       <Text style={styles.entrySubtitle}>{expSeparator}{exp.company}</Text>
-                    </View>
-                    <View style={styles.entryHeaderRight}>
-                      <Text style={styles.entryDates}>
-                        {exp.start_date} – {endDateStr}
-                      </Text>
-                      {exp.location && <Text style={styles.entryLocation}>{exp.location}</Text>}
-                    </View>
+                      {exp.location ? <Text style={styles.entryLocation}> ({exp.location})</Text> : null}
+                    </Text>
+                    <Text style={styles.entryDates}>
+                      {exp.start_date} – {endDateStr}
+                    </Text>
                   </View>
 
                   {exp.summary && <Text style={styles.entrySummary}>{exp.summary}</Text>}
@@ -813,21 +752,15 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
               return (
                 <View key={proj.id} style={styles.entryBlock} wrap={false}>
                   <View style={styles.entryHeader}>
-                    <View style={styles.entryHeaderLeft}>
+                    <Text style={styles.entryHeaderLeft}>
                       <Text style={styles.entryTitle}>{proj.name}</Text>
-                      {techStr && (
-                        <Text style={styles.entrySubtitle}>
-                          {techStr}
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.entryHeaderRight}>
-                      {proj.start_date && (
-                        <Text style={styles.entryDates}>
-                          {proj.start_date}{proj.end_date ? ` – ${proj.end_date}` : ""}
-                        </Text>
-                      )}
-                    </View>
+                      {techStr ? <Text style={styles.entrySubtitle}>{techStr}</Text> : null}
+                    </Text>
+                    {proj.start_date && (
+                      <Text style={styles.entryDates}>
+                        {proj.start_date}{proj.end_date ? ` – ${proj.end_date}` : ""}
+                      </Text>
+                    )}
                   </View>
 
                   {proj.description && (!proj.highlights || proj.highlights.length === 0 || proj.highlights[0] !== proj.description) && (
@@ -863,15 +796,11 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
                 return (
                   <View key={edu.id} style={styles.entryBlock} wrap={false}>
                     <View style={styles.entryHeader}>
-                      <View style={styles.entryHeaderLeft}>
-                        <Text style={styles.entryTitle}>{edu.institution}</Text>
-                      </View>
-                      <View style={styles.entryHeaderRight}>
-                        {dateRange && <Text style={styles.entryDates}>{dateRange}</Text>}
-                      </View>
+                      <Text style={styles.entryTitle}>{edu.institution}</Text>
+                      {dateRange && <Text style={styles.entryDates}>{dateRange}</Text>}
                     </View>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 0.5 }}>
-                      <Text style={{ fontSize: config.baseFontSize, color: "#27272a" }}>
+                      <Text style={{ fontSize: config.baseFontSize, color: "#27272a", flex: 1 }}>
                         {edu.degree}{edu.area ? ` en ${edu.area}` : ""}
                       </Text>
                       {edu.location && (
@@ -900,14 +829,12 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
               return (
                 <View key={edu.id} style={styles.entryBlock} wrap={false}>
                   <View style={styles.entryHeader}>
-                    <View style={styles.entryHeaderLeft}>
+                    <Text style={styles.entryHeaderLeft}>
                       <Text style={styles.entryTitle}>{edu.degree}{edu.area ? ` en ${edu.area}` : ""}</Text>
                       <Text style={styles.entrySubtitle}>{eduSeparator}{edu.institution}</Text>
-                    </View>
-                    <View style={styles.entryHeaderRight}>
-                      {dateRange && <Text style={styles.entryDates}>{dateRange}</Text>}
-                      {edu.location && <Text style={styles.entryLocation}>{edu.location}</Text>}
-                    </View>
+                      {edu.location && <Text style={styles.entryLocation}> ({edu.location})</Text>}
+                    </Text>
+                    {dateRange && <Text style={styles.entryDates}>{dateRange}</Text>}
                   </View>
                   {edu.gpa && (
                     <Text style={{ fontSize: config.entryDateSize, color: "#52525b", marginBottom: 0.5 }}>
@@ -935,7 +862,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
               const dateStr = cert.date ? ` (${cert.date})` : "";
               return (
                 <View key={cert.id} style={styles.certRow} wrap={false}>
-                  <Text>
+                  <Text style={{ flex: 1 }}>
                     <Text style={styles.certName}>{cert.name}</Text>
                     <Text style={styles.certIssuer}> — {cert.issuer}{dateStr}</Text>
                   </Text>
