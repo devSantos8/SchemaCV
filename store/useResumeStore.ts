@@ -478,7 +478,7 @@ export const useResumeStore = create<ResumeStoreState>()(
         });
       },
 
-      setZoom: (zoom) => set({ zoom }),
+      setZoom: (zoom) => set({ zoom: Math.max(30, Math.min(150, Math.round(zoom))) }),
       setActiveTab: (activeTab) => set({ activeTab }),
 
       setSectionOrder: (newOrder) => {

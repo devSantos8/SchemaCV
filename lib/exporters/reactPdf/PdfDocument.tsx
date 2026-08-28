@@ -55,332 +55,332 @@ interface TemplateConfig {
 }
 
 const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
+  academic_international: {
+    fontFamily: "Helvetica",
+    isSerif: false,
+    nameTransform: "uppercase",
+    nameSize: 14.5,
+    nameWeight: "bold",
+    headlineColor: "#3f3f46",
+    headlineSize: 8.5,
+    headlineTransform: "none",
+    contactSeparator: " • ",
+    contactFontSize: 7.2,
+    sectionTitleBorder: true,
+    sectionTitleBorderColor: "#a1a1aa",
+    sectionTitleBorderWidth: 0.8,
+    sectionTitleColor: "#09090b",
+    sectionTitleTransform: "uppercase",
+    sectionTitleSize: 8.5,
+    headerAlign: "center",
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.5,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
+  },
   chile_profesional: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "uppercase",
-    nameSize: 16,
+    nameSize: 15.5,
     nameWeight: "bold",
     headlineColor: "#1e40af",
-    headlineSize: 9,
+    headlineSize: 8.8,
     headlineTransform: "none",
     contactSeparator: " | ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#d4d4d8",
-    sectionTitleBorderWidth: 1,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.8,
+    sectionTitleSize: 8.5,
     headerAlign: "left",
     headerBorderBottom: true,
     headerBorderBottomColor: "#18181b",
     headerBorderBottomWidth: 1.5,
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8,
-    sectionMargin: 4.5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 7.8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.5,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
   },
   harvard: {
     fontFamily: "Times-Roman",
     isSerif: true,
     nameTransform: "uppercase",
-    nameSize: 15,
+    nameSize: 14.5,
     nameWeight: "bold",
     headlineColor: "#3f3f46",
-    headlineSize: 8.8,
+    headlineSize: 8.5,
     headlineTransform: "none",
     contactSeparator: " • ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#18181b",
-    sectionTitleBorderWidth: 1,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#18181b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.8,
+    sectionTitleSize: 8.5,
     headerAlign: "center",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 4.5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 8.0,
+    sectionMargin: 3.5,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.8,
   },
   tech_minimalist: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
-    nameSize: 15.5,
+    nameSize: 15,
     nameWeight: "bold",
     headlineColor: "#2563eb",
-    headlineSize: 9,
+    headlineSize: 8.8,
     headlineTransform: "none",
     contactSeparator: " / ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#e4e4e7",
-    sectionTitleBorderWidth: 1,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.8,
+    sectionTitleSize: 8.5,
     headerAlign: "between",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 4.5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.5,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
   },
   modern_executive: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
-    nameSize: 16,
+    nameSize: 15.5,
     nameWeight: "bold",
     headlineColor: "#0284c7",
-    headlineSize: 9,
+    headlineSize: 8.8,
     headlineTransform: "none",
     contactSeparator: " • ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#0284c7",
-    sectionTitleBorderWidth: 1.2,
+    sectionTitleBorderWidth: 1.0,
     sectionTitleColor: "#0f172a",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 9,
+    sectionTitleSize: 8.8,
     headerAlign: "left",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.8,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
   },
   compact_swiss: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "uppercase",
-    nameSize: 14.5,
+    nameSize: 14,
     nameWeight: "bold",
     headlineColor: "#3f3f46",
-    headlineSize: 8.2,
+    headlineSize: 7.8,
     headlineTransform: "uppercase",
     contactSeparator: " / ",
-    contactFontSize: 7,
+    contactFontSize: 6.8,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#09090b",
-    sectionTitleBorderWidth: 1.2,
+    sectionTitleBorderWidth: 1.0,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.2,
+    sectionTitleSize: 7.8,
     headerAlign: "left",
-    paddingTop: 18,
-    paddingBottom: 18,
-    paddingHorizontal: 24,
-    baseFontSize: 7.8,
-    sectionMargin: 3.5,
-    entryTitleSize: 8,
-    entryDateSize: 7,
-    bulletSize: 7.5,
+    paddingTop: 15,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    baseFontSize: 7.4,
+    sectionMargin: 3.0,
+    entryTitleSize: 7.8,
+    entryDateSize: 6.8,
+    bulletSize: 7.2,
   },
   stanford_clean: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "uppercase",
-    nameSize: 15.5,
+    nameSize: 15,
     nameWeight: "bold",
     headlineColor: "#52525b",
-    headlineSize: 8.8,
+    headlineSize: 8.5,
     headlineTransform: "none",
     contactSeparator: " • ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#d4d4d8",
-    sectionTitleBorderWidth: 1,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.8,
+    sectionTitleSize: 8.5,
     headerAlign: "left",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 4.5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.5,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
   },
   skills_first: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
-    nameSize: 15.5,
+    nameSize: 15,
     nameWeight: "bold",
     headlineColor: "#059669",
-    headlineSize: 9,
+    headlineSize: 8.8,
     headlineTransform: "none",
     contactSeparator: " | ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#059669",
-    sectionTitleBorderWidth: 1.2,
+    sectionTitleBorderWidth: 1.0,
     sectionTitleColor: "#064e3b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.8,
+    sectionTitleSize: 8.5,
     headerAlign: "left",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8,
-    sectionMargin: 4.5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 7.8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.5,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
   },
   executive_serif: {
     fontFamily: "Times-Roman",
     isSerif: true,
     nameTransform: "uppercase",
-    nameSize: 15.5,
+    nameSize: 15,
     nameWeight: "bold",
     headlineColor: "#52525b",
-    headlineSize: 8.8,
+    headlineSize: 8.5,
     headlineTransform: "uppercase",
     contactSeparator: " • ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#d4d4d8",
-    sectionTitleBorderWidth: 1,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#18181b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 9,
+    sectionTitleSize: 8.8,
     headerAlign: "center",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 8.0,
+    sectionMargin: 3.8,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.8,
   },
   tech_compact: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
-    nameSize: 14.5,
+    nameSize: 14,
     nameWeight: "bold",
     headlineColor: "#4f46e5",
-    headlineSize: 8.2,
+    headlineSize: 7.8,
     headlineTransform: "none",
     contactSeparator: " | ",
-    contactFontSize: 7,
+    contactFontSize: 6.8,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#e4e4e7",
-    sectionTitleBorderWidth: 1,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.2,
+    sectionTitleSize: 7.8,
     headerAlign: "between",
-    paddingTop: 18,
-    paddingBottom: 18,
-    paddingHorizontal: 24,
-    baseFontSize: 7.8,
-    sectionMargin: 3.5,
-    entryTitleSize: 8,
-    entryDateSize: 7,
-    bulletSize: 7.5,
+    paddingTop: 15,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    baseFontSize: 7.4,
+    sectionMargin: 3.0,
+    entryTitleSize: 7.8,
+    entryDateSize: 6.8,
+    bulletSize: 7.2,
   },
   modern_minimal: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
-    nameSize: 15.5,
+    nameSize: 15,
     nameWeight: "bold",
     headlineColor: "#52525b",
-    headlineSize: 8.8,
+    headlineSize: 8.5,
     headlineTransform: "none",
     contactSeparator: " / ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: false,
     sectionTitleBorderColor: "transparent",
     sectionTitleBorderWidth: 0,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 9,
+    sectionTitleSize: 8.8,
     headerAlign: "left",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.8,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
   },
   career_changer: {
     fontFamily: "Helvetica",
     isSerif: false,
     nameTransform: "none",
-    nameSize: 15.5,
-    nameWeight: "bold",
-    headlineColor: "#d97706",
-    headlineSize: 9,
-    headlineTransform: "none",
-    contactSeparator: " • ",
-    contactFontSize: 7.5,
-    sectionTitleBorder: true,
-    sectionTitleBorderColor: "#d97706",
-    sectionTitleBorderWidth: 1.2,
-    sectionTitleColor: "#78350f",
-    sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.8,
-    headerAlign: "left",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 4.5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
-  },
-  academic_international: {
-    fontFamily: "Helvetica",
-    isSerif: false,
-    nameTransform: "uppercase",
     nameSize: 15,
     nameWeight: "bold",
-    headlineColor: "#3f3f46",
+    headlineColor: "#d97706",
     headlineSize: 8.8,
     headlineTransform: "none",
     contactSeparator: " • ",
-    contactFontSize: 7.5,
+    contactFontSize: 7.2,
     sectionTitleBorder: true,
-    sectionTitleBorderColor: "#a1a1aa",
-    sectionTitleBorderWidth: 1,
-    sectionTitleColor: "#09090b",
+    sectionTitleBorderColor: "#d97706",
+    sectionTitleBorderWidth: 1.0,
+    sectionTitleColor: "#78350f",
     sectionTitleTransform: "uppercase",
-    sectionTitleSize: 8.8,
-    headerAlign: "center",
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 26,
-    baseFontSize: 8.2,
-    sectionMargin: 4.5,
-    entryTitleSize: 8.4,
-    entryDateSize: 7.4,
-    bulletSize: 8,
+    sectionTitleSize: 8.5,
+    headerAlign: "left",
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 22,
+    baseFontSize: 7.8,
+    sectionMargin: 3.5,
+    entryTitleSize: 8.2,
+    entryDateSize: 7.2,
+    bulletSize: 7.6,
   },
 };
 
@@ -424,7 +424,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       paddingHorizontal: config.paddingHorizontal,
       fontFamily: baseFont,
       color: "#09090b",
-      lineHeight: 1.22,
+      lineHeight: 1.18,
     },
     headerCenter: {
       textAlign: "center",
@@ -435,7 +435,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       marginBottom: config.sectionMargin,
       borderBottomWidth: config.headerBorderBottom ? (config.headerBorderBottomWidth || 1.5) : 0,
       borderBottomColor: config.headerBorderBottomColor || "#18181b",
-      paddingBottom: config.headerBorderBottom ? 2.5 : 0,
+      paddingBottom: config.headerBorderBottom ? 2.0 : 0,
     },
     headerBetween: {
       flexDirection: "row",
@@ -449,21 +449,21 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       textTransform: config.nameTransform,
       color: "#09090b",
       letterSpacing: -0.2,
-      marginBottom: 0.5,
+      marginBottom: 0.3,
     },
     headline: {
       fontSize: config.headlineSize,
       fontFamily: boldFont,
       color: config.headlineColor,
       textTransform: config.headlineTransform,
-      marginBottom: 1,
+      marginBottom: 0.8,
     },
     contactContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
       alignItems: "center",
       justifyContent: config.headerAlign === "center" ? "center" : "flex-start",
-      marginTop: 0.5,
+      marginTop: 0.3,
     },
     contactItem: {
       fontSize: config.contactFontSize,
@@ -477,7 +477,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     contactSeparator: {
       fontSize: config.contactFontSize,
       color: "#9ca3af",
-      marginHorizontal: 2,
+      marginHorizontal: 1.5,
     },
     section: {
       marginBottom: config.sectionMargin,
@@ -487,22 +487,23 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       fontFamily: boldFont,
       color: config.sectionTitleColor,
       textTransform: config.sectionTitleTransform,
-      letterSpacing: 0.4,
+      letterSpacing: 0.3,
       borderBottomWidth: config.sectionTitleBorder ? config.sectionTitleBorderWidth : 0,
       borderBottomColor: config.sectionTitleBorderColor,
-      paddingBottom: 0.5,
-      marginBottom: 2,
+      paddingBottom: 0.4,
+      marginBottom: 1.5,
     },
     summaryText: {
       fontSize: config.baseFontSize,
       color: "#27272a",
       textAlign: "justify",
-      lineHeight: 1.25,
+      lineHeight: 1.20,
     },
     skillRow: {
       flexDirection: "row",
-      marginBottom: 0.5,
+      marginBottom: 0.35,
       fontSize: config.baseFontSize,
+      lineHeight: 1.18,
     },
     skillCat: {
       fontFamily: boldFont,
@@ -514,13 +515,13 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       flex: 1,
     },
     entryBlock: {
-      marginBottom: 2.5,
+      marginBottom: 1.8,
     },
     entryHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "baseline",
-      marginBottom: 0.5,
+      marginBottom: 0.3,
     },
     entryTitle: {
       fontSize: config.entryTitleSize,
@@ -540,29 +541,30 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       fontSize: config.baseFontSize,
       color: "#3f3f46",
       fontFamily: italicFont,
-      marginVertical: 0.5,
+      marginVertical: 0.3,
     },
     bulletRow: {
       flexDirection: "row",
-      marginBottom: 0.5,
-      paddingLeft: 2.5,
+      marginBottom: 0.35,
+      paddingLeft: 2.0,
     },
     bulletDot: {
       fontSize: config.bulletSize,
       color: "#27272a",
-      marginRight: 3,
+      marginRight: 2.5,
       lineHeight: 1.15,
     },
     bulletText: {
       fontSize: config.bulletSize,
       color: "#27272a",
       flex: 1,
-      lineHeight: 1.2,
+      lineHeight: 1.18,
     },
     certRow: {
       flexDirection: "row",
-      marginBottom: 0.5,
+      marginBottom: 0.35,
       fontSize: config.baseFontSize,
+      lineHeight: 1.18,
     },
     certName: {
       fontFamily: boldFont,
@@ -578,7 +580,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
     referenceCard: {
       width: "48%",
-      marginBottom: 2,
+      marginBottom: 1.5,
     },
     refName: {
       fontSize: config.entryTitleSize,
@@ -593,7 +595,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       fontSize: config.entryDateSize,
       fontFamily: monoFont,
       color: "#52525b",
-      marginTop: 0.5,
+      marginTop: 0.3,
     },
   });
 
@@ -660,7 +662,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       case "summary":
         if (!data.summary) return null;
         return (
-          <View key="summary" style={styles.section}>
+          <View key="summary" style={styles.section} wrap={false}>
             <Text style={styles.sectionTitle}>{labels.summary}</Text>
             <Text style={styles.summaryText}>{data.summary}</Text>
           </View>
@@ -668,13 +670,14 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
 
       case "skills":
         if (!data.skills || data.skills.length === 0) return null;
+        const separator = templateId === "chile_profesional" ? " • " : ", ";
         return (
-          <View key="skills" style={styles.section}>
+          <View key="skills" style={styles.section} wrap={false}>
             <Text style={styles.sectionTitle}>{labels.skills}</Text>
             {data.skills.map((cat) => (
-              <View key={cat.id} style={styles.skillRow}>
+              <View key={cat.id || cat.category} style={styles.skillRow} wrap={false}>
                 <Text style={styles.skillCat}>{cat.category}: </Text>
-                <Text style={styles.skillItems}>{cat.skills.join(", ")}</Text>
+                <Text style={styles.skillItems}>{cat.skills.join(separator)}</Text>
               </View>
             ))}
           </View>
@@ -682,17 +685,18 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
 
       case "experience":
         if (!data.experience || data.experience.length === 0) return null;
+        const expSeparator = templateId === "chile_profesional" ? " | " : (templateId === "tech_minimalist" || templateId === "compact_swiss" ? " @ " : " — ");
         return (
           <View key="experience" style={styles.section}>
             <Text style={styles.sectionTitle}>{labels.experience}</Text>
             {data.experience.map((exp) => {
               const endDateStr = exp.current ? labels.present : (exp.end_date || labels.present);
               return (
-                <View key={exp.id} style={styles.entryBlock}>
+                <View key={exp.id} style={styles.entryBlock} wrap={false}>
                   <View style={styles.entryHeader}>
                     <Text>
                       <Text style={styles.entryTitle}>{exp.position}</Text>
-                      <Text style={styles.entrySubtitle}> — {exp.company}</Text>
+                      <Text style={styles.entrySubtitle}>{expSeparator}{exp.company}</Text>
                       {exp.location && <Text style={{ color: "#52525b", fontSize: config.entryDateSize }}> ({exp.location})</Text>}
                     </Text>
                     <Text style={styles.entryDates}>
@@ -703,7 +707,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
                   {exp.summary && <Text style={styles.entrySummary}>{exp.summary}</Text>}
 
                   {(exp.highlights || []).map((h, i) => (
-                    <View key={i} style={styles.bulletRow}>
+                    <View key={i} style={styles.bulletRow} wrap={false}>
                       <Text style={styles.bulletDot}>•</Text>
                       <Text style={styles.bulletText}>{h}</Text>
                     </View>
@@ -719,65 +723,109 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         return (
           <View key="projects" style={styles.section}>
             <Text style={styles.sectionTitle}>{labels.projects}</Text>
-            {data.projects.map((proj) => (
-              <View key={proj.id} style={styles.entryBlock}>
-                <View style={styles.entryHeader}>
-                  <Text>
-                    <Text style={styles.entryTitle}>{proj.name}</Text>
-                    {proj.technologies && proj.technologies.length > 0 && (
-                      <Text style={{ fontSize: config.entryDateSize, fontFamily: monoFont, color: "#52525b" }}>
-                        {" "}[{proj.technologies.join(", ")}]
+            {data.projects.map((proj) => {
+              const techStr = proj.technologies && proj.technologies.length > 0
+                ? (templateId === "academic_international" || templateId === "harvard" ? ` | ${proj.technologies.join(", ")}` : ` [${proj.technologies.join(", ")}]`)
+                : "";
+
+              return (
+                <View key={proj.id} style={styles.entryBlock} wrap={false}>
+                  <View style={styles.entryHeader}>
+                    <Text>
+                      <Text style={styles.entryTitle}>{proj.name}</Text>
+                      {techStr && (
+                        <Text style={{ fontSize: config.entryDateSize, color: "#52525b" }}>
+                          {techStr}
+                        </Text>
+                      )}
+                    </Text>
+                    {proj.start_date && (
+                      <Text style={styles.entryDates}>
+                        {proj.start_date}{proj.end_date ? ` – ${proj.end_date}` : ""}
                       </Text>
                     )}
-                  </Text>
-                  {proj.start_date && (
-                    <Text style={styles.entryDates}>
-                      {proj.start_date}{proj.end_date ? ` – ${proj.end_date}` : ""}
+                  </View>
+
+                  {proj.description && (!proj.highlights || proj.highlights.length === 0 || proj.highlights[0] !== proj.description) && (
+                    <Text style={{ fontSize: config.baseFontSize, color: "#3f3f46", marginVertical: 0.3 }}>
+                      {proj.description}
                     </Text>
                   )}
+
+                  {(proj.highlights || []).map((h, i) => (
+                    <View key={i} style={styles.bulletRow} wrap={false}>
+                      <Text style={styles.bulletDot}>•</Text>
+                      <Text style={styles.bulletText}>{h}</Text>
+                    </View>
+                  ))}
                 </View>
-
-                {proj.description && (
-                  <Text style={{ fontSize: config.baseFontSize, color: "#3f3f46", marginVertical: 0.5 }}>
-                    {proj.description}
-                  </Text>
-                )}
-
-                {(proj.highlights || []).map((h, i) => (
-                  <View key={i} style={styles.bulletRow}>
-                    <Text style={styles.bulletDot}>•</Text>
-                    <Text style={styles.bulletText}>{h}</Text>
-                  </View>
-                ))}
-              </View>
-            ))}
+              );
+            })}
           </View>
         );
 
       case "education":
         if (!data.education || data.education.length === 0) return null;
+        const isAcademicLayout = templateId === "academic_international" || templateId === "harvard" || templateId === "tech_minimalist" || templateId === "modern_executive" || templateId === "skills_first";
+
         return (
           <View key="education" style={styles.section}>
             <Text style={styles.sectionTitle}>{labels.education}</Text>
             {data.education.map((edu) => {
               const eduEndDate = edu.current ? labels.present : (edu.end_date || "");
-              return (
-                <View key={edu.id} style={styles.entryBlock}>
-                  <View style={styles.entryHeader}>
-                    <Text>
+              const dateRange = edu.start_date ? `${edu.start_date}${eduEndDate ? ` – ${eduEndDate}` : ""}` : eduEndDate;
+
+              if (isAcademicLayout) {
+                return (
+                  <View key={edu.id} style={styles.entryBlock} wrap={false}>
+                    <View style={styles.entryHeader}>
                       <Text style={styles.entryTitle}>{edu.institution}</Text>
-                      <Text style={styles.entrySubtitle}> — {edu.degree}{edu.area ? ` en ${edu.area}` : ""}</Text>
-                      {edu.gpa && <Text style={{ fontSize: config.entryDateSize, color: "#52525b" }}> (GPA: {edu.gpa})</Text>}
-                    </Text>
-                    {edu.start_date && (
-                      <Text style={styles.entryDates}>
-                        {edu.start_date}{eduEndDate ? ` – ${eduEndDate}` : ""}
+                      {dateRange && <Text style={styles.entryDates}>{dateRange}</Text>}
+                    </View>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", marginBottom: 0.3 }}>
+                      <Text style={{ fontSize: config.baseFontSize, color: "#27272a" }}>
+                        {edu.degree}{edu.area ? ` en ${edu.area}` : ""}
+                      </Text>
+                      {edu.location && (
+                        <Text style={{ fontSize: config.entryDateSize, color: "#52525b" }}>
+                          {edu.location}
+                        </Text>
+                      )}
+                    </View>
+                    {edu.gpa && (
+                      <Text style={{ fontSize: config.entryDateSize, color: "#52525b", marginBottom: 0.3 }}>
+                        GPA: {edu.gpa}
                       </Text>
                     )}
+                    {(edu.highlights || []).map((h, i) => (
+                      <View key={i} style={styles.bulletRow} wrap={false}>
+                        <Text style={styles.bulletDot}>•</Text>
+                        <Text style={styles.bulletText}>{h}</Text>
+                      </View>
+                    ))}
                   </View>
+                );
+              }
 
+              // Chilean / Compact / Stanford inline format
+              const eduSeparator = templateId === "stanford_clean" ? " | " : (templateId === "compact_swiss" || templateId === "tech_compact" ? " · " : " — ");
+              return (
+                <View key={edu.id} style={styles.entryBlock} wrap={false}>
+                  <View style={styles.entryHeader}>
+                    <Text>
+                      <Text style={styles.entryTitle}>{edu.degree}{edu.area ? ` en ${edu.area}` : ""}</Text>
+                      <Text style={styles.entrySubtitle}>{eduSeparator}{edu.institution}</Text>
+                      {edu.location && <Text style={{ color: "#52525b", fontSize: config.entryDateSize }}> ({edu.location})</Text>}
+                    </Text>
+                    {dateRange && <Text style={styles.entryDates}>{dateRange}</Text>}
+                  </View>
+                  {edu.gpa && (
+                    <Text style={{ fontSize: config.entryDateSize, color: "#52525b", marginBottom: 0.3 }}>
+                      GPA: {edu.gpa}
+                    </Text>
+                  )}
                   {(edu.highlights || []).map((h, i) => (
-                    <View key={i} style={styles.bulletRow}>
+                    <View key={i} style={styles.bulletRow} wrap={false}>
                       <Text style={styles.bulletDot}>•</Text>
                       <Text style={styles.bulletText}>{h}</Text>
                     </View>
@@ -791,12 +839,12 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       case "certifications":
         if (!data.certifications || data.certifications.length === 0) return null;
         return (
-          <View key="certifications" style={styles.section}>
+          <View key="certifications" style={styles.section} wrap={false}>
             <Text style={styles.sectionTitle}>{labels.certifications}</Text>
             {data.certifications.map((cert) => {
               const dateStr = cert.date ? ` (${cert.date})` : "";
               return (
-                <View key={cert.id} style={styles.certRow}>
+                <View key={cert.id} style={styles.certRow} wrap={false}>
                   <Text style={styles.certName}>{cert.name}</Text>
                   <Text style={styles.certIssuer}> — {cert.issuer}{dateStr}</Text>
                 </View>
@@ -808,14 +856,14 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       case "references":
         if (!data.references || data.references.length === 0) return null;
         return (
-          <View key="references" style={styles.section}>
+          <View key="references" style={styles.section} wrap={false}>
             <Text style={styles.sectionTitle}>{labels.references}</Text>
             <View style={styles.referencesGrid}>
               {data.references.map((ref) => {
                 const relStr = ref.relationship ? ` (${ref.relationship})` : "";
                 const contacts = [ref.email, ref.phone].filter(Boolean).join("  |  ");
                 return (
-                  <View key={ref.id} style={styles.referenceCard}>
+                  <View key={ref.id} style={styles.referenceCard} wrap={false}>
                     <Text style={styles.refName}>{ref.name}</Text>
                     <Text style={styles.refDetails}>
                       {ref.position}{ref.company ? ` — ${ref.company}` : ""}{relStr}
