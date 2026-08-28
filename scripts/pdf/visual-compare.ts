@@ -1,5 +1,5 @@
 import { chromium } from "playwright";
-import { generateNativeResumePdf } from "../../lib/exporters/reactPdf/renderPdf";
+import { generateChromiumResumePdf } from "../../lib/exporters/chromium/pdfExporter";
 import { ResumeData } from "../../types/resume";
 import fs from "fs";
 
@@ -101,7 +101,7 @@ const USER_DATA: ResumeData = {
 
 async function run() {
   // 1. Academic
-  const pdfBuf = await generateNativeResumePdf({
+  const pdfBuf = await generateChromiumResumePdf({
     data: USER_DATA,
     templateId: "academic_international",
     paperSize: "letter",
@@ -110,7 +110,7 @@ async function run() {
   fs.writeFileSync("test_academic.pdf", pdfBuf);
 
   // 2. Chile
-  const pdfBufChile = await generateNativeResumePdf({
+  const pdfBufChile = await generateChromiumResumePdf({
     data: USER_DATA,
     templateId: "chile_profesional",
     paperSize: "letter",

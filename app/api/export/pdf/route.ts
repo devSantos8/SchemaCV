@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateNativeResumePdf } from "@/lib/exporters/reactPdf/renderPdf";
+import { generateChromiumResumePdf } from "@/lib/exporters/chromium/pdfExporter";
 import type { ResumeData, TemplateId, PaperSize } from "@/types/resume";
 
 export async function POST(req: NextRequest) {
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const pdfDocumentTitle =
       title || (candidateClean ? `CV_${candidateClean}` : "Curriculum_Vitae");
 
-    const pdfBuffer = await generateNativeResumePdf({
+    const pdfBuffer = await generateChromiumResumePdf({
       data: resumeData as ResumeData,
       templateId: templateId as TemplateId,
       paperSize: paperSize as PaperSize,
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${pdfDocumentTitle}.pdf"`,
         "Cache-Control": "no-store, max-age=0",
-        "X-Engine": "SchemaCV-Native-Vector-PDF",
+        "X-Engine": "SchemaCV-Chromium-Vector-ATS-PDF",
       },
     });
   } catch (error) {

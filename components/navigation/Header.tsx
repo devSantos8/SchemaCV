@@ -709,11 +709,29 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
               </div>
               <div className="flex-1">
                 <div className="font-semibold text-foreground flex items-center justify-between">
-                  <span>PDF Vectorial</span>
+                  <span>Descargar PDF Vectorial</span>
                   <span className="text-[9px] font-mono text-muted-foreground">.pdf</span>
                 </div>
                 <div className="text-[10px] text-muted-foreground">
-                  Impresión y renderizado ({paperSize.toUpperCase()})
+                  Compilación Chromium 100% ATS ({paperSize.toUpperCase()})
+                </div>
+              </div>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              onClick={() => window.print()}
+              className="text-xs cursor-pointer gap-2.5 p-2 rounded-md"
+            >
+              <div className="p-1.5 rounded bg-zinc-500/10 text-zinc-600 dark:text-zinc-400">
+                <Printer className="h-4 w-4" />
+              </div>
+              <div className="flex-1">
+                <div className="font-semibold text-foreground flex items-center justify-between">
+                  <span>Imprimir / Guardar PDF</span>
+                  <span className="text-[9px] font-mono text-muted-foreground">Ctrl+P</span>
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  Diálogo directo del navegador (0ms)
                 </div>
               </div>
             </DropdownMenuItem>

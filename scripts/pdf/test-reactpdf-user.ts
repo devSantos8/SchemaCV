@@ -1,4 +1,4 @@
-import { generateNativeResumePdf } from "../../lib/exporters/reactPdf/renderPdf";
+import { generateChromiumResumePdf } from "../../lib/exporters/chromium/pdfExporter";
 import { extractText } from "unpdf";
 import { ResumeData, TemplateId, PaperSize } from "../../types/resume";
 import fs from "fs";
@@ -118,14 +118,14 @@ async function test() {
   for (const size of ["letter", "a4"] as PaperSize[]) {
     console.log(`\n--- Testing Paper Size: ${size.toUpperCase()} ---`);
     for (const t of templates) {
-      const pdfBuf = await generateNativeResumePdf({
+      const pdfBuf = await generateChromiumResumePdf({
         data: USER_DATA,
         templateId: t,
         paperSize: size,
         title: `Test_${t}_${size}`,
       });
       const parsed = await extractText(new Uint8Array(pdfBuf));
-      console.log(`[React-PDF] Template: ${t.padEnd(24)} | Size: ${size} -> Pages: ${parsed.totalPages}`);
+      console.log(`[Chromium-PDF] Template: ${t.padEnd(24)} | Size: ${size} -> Pages: ${parsed.totalPages}`);
       if (t === "academic_international" && size === "letter") {
         console.log("\n--- Full Extracted Text for Academic International (Letter) ---");
         console.log(parsed.text[0]);
