@@ -68,7 +68,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#a1a1aa",
-    sectionTitleBorderWidth: 1.0,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -77,7 +77,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -95,7 +95,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#d4d4d8",
-    sectionTitleBorderWidth: 1.0,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -107,7 +107,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -125,7 +125,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#18181b",
-    sectionTitleBorderWidth: 1.0,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#18181b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -134,7 +134,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.4,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.4,
@@ -152,7 +152,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#e4e4e7",
-    sectionTitleBorderWidth: 1.0,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -161,7 +161,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -179,7 +179,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#0284c7",
-    sectionTitleBorderWidth: 1.5,
+    sectionTitleBorderWidth: 1.2,
     sectionTitleColor: "#0f172a",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.8,
@@ -188,7 +188,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -206,7 +206,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 7.4,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#09090b",
-    sectionTitleBorderWidth: 1.5,
+    sectionTitleBorderWidth: 1.2,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 8.5,
@@ -233,7 +233,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#d4d4d8",
-    sectionTitleBorderWidth: 1.0,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -242,7 +242,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -260,7 +260,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#059669",
-    sectionTitleBorderWidth: 1.5,
+    sectionTitleBorderWidth: 1.2,
     sectionTitleColor: "#064e3b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -269,7 +269,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -287,7 +287,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#d4d4d8",
-    sectionTitleBorderWidth: 1.0,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#18181b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -296,7 +296,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.4,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.4,
@@ -314,7 +314,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 7.4,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#e4e4e7",
-    sectionTitleBorderWidth: 1.0,
+    sectionTitleBorderWidth: 0.8,
     sectionTitleColor: "#09090b",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 8.5,
@@ -350,7 +350,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -368,7 +368,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     contactFontSize: 8.0,
     sectionTitleBorder: true,
     sectionTitleBorderColor: "#d97706",
-    sectionTitleBorderWidth: 1.5,
+    sectionTitleBorderWidth: 1.2,
     sectionTitleColor: "#78350f",
     sectionTitleTransform: "uppercase",
     sectionTitleSize: 9.5,
@@ -377,7 +377,7 @@ const TEMPLATE_CONFIGS: Record<TemplateId, TemplateConfig> = {
     paddingBottom: 22,
     paddingHorizontal: 28,
     baseFontSize: 8.2,
-    sectionMargin: 5.5,
+    sectionMargin: 5.0,
     entryTitleSize: 8.8,
     entryDateSize: 8.0,
     bulletSize: 8.2,
@@ -433,9 +433,6 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
     headerLeft: {
       marginBottom: config.sectionMargin,
-      borderBottomWidth: config.headerBorderBottom ? (config.headerBorderBottomWidth || 1.8) : 0,
-      borderBottomColor: config.headerBorderBottomColor || "#18181b",
-      paddingBottom: config.headerBorderBottom ? 3.0 : 0,
     },
     headerBetween: {
       flexDirection: "row",
@@ -449,14 +446,14 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       textTransform: config.nameTransform,
       color: "#09090b",
       letterSpacing: -0.3,
-      marginBottom: 1.0,
+      marginBottom: 0.5,
     },
     headline: {
       fontSize: config.headlineSize,
       fontFamily: boldFont,
       color: config.headlineColor,
       textTransform: config.headlineTransform,
-      marginBottom: 1.5,
+      marginBottom: 1.0,
     },
     contactContainer: {
       flexDirection: "row",
@@ -482,16 +479,15 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     section: {
       marginBottom: config.sectionMargin,
     },
-    sectionTitle: {
+    sectionHeaderContainer: {
+      marginBottom: 2.5,
+    },
+    sectionTitleText: {
       fontSize: config.sectionTitleSize,
       fontFamily: boldFont,
       color: config.sectionTitleColor,
       textTransform: config.sectionTitleTransform,
       letterSpacing: 0.4,
-      borderBottomWidth: config.sectionTitleBorder ? config.sectionTitleBorderWidth : 0,
-      borderBottomColor: config.sectionTitleBorderColor,
-      paddingBottom: 0.8,
-      marginBottom: 2.2,
     },
     summaryText: {
       fontSize: config.baseFontSize,
@@ -515,13 +511,13 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
       flex: 1,
     },
     entryBlock: {
-      marginBottom: 2.5,
+      marginBottom: 2.2,
     },
     entryHeader: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "baseline",
-      marginBottom: 0.6,
+      marginBottom: 0.5,
     },
     entryTitle: {
       fontSize: config.entryTitleSize,
@@ -545,7 +541,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
     bulletRow: {
       flexDirection: "row",
-      marginBottom: 0.6,
+      marginBottom: 0.5,
       paddingLeft: 6.0,
     },
     bulletDot: {
@@ -601,6 +597,23 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
     },
   });
 
+  const renderSectionHeader = (title: string) => {
+    return (
+      <View style={styles.sectionHeaderContainer}>
+        <Text style={styles.sectionTitleText}>{title}</Text>
+        {config.sectionTitleBorder && (
+          <View
+            style={{
+              height: config.sectionTitleBorderWidth || 0.8,
+              backgroundColor: config.sectionTitleBorderColor || "#a1a1aa",
+              marginTop: 1.2,
+            }}
+          />
+        )}
+      </View>
+    );
+  };
+
   const renderHeader = () => {
     if (config.headerAlign === "between") {
       return (
@@ -655,6 +668,15 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
             ))}
           </View>
         )}
+        {config.headerBorderBottom && (
+          <View
+            style={{
+              height: config.headerBorderBottomWidth || 1.8,
+              backgroundColor: config.headerBorderBottomColor || "#18181b",
+              marginTop: 2.5,
+            }}
+          />
+        )}
       </View>
     );
   };
@@ -665,7 +687,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         if (!data.summary) return null;
         return (
           <View key="summary" style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.summary}</Text>
+            {renderSectionHeader(labels.summary)}
             <Text style={styles.summaryText}>{data.summary}</Text>
           </View>
         );
@@ -675,7 +697,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         const separator = templateId === "chile_profesional" ? " • " : ", ";
         return (
           <View key="skills" style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.skills}</Text>
+            {renderSectionHeader(labels.skills)}
             {data.skills.map((cat) => (
               <View key={cat.id || cat.category} style={styles.skillRow} wrap={false}>
                 <Text style={styles.skillCat}>{cat.category}: </Text>
@@ -690,7 +712,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         const expSeparator = templateId === "chile_profesional" ? " | " : (templateId === "tech_minimalist" || templateId === "compact_swiss" ? " @ " : " — ");
         return (
           <View key="experience" style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.experience}</Text>
+            {renderSectionHeader(labels.experience)}
             {data.experience.map((exp) => {
               const endDateStr = exp.current ? labels.present : (exp.end_date || labels.present);
               return (
@@ -724,7 +746,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         if (!data.projects || data.projects.length === 0) return null;
         return (
           <View key="projects" style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.projects}</Text>
+            {renderSectionHeader(labels.projects)}
             {data.projects.map((proj) => {
               const techStr = proj.technologies && proj.technologies.length > 0
                 ? (templateId === "academic_international" || templateId === "harvard" ? ` | ${proj.technologies.join(", ")}` : ` [${proj.technologies.join(", ")}]`)
@@ -772,7 +794,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
 
         return (
           <View key="education" style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.education}</Text>
+            {renderSectionHeader(labels.education)}
             {data.education.map((edu) => {
               const eduEndDate = edu.current ? labels.present : (edu.end_date || "");
               const dateRange = edu.start_date ? `${edu.start_date}${eduEndDate ? ` – ${eduEndDate}` : ""}` : eduEndDate;
@@ -842,7 +864,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         if (!data.certifications || data.certifications.length === 0) return null;
         return (
           <View key="certifications" style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.certifications}</Text>
+            {renderSectionHeader(labels.certifications)}
             {data.certifications.map((cert) => {
               const dateStr = cert.date ? ` (${cert.date})` : "";
               return (
@@ -861,7 +883,7 @@ export const PdfDocument: React.FC<PdfDocumentProps> = ({
         if (!data.references || data.references.length === 0) return null;
         return (
           <View key="references" style={styles.section}>
-            <Text style={styles.sectionTitle}>{labels.references}</Text>
+            {renderSectionHeader(labels.references)}
             <View style={styles.referencesGrid}>
               {data.references.map((ref) => {
                 const relStr = ref.relationship ? ` (${ref.relationship})` : "";

@@ -1,12 +1,7 @@
 import { chromium } from "playwright";
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { AcademicInternational } from "../../components/templates/AcademicInternational";
-import { ChileProfesional } from "../../components/templates/ChileProfesional";
 import { generateNativeResumePdf } from "../../lib/exporters/reactPdf/renderPdf";
 import { ResumeData } from "../../types/resume";
 import fs from "fs";
-import path from "path";
 
 const USER_DATA: ResumeData = {
   name: "JOAIN MATIAS MONROY SANTOS",
@@ -105,34 +100,7 @@ const USER_DATA: ResumeData = {
 };
 
 async function run() {
-  const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1200, height: 1600 } });
-
-  // 1. Render Preview (AcademicInternational) in Tailwind
-  const htmlAcademic = renderToStaticMarkup(React.createElement(AcademicInternational, { data: USER_DATA, paperSize: "letter" }));
-  const previewHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-          body { background: #f4f4f5; display: flex; justify-content: center; padding: 20px; }
-          .preview-page { width: 8.5in; min-height: 11in; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        </style>
-      </head>
-      <body>
-        <div class="preview-page">
-          ${htmlAcademic}
-        </div>
-      </body>
-    </html>
-  `;
-
-  await page.setContent(previewHtml, { waitUntil: "networkidle" });
-  await page.locator(".preview-page").screenshot({ path: "test_preview_academic.png" });
-  console.log("Saved test_preview_academic.png");
-
-  // 2. Render React-PDF generated PDF
+  // 1. Academic
   const pdfBuf = await generateNativeResumePdf({
     data: USER_DATA,
     templateId: "academic_international",
@@ -141,74 +109,7 @@ async function run() {
   });
   fs.writeFileSync("test_academic.pdf", pdfBuf);
 
-  // Render PDF to image using PDF.js via Playwright
-  const pdfBase64 = pdfBuf.toString("base64");
-  const pdfViewerHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-        <style>
-          body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #f4f4f5; }
-          canvas { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; }
-        </style>
-      </head>
-      <body>
-        <div id="container"></div>
-        <script>
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-          const pdfData = atob('${pdfBase64}');
-          const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-          loadingTask.promise.then(async function(pdf) {
-            window.numPages = pdf.numPages;
-            for (let i = 1; i <= pdf.numPages; i++) {
-              const page = await pdf.getPage(i);
-              const viewport = page.getViewport({ scale: 1.5 });
-              const canvas = document.createElement('canvas');
-              const context = canvas.getContext('2d');
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
-              canvas.id = 'page-' + i;
-              document.getElementById('container').appendChild(canvas);
-              await page.render({ canvasContext: context, viewport: viewport }).promise;
-            }
-            window.rendered = true;
-          });
-        </script>
-      </body>
-    </html>
-  `;
-  await page.setContent(pdfViewerHtml);
-  await page.waitForFunction(() => (window as any).rendered === true, { timeout: 10000 });
-  const numPagesAcademic = await page.evaluate(() => (window as any).numPages);
-  console.log(`[Playwright] Academic International PDF Page Count: ${numPagesAcademic}`);
-  await page.locator("#page-1").screenshot({ path: "test_pdf_academic_page1.png" });
-  console.log("Saved test_pdf_academic_page1.png");
-
-  // 3. Render Chile Profesional Preview
-  const htmlChile = renderToStaticMarkup(React.createElement(ChileProfesional, { data: USER_DATA, paperSize: "letter" }));
-  const previewHtmlChile = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-          body { background: #f4f4f5; display: flex; justify-content: center; padding: 20px; }
-          .preview-page { width: 8.5in; min-height: 11in; background: white; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        </style>
-      </head>
-      <body>
-        <div class="preview-page">
-          ${htmlChile}
-        </div>
-      </body>
-    </html>
-  `;
-  await page.setContent(previewHtmlChile, { waitUntil: "networkidle" });
-  await page.locator(".preview-page").screenshot({ path: "test_preview_chile.png" });
-  console.log("Saved test_preview_chile.png");
-
-  // 4. Render React-PDF Chile
+  // 2. Chile
   const pdfBufChile = await generateNativeResumePdf({
     data: USER_DATA,
     templateId: "chile_profesional",
@@ -216,53 +117,57 @@ async function run() {
     title: "Test_Chile",
   });
   fs.writeFileSync("test_chile.pdf", pdfBufChile);
-  console.log("Saved test_chile.pdf");
 
-  const pdfBase64Chile = pdfBufChile.toString("base64");
-  const pdfViewerHtmlChile = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-        <style>
-          body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #f4f4f5; }
-          canvas { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-bottom: 20px; }
-        </style>
-      </head>
-      <body>
-        <div id="container-chile"></div>
-        <script>
-          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-          const pdfData = atob('${pdfBase64Chile}');
-          const loadingTask = pdfjsLib.getDocument({ data: pdfData });
-          loadingTask.promise.then(async function(pdf) {
-            window.numPagesChile = pdf.numPages;
-            for (let i = 1; i <= pdf.numPages; i++) {
-              const page = await pdf.getPage(i);
-              const viewport = page.getViewport({ scale: 1.5 });
-              const canvas = document.createElement('canvas');
-              const context = canvas.getContext('2d');
-              canvas.height = viewport.height;
-              canvas.width = viewport.width;
-              canvas.id = 'page-chile-' + i;
-              document.getElementById('container-chile').appendChild(canvas);
-              await page.render({ canvasContext: context, viewport: viewport }).promise;
-            }
-            window.renderedChile = true;
-          });
-        </script>
-      </body>
-    </html>
-  `;
-  await page.setContent(pdfViewerHtmlChile);
-  await page.waitForFunction(() => (window as any).renderedChile === true, { timeout: 10000 });
-  const numPagesChile = await page.evaluate(() => (window as any).numPagesChile);
-  console.log(`[Playwright] Chile Profesional PDF Page Count: ${numPagesChile}`);
-  await page.locator("#page-chile-1").screenshot({ path: "test_pdf_chile_page1.png" });
-  console.log("Saved test_pdf_chile_page1.png");
+  const browser = await chromium.launch();
+
+  const renderPdfToPng = async (buf: Buffer, outName: string) => {
+    const freshPage = await browser.newPage({ viewport: { width: 1200, height: 1600 } });
+    const b64 = buf.toString("base64");
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+          <style>
+            body { margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; background: #52525b; }
+            canvas { box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3); background: white; margin-bottom: 20px; }
+          </style>
+        </head>
+        <body>
+          <div id="container"></div>
+          <script>
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            const pdfData = atob('${b64}');
+            pdfjsLib.getDocument({ data: pdfData }).promise.then(async function(pdf) {
+              window.numPages = pdf.numPages;
+              for (let i = 1; i <= pdf.numPages; i++) {
+                const p = await pdf.getPage(i);
+                const viewport = p.getViewport({ scale: 2.0 });
+                const canvas = document.createElement('canvas');
+                canvas.id = 'page-' + i;
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                document.getElementById('container').appendChild(canvas);
+                await p.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+              }
+              window.done = true;
+            });
+          </script>
+        </body>
+      </html>
+    `;
+    await freshPage.setContent(html);
+    await freshPage.waitForFunction(() => (window as any).done === true, { timeout: 15000 });
+    const pages = await freshPage.evaluate(() => (window as any).numPages);
+    console.log(`${outName} Pages: ${pages}`);
+    await freshPage.locator("#page-1").screenshot({ path: outName });
+    await freshPage.close();
+  };
+
+  await renderPdfToPng(pdfBuf, "academic_perfect.png");
+  await renderPdfToPng(pdfBufChile, "chile_perfect.png");
 
   await browser.close();
-  console.log("Visual compare done!");
 }
 
 run();
