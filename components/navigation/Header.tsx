@@ -239,10 +239,10 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (error) {
       console.error("Error al exportar DOCX:", error);
-      alert("Hubo un problema al generar el archivo DOCX.");
+      toast.error("Hubo un problema al generar el archivo DOCX.");
     } finally {
       setIsExportingDocx(false);
     }
@@ -259,7 +259,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
   // Exportar JSON
@@ -273,7 +273,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
   // Exportar PDF Vectorial y descarga directa
@@ -306,7 +306,7 @@ export const Header: React.FC<HeaderProps> = ({ onBackToDashboard, onOpenSetting
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
 
       toast.success("¡PDF vectorial descargado con éxito!", { id: toastId });
     } catch (err) {

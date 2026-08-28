@@ -558,10 +558,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (err) {
       console.error("Error exportando DOCX:", err);
-      alert("No se pudo generar el archivo DOCX.");
+      toast.error("No se pudo generar el archivo DOCX.");
     } finally {
       setDownloadingDocxId(null);
     }
@@ -571,6 +571,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const handleDownloadPdf = async (profile: ResumeProfile) => {
     try {
       setDownloadingPdfId(profile.id);
+      const safeName = (profile.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
+      const title = `${safeName}_ATS_${profile.paperSize || "letter"}`;
+
       const res = await fetch("/api/export/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -578,11 +581,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           resumeData: profile.data,
           templateId: profile.templateId,
           paperSize: profile.paperSize || "letter",
+          title,
         }),
       });
 
       if (!res.ok) {
-        handleOpenResume(profile.id);
+        toast.error("No se pudo generar el archivo PDF.");
         return;
       }
 
@@ -591,15 +595,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       const url = URL.createObjectURL(pdfBlob);
       const a = document.createElement("a");
       a.href = url;
-      const safeName = (profile.name || "Resume").replace(/[^a-zA-Z0-9_-]/g, "_");
-      a.download = `${safeName}_ATS_${profile.paperSize || "letter"}.pdf`;
+      a.download = `${title}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      toast.success("¡PDF descargado con éxito!");
     } catch (err) {
       console.error("Error exportando PDF:", err);
-      handleOpenResume(profile.id);
+      toast.error("Error al generar el PDF.");
     } finally {
       setDownloadingPdfId(null);
     }
@@ -617,7 +621,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
   };
 
   // Exportar Backup Completo JSON
