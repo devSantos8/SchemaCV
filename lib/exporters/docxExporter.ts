@@ -46,7 +46,6 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
         children: [
           new TextRun({
             text: resume.headline,
-            italics: true,
             size: 22, // 11pt
             color: "444444",
             font: "Arial",
@@ -270,7 +269,6 @@ export async function generateResumeDocx(rawResume: ResumeData): Promise<Blob> {
                   }),
                   new TextRun({
                     text: techStr,
-                    italics: true,
                     size: 18,
                     color: "444444",
                     font: "Arial",

@@ -155,7 +155,7 @@ export const ChileProfesional: React.FC<TemplateProps> = ({ data, paperSize = "l
                         </div>
 
                         {exp.summary && (
-                          <p className="text-[8.5pt] text-zinc-700 italic">
+                          <p className="text-[8.5pt] text-zinc-700">
                             {exp.summary}
                           </p>
                         )}

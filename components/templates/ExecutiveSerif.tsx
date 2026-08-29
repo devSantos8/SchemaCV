@@ -132,7 +132,7 @@ export const ExecutiveSerif: React.FC<TemplateProps> = ({ data, paperSize = "let
                         </div>
 
                         {exp.summary && (
-                          <p className="text-[9pt] italic text-zinc-700 mb-1 leading-snug">
+                          <p className="text-[9pt] text-zinc-700 mb-1 leading-snug">
                             {exp.summary}
                           </p>
                         )}

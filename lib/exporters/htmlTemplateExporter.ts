@@ -707,8 +707,8 @@ export function generateTemplateHtml(
         .entry-summary {
           margin: 1.5px 0 2px 0;
           font-size: ${styleConfig.baseFontSize};
-          color: #3f3f46;
-          font-style: italic;
+          color: #27272a;
+          font-style: normal;
         }
         .entry-bullets {
           margin: 2px 0 0 0;
