@@ -23,6 +23,7 @@
     "bump:minor": "npx tsx scripts/devops/bump-version.ts minor",
     "bump:major": "npx tsx scripts/devops/bump-version.ts major",
     "test:ats": "npx tsx scripts/ats/validate-ats.ts",
+    "audit:ats": "npx tsx scripts/ats/deep-ats-audit.ts",
     "test:pages": "npx tsx scripts/pdf/test-page-count.ts",
     "test:prompts": "npx tsx scripts/ai/validate-prompts.ts",
     "inspect:pdf": "npx tsx scripts/pdf/inspect-pdf-extraction.ts",

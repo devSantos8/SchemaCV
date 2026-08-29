@@ -586,12 +586,12 @@ export function generateTemplateHtml(
   let headerHtml = "";
   if (styleConfig.headerAlign === "between") {
     headerHtml = `
-      <div class="cv-header header-between" style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: ${styleConfig.sectionMargin};">
-        <div style="flex: 1;">
-          <h1 class="header-title" style="text-align: left; margin: 0; padding: 0;">${data.name || "Nombre Completo"}</h1>
+      <div class="cv-header header-between" style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: ${styleConfig.sectionMargin};">
+        <div style="flex: 1 1 auto; min-width: 45%;">
+          <h1 class="header-title" style="text-align: left; margin: 0; padding: 0; white-space: nowrap;">${data.name || "Nombre Completo"}</h1>
           ${data.headline ? `<p class="header-headline" style="text-align: left; margin: 1px 0 0 0;">${data.headline}</p>` : ""}
         </div>
-        ${contactLine ? `<div class="header-contact" style="text-align: right; margin: 0; font-size: ${styleConfig.contactFontSize || "8.5pt"};">${contactLine}</div>` : ""}
+        ${contactLine ? `<div class="header-contact" style="max-width: 52%; text-align: right; margin: 0; font-size: ${styleConfig.contactFontSize || "8.5pt"}; line-height: 1.35;">${contactLine}</div>` : ""}
       </div>
     `;
   } else if (styleConfig.headerAlign === "left") {
