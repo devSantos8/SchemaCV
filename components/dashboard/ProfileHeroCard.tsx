@@ -114,10 +114,10 @@ export const ProfileHeroCard: React.FC<ProfileHeroCardProps> = ({
         {/* Nombre y Cargo Profesional */}
         <div className="space-y-0.5 mb-4">
           <h2 className="text-base font-extrabold text-foreground tracking-tight">
-            {user?.name || "Joain Matias Monroy"}
+            {user?.name || "Mi Perfil"}
           </h2>
           <p className="text-xs text-muted-foreground font-medium">
-            {user?.headline || "Senior Full Stack & Cloud Developer"}
+            {user?.headline || "Software Engineer"}
           </p>
         </div>
 

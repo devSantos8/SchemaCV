@@ -427,8 +427,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   useEffect(() => {
     if (user?.name) {
       const parts = user.name.split(" ");
-      setFirstName(parts[0] || "Joain");
-      setLastName(parts.slice(1).join(" ") || "Monroy Santos");
+      setFirstName(parts[0] || "");
+      setLastName(parts.slice(1).join(" ") || "");
     }
   }, [user]);
 
@@ -1039,12 +1039,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     ? "h-10 w-10 rounded-xl justify-center hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60 relative"
                     : "w-full p-2.5 justify-between rounded-2xl bg-card border border-border/80 hover:border-zinc-300 dark:hover:border-zinc-700 shadow-2xs hover:shadow-xs text-left"
                 }`}
-                title={isSidebarCollapsed ? `${user?.name || "Joain Monroy"} (${user?.email || "matiasmonroy483@gmail.com"})` : undefined}
+                title={isSidebarCollapsed ? `${user?.name || "Usuario"} (${user?.email || "usuario@schemacv.dev"})` : undefined}
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="relative shrink-0">
                     <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-zinc-800 to-zinc-600 dark:from-zinc-100 dark:to-zinc-300 text-background flex items-center justify-center font-bold text-xs shadow-xs group-hover:scale-105 transition-transform">
-                      {user?.name ? user.name.charAt(0).toUpperCase() : "J"}
+                      {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                     </div>
                     <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
                   </div>
@@ -1052,10 +1052,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   {!isSidebarCollapsed && (
                     <div className="flex flex-col min-w-0 pr-1">
                       <span className="text-xs font-bold text-foreground truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
-                        {user?.name || "Joain Monroy"}
+                        {user?.name || "Usuario"}
                       </span>
                       <span className="text-[10px] text-muted-foreground truncate font-mono">
-                        {user?.email || "devSantos8"}
+                        {user?.email || "usuario@schemacv.dev"}
                       </span>
                     </div>
                   )}
@@ -1068,8 +1068,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent align={isSidebarCollapsed ? "center" : "end"} side={isSidebarCollapsed ? "right" : "top"} className="w-56 bg-card border-border p-1.5 shadow-xl">
               <DropdownMenuLabel className="text-xs">
-                <div className="font-bold text-foreground">{user?.name || "Joain Monroy"}</div>
-                <div className="text-[10px] text-muted-foreground font-mono truncate">{user?.email || "matiasmonroy483@gmail.com"}</div>
+                <div className="font-bold text-foreground">{user?.name || "Usuario"}</div>
+                <div className="text-[10px] text-muted-foreground font-mono truncate">{user?.email || "usuario@schemacv.dev"}</div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -2656,7 +2656,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                                     updated[idx].github_url = e.target.value;
                                     setMasterFormData({ ...masterFormData, projects: updated });
                                   }}
-                                  placeholder="ej: https://github.com/devSantos8/SchemaCV"
+                                  placeholder="ej: https://github.com/usuario/mi-proyecto"
                                   className="h-8 text-xs rounded-xl"
                                 />
                               </div>
@@ -3681,8 +3681,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                             onClick={() => {
                               if (user?.name) {
                                 const parts = user.name.split(" ");
-                                setFirstName(parts[0] || "Joain");
-                                setLastName(parts.slice(1).join(" ") || "Monroy Santos");
+                                setFirstName(parts[0] || "");
+                                setLastName(parts.slice(1).join(" ") || "");
                               }
                             }}
                             className="h-8 text-xs"

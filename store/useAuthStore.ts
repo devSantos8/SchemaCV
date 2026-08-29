@@ -51,21 +51,21 @@ interface AuthState {
 }
 
 const DEFAULT_DEMO_USER: UserProfile = {
-  id: "user-demo-01",
-  name: "Joain Matias Monroy",
-  email: "matiasmonroy483@gmail.com",
-  headline: "Senior Full Stack & Cloud Developer",
-  bio: "Ingeniero de software con foco en arquitecturas distribuidas, diseño UI/UX de alta fidelidad y optimización para filtros ATS.",
+  id: "user-guest",
+  name: "Usuario Invitado",
+  email: "invitado@schemacv.dev",
+  headline: "Software Engineer & Developer",
+  bio: "Perfil de usuario para edición y exportación de currículums técnicos en SchemaCV.",
   location: "Santiago, Chile",
-  phone: "+56 9 4900 2793",
-  githubUrl: "https://github.com/devSantos8",
-  linkedinUrl: "https://linkedin.com/in/joain-monroy",
-  websiteUrl: "https://schemacv.dev",
+  phone: "",
+  githubUrl: "",
+  linkedinUrl: "",
+  websiteUrl: "",
   bannerTheme: "warm_amber",
-  experienceYears: "5+ Años Exp.",
-  availability: "Disponible Inmediato",
+  experienceYears: "3+ Años Exp.",
+  availability: "Disponible",
   joinedDate: "Agosto 2026",
-  isDemoUser: true,
+  isDemoUser: false,
 };
 
 export const useAuthStore = create<AuthState>()(
@@ -215,22 +215,22 @@ export const useAuthStore = create<AuthState>()(
           }
 
           // Simulación local si no está configurado Supabase
-          let name = "Joain Matías Monroy";
-          let email = "matiasmonroy483@gmail.com";
-          let githubUrl = "https://github.com/devSantos8";
-          let linkedinUrl = "https://linkedin.com/in/joain-monroy";
+          let name = "Usuario";
+          let email = "usuario@schemacv.dev";
+          let githubUrl = "";
+          let linkedinUrl = "";
 
           if (provider === "google") {
-            name = "Joain Monroy (Google)";
-            email = "matiasmonroy483@gmail.com";
+            name = "Usuario (Google)";
+            email = "usuario.google@schemacv.dev";
           } else if (provider === "github") {
-            name = "devSantos8 (GitHub)";
-            email = "devsantos8@users.noreply.github.com";
-            githubUrl = "https://github.com/devSantos8";
+            name = "Usuario (GitHub)";
+            email = "usuario.github@schemacv.dev";
+            githubUrl = "https://github.com";
           } else if (provider === "linkedin") {
-            name = "Joain Monroy Santos (LinkedIn)";
-            email = "jmonroys@linkedin.com";
-            linkedinUrl = "https://linkedin.com/in/joain-monroy";
+            name = "Usuario (LinkedIn)";
+            email = "usuario.linkedin@schemacv.dev";
+            linkedinUrl = "https://linkedin.com";
           }
 
           const user: UserProfile = {
